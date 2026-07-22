@@ -55,8 +55,19 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Try to find user by email (for backward compatibility with old tokens)
     result = await db.execute(select(User).where(User.email == token_data.sub))
     user = result.scalars().first()
+    
+    # If not found by email, try by user_id (for new tokens)
+    if not user:
+        try:
+            user_id = int(token_data.sub)
+            result = await db.execute(select(User).where(User.user_id == user_id))
+            user = result.scalars().first()
+        except (ValueError, TypeError):
+            pass
+    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -78,8 +89,3 @@ def require_roles(allowed_roles: Iterable[UserRole]):
         return current_user
 
     return role_checker
-
-
-
-
-

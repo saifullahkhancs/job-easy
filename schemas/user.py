@@ -1,12 +1,13 @@
-from pydantic import BaseModel, EmailStr
-
+from pydantic import BaseModel, EmailStr, HttpUrl
 from models.roles import UserRole
 
 
 class UserResponse(BaseModel):
+    user_id: int
     first_name: str
     last_name: str
     email: EmailStr
+    linkedin_url: str | None
     is_verified: bool
     role: UserRole
 

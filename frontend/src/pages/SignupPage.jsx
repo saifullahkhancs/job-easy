@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, RefreshCw } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, RefreshCw, Linkedin } from "lucide-react";
 import { register, verifyEmail, resendVerification } from "../api/client";
 
 export default function SignupPage() {
@@ -10,6 +10,7 @@ export default function SignupPage() {
     lastName: "",
     email: "",
     password: "",
+    linkedinUrl: "",
   });
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
@@ -24,7 +25,13 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const data = await register(formData.firstName, formData.lastName, formData.email, formData.password);
+      const data = await register(
+        formData.firstName, 
+        formData.lastName, 
+        formData.email, 
+        formData.password,
+        formData.linkedinUrl
+      );
       setMessage(data.message);
       setStep("verify");
     } catch (err) {
@@ -136,6 +143,22 @@ export default function SignupPage() {
                   minLength={6}
                 />
               </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="linkedinUrl">LinkedIn Profile URL</label>
+              <div className="input-wrapper">
+                <Linkedin size={20} className="input-icon" />
+                <input
+                  id="linkedinUrl"
+                  type="url"
+                  value={formData.linkedinUrl}
+                  onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
+                  placeholder="https://linkedin.com/in/your-profile"
+                  required
+                />
+              </div>
+              <p className="input-hint">Your LinkedIn profile URL is required for account verification</p>
             </div>
 
             <button type="submit" className="auth-submit-btn" disabled={loading}>

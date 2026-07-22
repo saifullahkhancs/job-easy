@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, HttpUrl
 from models.roles import UserRole
 
 
@@ -7,6 +7,7 @@ class UserRegister(BaseModel):
     last_name: str
     email: EmailStr
     password: str
+    linkedin_url: HttpUrl
 
 class UserResponse(BaseModel):
     first_name: str
@@ -56,6 +57,6 @@ class RefreshTokenRequest(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: EmailStr
+    sub: str  # Can be email (old) or user_id (new)
     role: UserRole
     token_type: str | None = None

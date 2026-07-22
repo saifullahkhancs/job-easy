@@ -5,6 +5,8 @@ from jose import JWTError, jwt
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from api.dependencies import get_current_user, get_db
 from core.config import settings
@@ -22,6 +24,7 @@ from core.security import (
     hash_password,
     verify_password,
 )
+from core.utils import normalize_linkedin_url, validate_linkedin_url
 from models.roles import UserRole
 from models.user import PasswordResetToken, User
 from schemas.auth import (
@@ -36,8 +39,10 @@ from schemas.auth import (
     UserRegister,
     VerifyEmail,
 )
+from schemas.user_profile import UserProfileResponse, ApprovalStatus
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+limiter = Limiter(key_func=get_remote_address)
 
 VERIFICATION_CODE_TTL_MINUTES = 15
 VERIFICATION_ATTEMPT_LIMIT = 5
@@ -58,12 +63,31 @@ def _ensure_aware(value: datetime | None) -> datetime | None:
 
 
 @router.post("/register", response_model=RegisterResponse,response_model_exclude_none=True, status_code=status.HTTP_201_CREATED,)
+@limiter.limit("5/minute")
 async def register( user_in: UserRegister, response: Response, db: AsyncSession = Depends(get_db),):
+    # Validate LinkedIn URL
+    linkedin_url_str = str(user_in.linkedin_url)
+    if not validate_linkedin_url(linkedin_url_str):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid LinkedIn URL. Must be a valid LinkedIn profile URL."
+        )
+    
+    linkedin_normalized = normalize_linkedin_url(linkedin_url_str)
+    
+    # Check for existing user by email
     result = await db.execute(select(User).where(User.email == user_in.email))
     existing_user = result.scalars().first()
     if existing_user is not None:
         response.status_code = status.HTTP_200_OK
         return {"message": "User already exists"}
+    
+    # Check for existing user by normalized LinkedIn URL
+    result = await db.execute(select(User).where(User.linkedin_url_normalized == linkedin_normalized))
+    existing_linkedin = result.scalars().first()
+    if existing_linkedin is not None:
+        response.status_code = status.HTTP_200_OK
+        return {"message": "LinkedIn account already registered"}
 
     verification_code = generate_5_digit_code()
     now = _utc_now()
@@ -71,6 +95,8 @@ async def register( user_in: UserRegister, response: Response, db: AsyncSession 
         first_name=user_in.first_name,
         last_name=user_in.last_name,
         email=user_in.email,
+        linkedin_url=linkedin_url_str,
+        linkedin_url_normalized=linkedin_normalized,
         hashed_password=hash_password(user_in.password),
         is_verified=False,
         verification_code=verification_code,
@@ -78,7 +104,7 @@ async def register( user_in: UserRegister, response: Response, db: AsyncSession 
         + timedelta(minutes=VERIFICATION_CODE_TTL_MINUTES),
         verification_attempt_count=0,
         verification_attempt_window_start=now,
-        role=UserRole.CUSTOMER.value,
+        role=UserRole.VISITOR,
     )
 
     db.add(user)
@@ -101,6 +127,7 @@ async def register( user_in: UserRegister, response: Response, db: AsyncSession 
 
 
 @router.post("/verify-email")
+@limiter.limit("10/minute")
 async def verify_email(data: VerifyEmail, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalars().first()
@@ -180,6 +207,7 @@ async def resend_verification(
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("10/minute")
 async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalars().first()
@@ -191,7 +219,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=403, detail="Please verify your email first")
 
     subject = {
-        "sub": user.email,
+        "sub": str(user.user_id),
         "role": user.role.value if hasattr(user.role, "value") else user.role,
     }
     access_token = create_access_token(subject)
@@ -205,6 +233,7 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/forgot-password")
+@limiter.limit("5/minute")
 async def forgot_password(data: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalars().first()
@@ -243,6 +272,7 @@ async def resend_password_reset(
     return await forgot_password(data, db)
 
 @router.post("/reset-password")
+@limiter.limit("5/minute")
 async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
     try:
         payload = jwt.decode(
@@ -295,14 +325,24 @@ async def refresh_token(data: RefreshTokenRequest, db: AsyncSession = Depends(ge
     except (JWTError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
+    # Try to find user by email (for backward compatibility with old tokens)
     result = await db.execute(select(User).where(User.email == token_data.sub))
     user = result.scalars().first()
+    
+    # If not found by email, try by user_id (for new tokens)
+    if not user:
+        try:
+            user_id = int(token_data.sub)
+            result = await db.execute(select(User).where(User.user_id == user_id))
+            user = result.scalars().first()
+        except (ValueError, TypeError):
+            pass
 
     if user is None or not user.is_verified:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     subject = {
-        "sub": user.email,
+        "sub": str(user.user_id),
         "role": user.role.value if hasattr(user.role, "value") else user.role,
     }
 
@@ -311,3 +351,79 @@ async def refresh_token(data: RefreshTokenRequest, db: AsyncSession = Depends(ge
         "refresh_token": create_refresh_token(subject),
         "token_type": "bearer",
     }
+
+
+@router.get("/me", response_model=UserProfileResponse)
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get current user profile with approval status and permissions."""
+    from models.email_automation_requests import EmailAutomationRequest
+    from models.user_templates import UserTemplate
+    from models.user_email_info import UserEmailInfo
+    
+    # Determine approval status based on role and automation request
+    approval_status = ApprovalStatus.PENDING
+    if current_user.role == UserRole.ADMIN:
+        approval_status = ApprovalStatus.APPROVED
+    elif current_user.role == UserRole.CUSTOMER:
+        approval_status = ApprovalStatus.APPROVED
+    else:
+        # Check if there's an approved request
+        result = await db.execute(
+            select(EmailAutomationRequest).where(
+                EmailAutomationRequest.user_id == current_user.user_id,
+                EmailAutomationRequest.status == "approved"
+            )
+        )
+        approved_request = result.scalars().first()
+        if approved_request:
+            approval_status = ApprovalStatus.APPROVED
+        else:
+            # Check for rejected request
+            result = await db.execute(
+                select(EmailAutomationRequest).where(
+                    EmailAutomationRequest.user_id == current_user.user_id,
+                    EmailAutomationRequest.status == "rejected"
+                )
+            )
+            rejected_request = result.scalars().first()
+            if rejected_request:
+                approval_status = ApprovalStatus.REJECTED
+    
+    # Check if user has email info
+    result = await db.execute(
+        select(UserEmailInfo).where(UserEmailInfo.user_id == current_user.user_id)
+    )
+    has_email_info = result.scalars().first() is not None
+    
+    # Count user's templates
+    result = await db.execute(
+        select(UserTemplate).where(
+            UserTemplate.owner_user_id == current_user.user_id,
+            UserTemplate.template_scope == "customer"
+        )
+    )
+    current_template_count = len(result.scalars().all())
+    
+    # Determine permissions
+    can_manage_templates = current_user.role in [UserRole.ADMIN, UserRole.CUSTOMER]
+    can_send_email = current_user.role == UserRole.CUSTOMER
+    template_limit = 2 if current_user.role == UserRole.CUSTOMER else 0
+    
+    return UserProfileResponse(
+        user_id=current_user.user_id,
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
+        email=current_user.email,
+        linkedin_url=current_user.linkedin_url,
+        is_verified=current_user.is_verified,
+        role=current_user.role,
+        approval_status=approval_status,
+        can_manage_templates=can_manage_templates,
+        can_send_email=can_send_email,
+        has_email_info=has_email_info,
+        template_limit=template_limit,
+        current_template_count=current_template_count,
+    )

@@ -9,6 +9,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     DATABASE_URL: str
     DEBUG: bool = False
+    ENVIRONMENT: str = os.environ.get("ENVIRONMENT", "development")
     # It's crucial to set a strong, secret key in your environment.
     # You can generate one with: openssl rand -hex 32
     JWT_SECRET: str = os.environ.get("JWT_SECRET", "dev-secret-change-me")
@@ -26,11 +27,21 @@ class Settings(BaseSettings):
     SMTP_FROM_NAME: str = "Saifullah Khan"
     SMTP_USE_TLS: bool = True
     SMTP_USE_SSL: bool = False
+    # Rate limiting settings
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_REQUESTS: int = 100
+    RATE_LIMIT_PERIOD: int = 60  # seconds
 
     @model_validator(mode="after")
     def validate_smtp_security(self):
         if self.SMTP_USE_TLS and self.SMTP_USE_SSL:
             raise ValueError("SMTP_USE_TLS and SMTP_USE_SSL cannot both be true")
+        return self
+
+    @model_validator(mode="after")
+    def validate_jwt_secret(self):
+        if self.ENVIRONMENT == "production" and self.JWT_SECRET in ["dev-secret-change-me", "change-me", "secret"]:
+            raise ValueError("JWT_SECRET must be set to a strong random value in production")
         return self
 
     @property
