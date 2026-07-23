@@ -10,7 +10,6 @@ export default function SignupPage() {
     lastName: "",
     email: "",
     password: "",
-    linkedinUrl: "",
   });
   const [verificationCode, setVerificationCode] = useState("");
   const [error, setError] = useState("");
@@ -29,8 +28,7 @@ export default function SignupPage() {
         formData.firstName, 
         formData.lastName, 
         formData.email, 
-        formData.password,
-        formData.linkedinUrl
+        formData.password
       );
       setMessage(data.message);
       setStep("verify");
@@ -143,22 +141,6 @@ export default function SignupPage() {
                   minLength={6}
                 />
               </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="linkedinUrl">LinkedIn Profile URL</label>
-              <div className="input-wrapper">
-                <LinkIcon size={20} className="input-icon" />
-                <input
-                  id="linkedinUrl"
-                  type="url"
-                  value={formData.linkedinUrl}
-                  onChange={(e) => setFormData({ ...formData, linkedinUrl: e.target.value })}
-                  placeholder="https://linkedin.com/in/your-profile"
-                  required
-                />
-              </div>
-              <p className="input-hint">Your LinkedIn profile URL is required for account verification</p>
             </div>
 
             <button type="submit" className="auth-submit-btn" disabled={loading}>

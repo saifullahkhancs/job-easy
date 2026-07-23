@@ -90,8 +90,9 @@ export default function SendPage() {
           <p className="muted">No personal templates available. Create a template first to send emails.</p>
         </div>
       ) : (
-        <div className="split-layout">
-          <form className="form" onSubmit={handleSubmit} style={{ background: '#f8fafc', padding: '24px', borderRadius: '16px' }}>
+        <div className="form-page-layout">
+          <div className="form-main-panel">
+            <form className="form" onSubmit={handleSubmit}>
             <label>
               Select Template
               <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} required disabled={isDisabled}>
@@ -120,9 +121,11 @@ export default function SendPage() {
               <Send size={18} />
               {loading ? "Sending..." : "Send Email"}
             </button>
-          </form>
+            </form>
+          </div>
 
-          <div className="dark-preview-card" style={{ height: 'auto', alignSelf: 'start' }}>
+          <div className="form-side-panel">
+            <div className="dark-preview-card" style={{ height: 'auto' }}>
             <div className="dark-preview-header" style={{ marginBottom: '12px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: isDisabled ? '#94a3b8' : '#10b981' }}>
                 <CheckCircle2 size={20} />
@@ -140,6 +143,7 @@ export default function SendPage() {
               <Copy size={20} style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', opacity: isDisabled ? 0.5 : 1 }} />
               <Link size={20} style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', opacity: isDisabled ? 0.5 : 1 }} />
               <Mail size={20} style={{ cursor: isDisabled ? 'not-allowed' : 'pointer', opacity: isDisabled ? 0.5 : 1 }} />
+            </div>
             </div>
           </div>
         </div>

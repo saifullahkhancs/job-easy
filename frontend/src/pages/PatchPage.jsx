@@ -79,7 +79,8 @@ export default function PatchPage() {
   if (loading) return <p className="muted">Loading templates...</p>;
 
   return (
-    <section className="card">
+    <div className="page-container">
+      <section className="card">
       <div className="page-header">
         <div>
           <h2>Update Template</h2>
@@ -94,8 +95,9 @@ export default function PatchPage() {
       {templates.length === 0 ? (
         <p className="muted">No templates yet. Upload one first.</p>
       ) : (
-        <div className="split-layout">
-          <form className="form" onSubmit={handleSubmit}>
+        <div className="form-page-layout">
+          <div className="form-main-panel">
+            <form className="form" onSubmit={handleSubmit}>
             <label>
               Job Type
               <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
@@ -107,8 +109,8 @@ export default function PatchPage() {
               </select>
             </label>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-              <label className="checkbox-row" style={{ flex: 1, borderColor: updateTitle ? '#3b82f6' : '#cbd5e1', background: updateTitle ? '#eff6ff' : '#fdfbfb' }}>
+            <div className="patch-options-group">
+              <label className={`patch-option-card ${updateTitle ? 'active' : ''}`}>
                 <input
                   type="checkbox"
                   checked={updateTitle}
@@ -117,18 +119,18 @@ export default function PatchPage() {
                 Subject
               </label>
               
-              <label className="checkbox-row" style={{ flex: 1, borderColor: updateContext ? '#3b82f6' : '#cbd5e1', background: updateContext ? '#eff6ff' : '#fdfbfb' }}>
+              <label className={`patch-option-card ${updateContext ? 'active' : ''}`}>
                 <input
                   type="checkbox"
                   checked={updateContext}
                   onChange={(e) => setUpdateContext(e.target.checked)}
                 />
-                Email body
+                Email Body
               </label>
 
-              <label className="checkbox-row" style={{ flex: 1, borderColor: updateCv ? '#3b82f6' : '#cbd5e1', background: updateCv ? '#eff6ff' : '#fdfbfb' }}>
+              <label className={`patch-option-card ${updateCv ? 'active' : ''}`}>
                 <input type="checkbox" checked={updateCv} onChange={(e) => setUpdateCv(e.target.checked)} />
-                CV file
+                CV File
               </label>
             </div>
 
@@ -166,9 +168,11 @@ export default function PatchPage() {
               <Save size={18} />
               {submitting ? "Saving..." : "Save Changes"}
             </button>
-          </form>
+            </form>
+          </div>
 
-          <div className="dark-preview-card" style={{ height: 'auto', alignSelf: 'start' }}>
+          <div className="form-side-panel">
+            <div className="dark-preview-card" style={{ height: 'auto' }}>
             <div className="dark-preview-header" style={{ marginBottom: '12px' }}>
               <span style={{ color: '#fff', fontSize: '1.1rem' }}>Patch summary</span>
             </div>
@@ -188,12 +192,14 @@ export default function PatchPage() {
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#3b82f6', letterSpacing: '0.05em', marginBottom: '4px' }}>CURRENT TEMPLATE</div>
               <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{selectedType} · {templates.find(t => t.type === selectedType)?.cv_filename || "CV file attached"}</div>
             </div>
+            </div>
           </div>
         </div>
       )}
 
       {message && <p className="success">{message}</p>}
       {error && <p className="error">{error}</p>}
-    </section>
+      </section>
+    </div>
   );
 }

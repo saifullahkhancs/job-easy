@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutGrid, LayoutTemplate, Send, LogOut, User, Clock, PenTool, Layers2, Edit, CheckCircle2 } from "lucide-react";
+import { LayoutGrid, LayoutTemplate, Send, LogOut, User, Clock, UploadCloud, Edit, CheckCircle2 } from "lucide-react";
 import { getCurrentUser, logout } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "./RoleBadge";
 import { ROLES } from "./RoleGuard";
@@ -31,15 +31,16 @@ export default function Layout() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    setCurrentUser(null);
+    navigate("/app/templates/new", { replace: true });
   };
 
   const getNavItems = () => {
     if (!currentUser) {
       // For guest, show all pages (disabled state)
       return [
-        { to: "/app/templates/new", label: "New Template", icon: PenTool },
-        { to: "/app", label: "View Templates", end: true, icon: Layers2 },
+        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app", label: "View Templates", end: true, icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
         { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
       ];
@@ -51,8 +52,8 @@ export default function Layout() {
 
     if (isVisitor) {
       return [
-        { to: "/app/templates/new", label: "New Template", icon: PenTool },
-        { to: "/app", label: "View Templates", end: true, icon: Layers2 },
+        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app", label: "View Templates", end: true, icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
         { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
         { to: "/app/request-access", label: "Request Access", icon: Clock },
@@ -62,8 +63,8 @@ export default function Layout() {
 
     if (isCustomer) {
       return [
-        { to: "/app/templates/new", label: "New Template", icon: PenTool },
-        { to: "/app", label: "View Templates", end: true, icon: Layers2 },
+        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app", label: "View Templates", end: true, icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
         { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
         { to: "/app/request-status", label: "Request Status", icon: CheckCircle2 },
@@ -148,7 +149,7 @@ export default function Layout() {
       </aside>
 
       <main className="app-main-content">
-        <Outlet />
+        <Outlet key={currentUser?.user_id || 'guest'} />
       </main>
     </div>
   );

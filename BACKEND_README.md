@@ -17,14 +17,12 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 #### Users Table
 - `user_id` (PK): Internal user identifier
 - `email`: Unique email address
-- `linkedin_url`: Original LinkedIn URL
-- `linkedin_url_normalized`: Normalized LinkedIn URL for uniqueness checks
 - `first_name`, `last_name`: User name
 - `hashed_password`: Bcrypt hashed password
 - `is_verified`: Email verification status
 - `role`: Enum (admin, visitor, customer)
 - `created_at`, `updated_at`: Timestamps
-- **Constraints**: Unique email, unique linkedin_url_normalized, composite unique (email, linkedin_url_normalized)
+- **Constraints**: Unique email
 
 #### User Email Info Table
 - `id` (PK): Email configuration ID
@@ -74,15 +72,14 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 ### Authentication Routes (`/api/v1/auth`)
 
 #### POST `/api/v1/auth/register`
-- **Description**: Register a new user with LinkedIn URL
+- **Description**: Register a new user.
 - **Request Body**:
   ```json
   {
     "first_name": "John",
     "last_name": "Doe",
     "email": "john@example.com",
-    "password": "securepassword",
-    "linkedin_url": "https://linkedin.com/in/john-doe"
+    "password": "securepassword"
   }
   ```
 - **Response**: Message indicating verification code sent

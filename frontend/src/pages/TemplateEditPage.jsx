@@ -118,7 +118,7 @@ export default function TemplateEditPage() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container page-container-full-width">
       {(isGuest || isVisitor) && (
         <div className="visitor-banner">
           <Lock size={24} className="banner-icon" />
@@ -129,6 +129,7 @@ export default function TemplateEditPage() {
         </div>
       )}
 
+      <section className="card">
       <div className="page-header">
         <div>
           <h2>Edit Template</h2>
@@ -140,9 +141,12 @@ export default function TemplateEditPage() {
         </button>
       </div>
 
-      <form className="form" onSubmit={handleSubmit}>
-        {error && <div className="error-message">{error}</div>}
-        {message && <div className="success-message">{message}</div>}
+      {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
+      {message && <div className="success-message" style={{ marginBottom: '16px' }}>{message}</div>}
+
+      <div className="form-page-layout">
+        <div className="form-main-panel">
+          <form className="form" onSubmit={handleSubmit}>
 
 
 
@@ -156,35 +160,35 @@ export default function TemplateEditPage() {
           <p className="input-hint">Template role cannot be changed after creation</p>
         </label>
 
-        <div className="checkbox-group">
-          <label className="checkbox-label">
+        <div className="patch-options-group">
+          <label className={`patch-option-card ${updateTitle ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
             <input
               type="checkbox"
               checked={updateTitle}
               onChange={(e) => setUpdateTitle(e.target.checked)}
               disabled={isDisabled}
             />
-            Update Subject
+            Subject
           </label>
           
-          <label className="checkbox-label">
+          <label className={`patch-option-card ${updateContext ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
             <input
               type="checkbox"
               checked={updateContext}
               onChange={(e) => setUpdateContext(e.target.checked)}
               disabled={isDisabled}
             />
-            Update Email Body
+            Email Body
           </label>
 
-          <label className="checkbox-label">
+          <label className={`patch-option-card ${updateCv ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
             <input 
               type="checkbox" 
               checked={updateCv} 
               onChange={(e) => setUpdateCv(e.target.checked)}
               disabled={isDisabled}
             />
-            Update CV File
+            CV File
           </label>
         </div>
 
@@ -237,18 +241,23 @@ export default function TemplateEditPage() {
           <Save size={18} />
           {submitting ? "Saving..." : "Save Changes"}
         </button>
-      </form>
-
-      <div className="patch-summary">
-        <h3>Patch Summary</h3>
-        <div className="patch-items">
-          {updateTitle && <div className="patch-item"><span className="patch-icon">✓</span> Subject will be updated</div>}
-          {updateContext && <div className="patch-item"><span className="patch-icon">✓</span> Email body will be updated</div>}
-          {updateCv && <div className="patch-item"><span className="patch-icon">✓</span> CV file will be updated</div>}
-          {!updateTitle && !updateContext && !updateCv && <div className="patch-item disabled">No fields selected for update</div>}
+          </form>
         </div>
-        <p className="patch-note">Disabled fields stay untouched, so you can safely make targeted edits without accidentally replacing stored data.</p>
+
+        <div className="form-side-panel">
+          <div className="dark-preview-card patch-summary">
+            <h3>Patch Summary</h3>
+            <div className="patch-items">
+              {updateTitle && <div className="patch-item"><span className="patch-icon">✓</span> Subject will be updated</div>}
+              {updateContext && <div className="patch-item"><span className="patch-icon">✓</span> Email body will be updated</div>}
+              {updateCv && <div className="patch-item"><span className="patch-icon">✓</span> CV file will be updated</div>}
+              {!updateTitle && !updateContext && !updateCv && <div className="patch-item disabled">No fields selected for update</div>}
+            </div>
+            <p className="patch-note">Disabled fields stay untouched, so you can safely make targeted edits without accidentally replacing stored data.</p>
+          </div>
+        </div>
       </div>
+      </section>
     </div>
   );
 }

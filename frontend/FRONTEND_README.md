@@ -15,7 +15,7 @@ This React + Vite frontend implements a role-based workflow for email automation
 
 #### Public Routes
 - `/login` - Login page
-- `/signup` - Registration with LinkedIn URL
+- `/signup` - Registration page
 - `/forgot-password` - Password reset flow
 
 #### Authenticated Routes (`/app/*`)
@@ -73,7 +73,7 @@ This React + Vite frontend implements a role-based workflow for email automation
 
 #### Auth Pages
 - **LoginPage**: Login with email/password, stores JWT tokens
-- **SignupPage**: Registration with LinkedIn URL, email verification flow
+- **SignupPage**: Registration with email and password, email verification flow
 - **ForgotPasswordPage**: Password reset flow
 
 #### Dashboard
@@ -108,7 +108,7 @@ This React + Vite frontend implements a role-based workflow for email automation
 ## API Service Layer
 
 ### Auth API
-- `register(firstName, lastName, email, password, linkedinUrl)` - Register with LinkedIn URL
+- `register(firstName, lastName, email, password)` - Register a new user
 - `verifyEmail(email, code)` - Verify email with code
 - `resendVerification(email)` - Resend verification code
 - `login(email, password)` - Login and get tokens
@@ -192,7 +192,7 @@ This React + Vite frontend implements a role-based workflow for email automation
 
 ## Business Workflow Summary
 
-1. **Registration**: User registers with email, password, and LinkedIn URL → Role: visitor
+1. **Registration**: User registers with email and password → Role: visitor
 2. **Verification**: User verifies email via code
 3. **Email Config**: User sets up email configuration with Gmail app password
 4. **Approval Request**: User submits approval request with live preview
@@ -208,9 +208,7 @@ This React + Vite frontend implements a role-based workflow for email automation
 - **Backend Authority**: UI enforces limits but backend is final authority
 - **Template Limits**: Default templates don't count against customer's 2-template limit
 - **Template Role**: Templates use template_role as a unique identifier per user (or globally for default templates)
-- **Email Masking**: Admin views show masked emails, never app passwords
 - **Role Transitions**: Only admin can change user roles via approval workflow
-- **LinkedIn URL**: Required for registration, validated and normalized
 - **Route Guards**: Prevent visitors from accessing customer-only routes
 - **Conditional Rendering**: Prevents visitors from seeing customer-only actions
 - **No Template Role Types**: Template role types have been removed; template_role is now a direct string field

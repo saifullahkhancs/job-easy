@@ -68,7 +68,7 @@ export default function TemplateCreatePage() {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container page-container-full-width">
       {(isGuest || isVisitor) && (
         <div className="visitor-banner">
           <Lock size={24} className="banner-icon" />
@@ -79,6 +79,7 @@ export default function TemplateCreatePage() {
         </div>
       )}
 
+      <section className="card">
       <div className="page-header">
         <div>
           <h2>Create New Template</h2>
@@ -94,9 +95,12 @@ export default function TemplateCreatePage() {
         <p>Templates used: {currentUser?.current_template_count || 0} / {currentUser?.template_limit || 2}</p>
       </div>
 
-      <form className="form" onSubmit={handleSubmit}>
-        {error && <div className="error-message">{error}</div>}
-        {message && <div className="success-message">{message}</div>}
+      {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
+      {message && <div className="success-message" style={{ marginBottom: '16px' }}>{message}</div>}
+
+      <div className="form-page-layout">
+        <div className="form-main-panel">
+          <form className="form" onSubmit={handleSubmit} id="create-template-form">
 
         <label>
           Template Role
@@ -124,18 +128,6 @@ export default function TemplateCreatePage() {
         </label>
 
         <label>
-          Email Body
-          <textarea
-            value={context}
-            onChange={(e) => setContext(e.target.value)}
-            placeholder="Dear Hiring Manager,&#10;&#10;I hope you are doing well.&#10;&#10;I am writing to apply for..."
-            rows={8}
-            required
-            disabled={isDisabled}
-          />
-        </label>
-
-        <label>
           CV (PDF)
           <div className={`file-upload-area ${isDisabled ? 'disabled' : ''}`} style={isDisabled ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
             <input
@@ -156,11 +148,31 @@ export default function TemplateCreatePage() {
           </div>
         </label>
 
-        <button type="submit" className="primary-btn" disabled={loading || isDisabled || !cvFile}>
+        <button type="submit" className="primary-btn" disabled={loading || isDisabled || !cvFile} style={{ marginTop: '16px' }}>
           <UploadCloud size={18} />
           {loading ? "Creating Template..." : "Create Template"}
         </button>
-      </form>
+          </form>
+        </div>
+
+        <div className="form-side-panel">
+          <div className="dark-preview-card" style={{ height: '100%' }}>
+            <div className="dark-preview-header">
+              <span>Email Body</span>
+            </div>
+            <textarea
+              className="dark-preview-content"
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder="Dear Hiring Manager,&#10;&#10;I hope you are doing well.&#10;&#10;I am writing to apply for..."
+              required
+              disabled={isDisabled}
+              form="create-template-form"
+            />
+          </div>
+        </div>
+      </div>
+      </section>
     </div>
   );
 }

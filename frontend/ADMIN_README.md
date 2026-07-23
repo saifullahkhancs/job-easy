@@ -63,7 +63,6 @@ The admin dashboard at `/admin` is intentionally accessible without authenticati
   - Filter by verification status
   - Display role badges
   - Display verification badges
-  - Display LinkedIn URL links
   - Edit user role and verification status
 - **User Management**:
   - Change user role (visitor ↔ customer ↔ admin)
