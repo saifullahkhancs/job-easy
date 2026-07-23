@@ -1,4 +1,4 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getCurrentUser, logout } from "../api/client";
 
@@ -38,9 +38,5 @@ export default function AuthGuard({ children }) {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return children;
+  return children || <Outlet />;
 }

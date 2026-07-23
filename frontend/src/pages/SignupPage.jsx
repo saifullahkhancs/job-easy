@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, RefreshCw, Linkedin } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, RefreshCw, Link as LinkIcon } from "lucide-react";
 import { register, verifyEmail, resendVerification } from "../api/client";
 
 export default function SignupPage() {
@@ -148,7 +148,7 @@ export default function SignupPage() {
             <div className="form-group">
               <label htmlFor="linkedinUrl">LinkedIn Profile URL</label>
               <div className="input-wrapper">
-                <Linkedin size={20} className="input-icon" />
+                <LinkIcon size={20} className="input-icon" />
                 <input
                   id="linkedinUrl"
                   type="url"

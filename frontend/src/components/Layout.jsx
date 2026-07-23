@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutGrid, LayoutTemplate, Send, LogOut, User, Clock, Shield } from "lucide-react";
+import { LayoutGrid, LayoutTemplate, Send, LogOut, User, Clock, PenTool, Layers2, Edit, CheckCircle2 } from "lucide-react";
 import { getCurrentUser, logout } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "./RoleBadge";
 import { ROLES } from "./RoleGuard";
@@ -14,11 +14,18 @@ export default function Layout() {
   }, []);
 
   const fetchCurrentUser = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setCurrentUser(null);
+      return;
+    }
     try {
       const user = await getCurrentUser();
       setCurrentUser(user);
     } catch (error) {
       console.error("Failed to fetch current user:", error);
+      logout();
+      setCurrentUser(null);
     }
   };
 
@@ -28,35 +35,46 @@ export default function Layout() {
   };
 
   const getNavItems = () => {
-    if (!currentUser) return [];
+    if (!currentUser) {
+      // For guest, show all pages (disabled state)
+      return [
+        { to: "/app/templates/new", label: "New Template", icon: PenTool },
+        { to: "/app", label: "View Templates", end: true, icon: Layers2 },
+        { to: "/app/send", label: "Send Email", icon: Send },
+        { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
+      ];
+    }
 
     const isVisitor = currentUser.role === ROLES.VISITOR;
     const isCustomer = currentUser.role === ROLES.CUSTOMER;
     const isAdmin = currentUser.role === ROLES.ADMIN;
 
-    const baseItems = [
-      { to: "/app", label: "Templates", end: true, icon: LayoutTemplate },
-    ];
-
     if (isVisitor) {
       return [
-        ...baseItems,
+        { to: "/app/templates/new", label: "New Template", icon: PenTool },
+        { to: "/app", label: "View Templates", end: true, icon: Layers2 },
+        { to: "/app/send", label: "Send Email", icon: Send },
+        { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
         { to: "/app/request-access", label: "Request Access", icon: Clock },
+        { to: "/app/request-status", label: "Request Status", icon: CheckCircle2 },
       ];
     }
 
     if (isCustomer) {
       return [
-        ...baseItems,
+        { to: "/app/templates/new", label: "New Template", icon: PenTool },
+        { to: "/app", label: "View Templates", end: true, icon: Layers2 },
         { to: "/app/send", label: "Send Email", icon: Send },
+        { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
+        { to: "/app/request-status", label: "Request Status", icon: CheckCircle2 },
       ];
     }
 
     if (isAdmin) {
-      return baseItems; // Admin should use separate admin interface
+      return []; // Admin should use separate admin interface
     }
 
-    return baseItems;
+    return [];
   };
 
   const navItems = getNavItems();
@@ -94,8 +112,14 @@ export default function Layout() {
         {currentUser && (
           <div className="sidebar-user-info">
             <div className="user-badges">
-              <RoleBadge role={currentUser.role} />
-              <ApprovalStatusBadge status={currentUser.approval_status} />
+              {currentUser.role === ROLES.VISITOR && currentUser.approval_status === 'pending' ? (
+                <ApprovalStatusBadge status={currentUser.approval_status} />
+              ) : (
+                <>
+                  <RoleBadge role={currentUser.role} />
+                  <ApprovalStatusBadge status={currentUser.approval_status} />
+                </>
+              )}
             </div>
             <div className="user-details">
               <span className="user-name">{currentUser.first_name} {currentUser.last_name}</span>
@@ -105,10 +129,21 @@ export default function Layout() {
         )}
 
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={20} className="link-icon" />
-            <span>Logout</span>
-          </button>
+          {currentUser ? (
+            <button className="logout-btn" onClick={handleLogout}>
+              <LogOut size={20} className="link-icon" />
+              <span>Logout</span>
+            </button>
+          ) : (
+            <div className="sidebar-auth-buttons">
+              <button className="sidebar-login-btn" onClick={() => navigate("/login")}>
+                <span>Login</span>
+              </button>
+              <button className="sidebar-register-btn" onClick={() => navigate("/signup")}>
+                <span>Register</span>
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 

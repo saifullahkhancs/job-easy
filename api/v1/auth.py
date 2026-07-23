@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
 from jose import JWTError, jwt
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -64,7 +64,12 @@ def _ensure_aware(value: datetime | None) -> datetime | None:
 
 @router.post("/register", response_model=RegisterResponse,response_model_exclude_none=True, status_code=status.HTTP_201_CREATED,)
 @limiter.limit("5/minute")
-async def register( user_in: UserRegister, response: Response, db: AsyncSession = Depends(get_db),):
+async def register(
+    request: Request,
+    user_in: UserRegister,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+):
     # Validate LinkedIn URL
     linkedin_url_str = str(user_in.linkedin_url)
     if not validate_linkedin_url(linkedin_url_str):
@@ -128,7 +133,7 @@ async def register( user_in: UserRegister, response: Response, db: AsyncSession 
 
 @router.post("/verify-email")
 @limiter.limit("10/minute")
-async def verify_email(data: VerifyEmail, db: AsyncSession = Depends(get_db)):
+async def verify_email(request: Request, data: VerifyEmail, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalars().first()
 
@@ -208,7 +213,7 @@ async def resend_verification(
 
 @router.post("/login", response_model=Token)
 @limiter.limit("10/minute")
-async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+async def login(request: Request, credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalars().first()
 
@@ -234,7 +239,9 @@ async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
 
 @router.post("/forgot-password")
 @limiter.limit("5/minute")
-async def forgot_password(data: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+async def forgot_password(
+    request: Request, data: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalars().first()
 
@@ -273,7 +280,9 @@ async def resend_password_reset(
 
 @router.post("/reset-password")
 @limiter.limit("5/minute")
-async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+async def reset_password(
+    request: Request, data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)
+):
     try:
         payload = jwt.decode(
             data.token,
@@ -364,7 +373,6 @@ async def get_me(
     from models.user_email_info import UserEmailInfo
     
     # Determine approval status based on role and automation request
-    approval_status = ApprovalStatus.PENDING
     if current_user.role == UserRole.ADMIN:
         approval_status = ApprovalStatus.APPROVED
     elif current_user.role == UserRole.CUSTOMER:
@@ -391,6 +399,19 @@ async def get_me(
             rejected_request = result.scalars().first()
             if rejected_request:
                 approval_status = ApprovalStatus.REJECTED
+            else:
+                # Check for pending request
+                result = await db.execute(
+                    select(EmailAutomationRequest).where(
+                        EmailAutomationRequest.user_id == current_user.user_id,
+                        EmailAutomationRequest.status == "pending"
+                    )
+                )
+                pending_request = result.scalars().first()
+                if pending_request:
+                    approval_status = ApprovalStatus.PENDING
+                else:
+                    approval_status = ApprovalStatus.NONE
     
     # Check if user has email info
     result = await db.execute(

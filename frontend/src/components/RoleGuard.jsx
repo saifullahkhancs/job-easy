@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Outlet } from "react-router-dom";
 import { getCurrentUser } from "../api/client";
 
 const ROLES = {
@@ -39,7 +39,7 @@ export default function RoleGuard({ allowedRoles, children, fallbackPath = "/app
     return <Navigate to={fallbackPath} replace />;
   }
 
-  return children;
+  return children || <Outlet />;
 }
 
 export { ROLES };

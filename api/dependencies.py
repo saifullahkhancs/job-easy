@@ -73,6 +73,41 @@ async def get_current_user(
     return user
 
 
+async def get_current_user_optional(
+    auth: HTTPAuthorizationCredentials | None = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Dependency to get the current authenticated user optionally, returning None if unauthenticated."""
+    if auth is None or auth.scheme != "Bearer":
+        return None
+
+    token = auth.credentials
+    try:
+        payload = jwt.decode(
+            token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM]
+        )
+        token_data = TokenPayload(**payload)
+        if token_data.token_type != "access":
+            return None
+    except (JWTError, ValidationError):
+        return None
+
+    # Try to find user by email
+    result = await db.execute(select(User).where(User.email == token_data.sub))
+    user = result.scalars().first()
+    
+    # If not found by email, try by user_id
+    if not user:
+        try:
+            user_id = int(token_data.sub)
+            result = await db.execute(select(User).where(User.user_id == user_id))
+            user = result.scalars().first()
+        except (ValueError, TypeError):
+            pass
+    
+    return user
+
+
 def require_roles(allowed_roles: Iterable[UserRole]):
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
         logger.debug(

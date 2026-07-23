@@ -90,9 +90,31 @@ export default function RequestStatusPage() {
     <div className="page-container">
       <div className="page-header">
         <h1>Approval Request Status</h1>
-        <div className="header-badges">
-          {currentUser && <RoleBadge role={currentUser.role} />}
-          {request && <ApprovalStatusBadge status={request.approval_status || request.status} />}
+        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {request && (
+            <button
+              className="secondary-btn"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              title="Refresh status"
+            >
+              <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </button>
+          )}
+          {!request && (
+            <button
+              className="primary-btn"
+              onClick={() => navigate("/app/request-access")}
+            >
+              Submit New Request
+              <ArrowRight size={16} className="btn-icon" />
+            </button>
+          )}
+          <div className="header-badges">
+            {currentUser && <RoleBadge role={currentUser.role} />}
+            {request && <ApprovalStatusBadge status={request.approval_status || request.status} />}
+          </div>
         </div>
       </div>
 
@@ -137,37 +159,21 @@ export default function RequestStatusPage() {
           <div className="no-request-state">
             <AlertCircle size={32} className="warning-icon" />
             <h3>No Request Found</h3>
-            <p>You haven't submitted an approval request yet.</p>
-            <button 
-              className="primary-btn"
-              onClick={() => navigate("/app/request-access")}
-            >
-              Submit Approval Request
-              <ArrowRight size={20} className="btn-icon" />
-            </button>
+            <p>You haven't submitted an approval request yet. Click the button above to get started.</p>
           </div>
         )}
 
-        <div className="action-buttons">
-          <button 
-            className="secondary-btn"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw size={20} className={refreshing ? "spinning" : ""} />
-            {refreshing ? "Refreshing..." : "Refresh Status"}
-          </button>
-          
-          {statusConfig.action && (
-            <button 
+        {statusConfig.action && (
+          <div className="action-buttons">
+            <button
               className="primary-btn"
               onClick={statusConfig.action}
             >
               {statusConfig.actionText}
               <ArrowRight size={20} className="btn-icon" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

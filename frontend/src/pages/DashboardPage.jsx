@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Eye, Send, Lock, ArrowRight, AlertCircle, FileText } from "lucide-react";
-import { getCurrentUser, fetchTemplatesV2, getTemplateRoleTypes } from "../api/client";
+import { Plus, Eye, Send, Lock, AlertCircle, FileText } from "lucide-react";
+import { getCurrentUser, fetchTemplatesV2 } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
 import { ROLES } from "../components/RoleGuard";
 
 export default function DashboardPage() {
   const [currentUser, setCurrentUser] = useState(null);
   const [templates, setTemplates] = useState([]);
-  const [roleTypes, setRoleTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -18,14 +17,21 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const [user, templatesData, roleTypesData] = await Promise.all([
-        getCurrentUser(),
-        fetchTemplatesV2(),
-        getTemplateRoleTypes()
-      ]);
-      setCurrentUser(user);
+      const token = localStorage.getItem("access_token");
+      
+      // Fetch templates (works for guests too)
+      const templatesData = await fetchTemplatesV2();
       setTemplates(templatesData);
-      setRoleTypesData(roleTypesData);
+
+      // Fetch user only if logged in
+      if (token) {
+        try {
+          const user = await getCurrentUser();
+          setCurrentUser(user);
+        } catch {
+          setCurrentUser(null);
+        }
+      }
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -33,15 +39,7 @@ export default function DashboardPage() {
     }
   };
 
-  const setRoleTypesData = (data) => {
-    // Handle different response formats
-    if (data.role_types) {
-      setRoleTypes(data.role_types);
-    } else if (Array.isArray(data)) {
-      setRoleTypes(data);
-    }
-  };
-
+  const isGuest = !currentUser;
   const isVisitor = currentUser?.role === ROLES.VISITOR;
   const isCustomer = currentUser?.role === ROLES.CUSTOMER;
   const isAdmin = currentUser?.role === ROLES.ADMIN;
@@ -66,30 +64,85 @@ export default function DashboardPage() {
     );
   }
 
-  // Visitor mode - read-only default templates
+  // Guest mode (not logged in) - show default templates with disabled actions
+  if (isGuest) {
+    return (
+      <div className="page-container">
+        <div className="visitor-banner">
+          <Lock size={24} className="banner-icon" />
+          <div className="banner-content">
+            <h3>Preview Mode</h3>
+            <p>You need to log in to create and manage templates.</p>
+          </div>
+        </div>
+
+        <div className="page-header">
+          <h1>Template Gallery</h1>
+        </div>
+
+        <div className="templates-grid">
+          {templates.length === 0 ? (
+            <div className="empty-state">
+              <FileText size={48} className="empty-icon" />
+              <h3>No Templates Available</h3>
+              <p>Default templates will appear here once added by the admin.</p>
+            </div>
+          ) : (
+            templates.map((template) => (
+              <div key={template.id} className="template-card visitor-card">
+                <div className="template-header">
+                  <h3>{template.title}</h3>
+                  <span className="template-badge">Default</span>
+                </div>
+                <p className="template-context">{template.context}</p>
+                <div className="template-footer">
+                  <button 
+                    className="icon-btn disabled"
+                    disabled
+                    title="Login to view details"
+                  >
+                    <Eye size={20} />
+                  </button>
+                  <button 
+                    className="icon-btn disabled"
+                    disabled
+                    title="Login to send emails"
+                  >
+                    <Send size={20} />
+                  </button>
+                  <button 
+                    className="icon-btn disabled"
+                    disabled
+                    title="Login to create templates"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Visitor mode (logged in, not approved) - read-only default templates
   if (isVisitor) {
     return (
       <div className="page-container">
+        <div className="visitor-banner">
+          <Lock size={24} className="banner-icon" />
+          <div className="banner-content">
+            <h3>Visitor Mode</h3>
+            <p>Your account is in Visitor mode. You need approval from an admin to create templates.</p>
+          </div>
+        </div>
+
         <div className="page-header">
           <h1>Template Gallery</h1>
           <div className="header-badges">
             <RoleBadge role={currentUser.role} />
             <ApprovalStatusBadge status={currentUser.approval_status} />
-          </div>
-        </div>
-
-        <div className="visitor-banner">
-          <Lock size={24} className="banner-icon" />
-          <div className="banner-content">
-            <h3>Visitor Mode</h3>
-            <p>Browse default templates in read-only mode. Request approval to create your own templates and send emails.</p>
-            <button 
-              className="primary-btn"
-              onClick={() => navigate("/app/request-access")}
-            >
-              Request Approval
-              <ArrowRight size={20} className="btn-icon" />
-            </button>
           </div>
         </div>
 
@@ -110,9 +163,9 @@ export default function DashboardPage() {
                 <p className="template-context">{template.context}</p>
                 <div className="template-footer">
                   <button 
-                    className="icon-btn"
-                    onClick={() => handleViewTemplate(template.id)}
-                    title="View Details"
+                    className="icon-btn disabled"
+                    disabled
+                    title="Available after admin approval"
                   >
                     <Eye size={20} />
                   </button>

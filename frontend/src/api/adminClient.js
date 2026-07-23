@@ -19,10 +19,22 @@ async function handleResponse(response) {
   return data;
 }
 
+const getHeaders = (extraHeaders = {}) => {
+  const token = localStorage.getItem("access_token");
+  const headers = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return {
+    ...headers,
+    ...extraHeaders,
+  };
+};
+
 // Admin Dashboard Stats
 export async function getAdminStats() {
   const response = await fetch(`${API_BASE}/api/v1/admin/dashboard`, {
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }
@@ -34,14 +46,14 @@ export async function listAdminUsers(role, isVerified) {
   if (isVerified !== undefined) params.append("is_verified", isVerified);
   
   const response = await fetch(`${API_BASE}/api/v1/admin/users?${params}`, {
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }
 
 export async function getAdminUser(userId) {
   const response = await fetch(`${API_BASE}/api/v1/admin/users/${userId}`, {
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }
@@ -49,9 +61,9 @@ export async function getAdminUser(userId) {
 export async function updateAdminUser(userId, userData) {
   const response = await fetch(`${API_BASE}/api/v1/admin/users/${userId}`, {
     method: "PATCH",
-    headers: { 
+    headers: getHeaders({ 
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify(userData),
   });
   return handleResponse(response);
@@ -61,14 +73,14 @@ export async function updateAdminUser(userId, userData) {
 export async function listAdminRequests(status) {
   const params = status ? `?status=${status}` : "";
   const response = await fetch(`${API_BASE}/api/v1/admin/approval-requests${params}`, {
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }
 
 export async function getAdminRequest(requestId) {
   const response = await fetch(`${API_BASE}/api/v1/admin/approval-requests/${requestId}`, {
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }
@@ -76,9 +88,9 @@ export async function getAdminRequest(requestId) {
 export async function reviewAdminRequest(requestId, reviewData) {
   const response = await fetch(`${API_BASE}/api/v1/admin/approval-requests/${requestId}`, {
     method: "PATCH",
-    headers: { 
+    headers: getHeaders({ 
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify(reviewData),
   });
   return handleResponse(response);
@@ -87,7 +99,7 @@ export async function reviewAdminRequest(requestId, reviewData) {
 // Admin Default Templates API
 export async function listAdminDefaultTemplates() {
   const response = await fetch(`${API_BASE}/api/v1/admin/default-templates`, {
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }
@@ -95,7 +107,7 @@ export async function listAdminDefaultTemplates() {
 export async function createAdminDefaultTemplate(formData) {
   const response = await fetch(`${API_BASE}/api/v1/admin/default-templates`, {
     method: "POST",
-    headers: {},
+    headers: getHeaders(),
     body: formData,
   });
   return handleResponse(response);
@@ -103,7 +115,7 @@ export async function createAdminDefaultTemplate(formData) {
 
 export async function getAdminTemplate(templateId) {
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }
@@ -111,9 +123,9 @@ export async function getAdminTemplate(templateId) {
 export async function updateAdminTemplate(templateId, formData) {
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
     method: "PUT",
-    headers: { 
+    headers: getHeaders({ 
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify(formData),
   });
   return handleResponse(response);
@@ -124,7 +136,7 @@ export async function updateAdminTemplateCv(templateId, cvPdf) {
   formData.append("cv_pdf", cvPdf);
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}/cv`, {
     method: "PATCH",
-    headers: {},
+    headers: getHeaders(),
     body: formData,
   });
   return handleResponse(response);
@@ -133,7 +145,7 @@ export async function updateAdminTemplateCv(templateId, cvPdf) {
 export async function deleteAdminTemplate(templateId) {
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
     method: "DELETE",
-    headers: {},
+    headers: getHeaders(),
   });
   return handleResponse(response);
 }

@@ -104,13 +104,6 @@ export default function AdminDashboardPage() {
       link: "/admin/default-templates",
       color: "green",
     },
-    {
-      title: "Manage Template Role Types",
-      description: "Configure dynamic template role types",
-      icon: Clock,
-      link: "/admin/template-role-types",
-      color: "purple",
-    },
   ];
 
   if (loading) {

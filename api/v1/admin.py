@@ -17,6 +17,32 @@ from schemas.user import UserUpdate, UserResponse
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
+def _build_admin_request_response(req: EmailAutomationRequest) -> EmailAutomationRequestAdminResponse:
+    """Helper to build the admin response for an approval request."""
+    response_dict = {
+        "id": req.id,
+        "user_id": req.user_id,
+        "user_email_info_id": req.user_email_info_id,
+        "status": req.status,
+        "requested_at": req.requested_at,
+        "reviewed_at": req.reviewed_at,
+        "reviewed_by_admin_id": req.reviewed_by_admin_id,
+        "admin_notes": req.admin_notes,
+        "user_email": None,
+    }
+    
+    if req.user_email_info:
+        response_dict["user_email"] = {
+            "id": req.user_email_info.id,
+            "user_id": req.user_email_info.user_id,
+            "sender_email": mask_email(req.user_email_info.sender_email),
+            "sender_name": req.user_email_info.sender_name,
+            "email_provider": req.user_email_info.email_provider,
+        }
+    
+    return EmailAutomationRequestAdminResponse(**response_dict)
+
+
 @router.get("/users", response_model=list[UserResponse])
 async def list_users(
     role: UserRole | None = Query(None, description="Filter by role"),
@@ -108,33 +134,7 @@ async def list_approval_requests(
     result = await db.execute(query)
     requests = result.scalars().all()
     
-    # Build response with masked email info
-    response_data = []
-    for req in requests:
-        response_dict = {
-            "id": req.id,
-            "user_id": req.user_id,
-            "user_email_info_id": req.user_email_info_id,
-            "status": req.status,
-            "requested_at": req.requested_at,
-            "reviewed_at": req.reviewed_at,
-            "reviewed_by_admin_id": req.reviewed_by_admin_id,
-            "admin_notes": req.admin_notes,
-            "user_email": None,
-        }
-        
-        if req.user_email_info:
-            response_dict["user_email"] = {
-                "id": req.user_email_info.id,
-                "user_id": req.user_email_info.user_id,
-                "sender_email": mask_email(req.user_email_info.sender_email),
-                "sender_name": req.user_email_info.sender_name,
-                "email_provider": req.user_email_info.email_provider,
-            }
-        
-        response_data.append(EmailAutomationRequestAdminResponse(**response_dict))
-    
-    return response_data
+    return [_build_admin_request_response(req) for req in requests]
 
 
 @router.get("/approval-requests/{request_id}", response_model=EmailAutomationRequestAdminResponse)
@@ -158,29 +158,7 @@ async def get_approval_request(
             detail="Approval request not found",
         )
     
-    # Build response with masked email info
-    response_dict = {
-        "id": request.id,
-        "user_id": request.user_id,
-        "user_email_info_id": request.user_email_info_id,
-        "status": request.status,
-        "requested_at": request.requested_at,
-        "reviewed_at": request.reviewed_at,
-        "reviewed_by_admin_id": request.reviewed_by_admin_id,
-        "admin_notes": request.admin_notes,
-        "user_email": None,
-    }
-    
-    if request.user_email_info:
-        response_dict["user_email"] = {
-            "id": request.user_email_info.id,
-            "user_id": request.user_email_info.user_id,
-            "sender_email": mask_email(request.user_email_info.sender_email),
-            "sender_name": request.user_email_info.sender_name,
-            "email_provider": request.user_email_info.email_provider,
-        }
-    
-    return EmailAutomationRequestAdminResponse(**response_dict)
+    return _build_admin_request_response(request)
 
 
 @router.patch("/approval-requests/{request_id}", response_model=EmailAutomationRequestAdminResponse)
@@ -227,29 +205,7 @@ async def review_approval_request(
     await db.commit()
     await db.refresh(request)
     
-    # Build response with masked email info
-    response_dict = {
-        "id": request.id,
-        "user_id": request.user_id,
-        "user_email_info_id": request.user_email_info_id,
-        "status": request.status,
-        "requested_at": request.requested_at,
-        "reviewed_at": request.reviewed_at,
-        "reviewed_by_admin_id": request.reviewed_by_admin_id,
-        "admin_notes": request.admin_notes,
-        "user_email": None,
-    }
-    
-    if request.user_email_info:
-        response_dict["user_email"] = {
-            "id": request.user_email_info.id,
-            "user_id": request.user_email_info.user_id,
-            "sender_email": mask_email(request.user_email_info.sender_email),
-            "sender_name": request.user_email_info.sender_name,
-            "email_provider": request.user_email_info.email_provider,
-        }
-    
-    return EmailAutomationRequestAdminResponse(**response_dict)
+    return _build_admin_request_response(request)
 
 
 @router.get("/default-templates")

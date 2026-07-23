@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTemplateV2, getCurrentUser } from "../api/client";
-import { UploadCloud, Wand2, ArrowLeft } from "lucide-react";
+import { UploadCloud, Wand2, ArrowLeft, Lock } from "lucide-react";
 
 export default function TemplateCreatePage() {
   const [templateRole, setTemplateRole] = useState("");
@@ -19,16 +19,26 @@ export default function TemplateCreatePage() {
   }, []);
 
   const fetchData = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setCurrentUser(null);
+      return;
+    }
     try {
       const user = await getCurrentUser();
       setCurrentUser(user);
     } catch (err) {
-      setError(err.message);
+      setCurrentUser(null);
     }
   };
 
+  const isGuest = !currentUser;
+  const isVisitor = currentUser?.role === "visitor";
+  const isDisabled = isGuest || isVisitor;
+
   async function handleSubmit(event) {
     event.preventDefault();
+    if (isDisabled) return;
     setLoading(true);
     setMessage("");
     setError("");
@@ -59,19 +69,22 @@ export default function TemplateCreatePage() {
 
   return (
     <div className="page-container">
+      {(isGuest || isVisitor) && (
+        <div className="visitor-banner">
+          <Lock size={24} className="banner-icon" />
+          <div className="banner-content">
+            <h3>{isGuest ? "Preview Mode" : "Visitor Mode"}</h3>
+            <p>{isGuest ? "You need to log in to create and manage templates." : "Your account is in Visitor mode. You need approval from an admin to create templates."}</p>
+          </div>
+        </div>
+      )}
+
       <div className="page-header">
-        <button 
-          className="back-btn"
-          onClick={() => navigate("/app/templates")}
-        >
-          <ArrowLeft size={20} />
-          Back to Templates
-        </button>
         <div>
           <h2>Create New Template</h2>
           <p className="muted">Create a reusable job application email with subject, body, and CV attached.</p>
         </div>
-        <button type="button" className="header-action">
+        <button type="button" className="header-action" disabled={isDisabled}>
           <Wand2 size={16} />
           Template draft
         </button>
@@ -93,6 +106,7 @@ export default function TemplateCreatePage() {
             onChange={(e) => setTemplateRole(e.target.value)}
             placeholder="e.g., software_engineer"
             required
+            disabled={isDisabled}
           />
           <p className="input-hint">Unique identifier for this template role</p>
         </label>
@@ -105,6 +119,7 @@ export default function TemplateCreatePage() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Application for Python Developer"
             required
+            disabled={isDisabled}
           />
         </label>
 
@@ -116,12 +131,13 @@ export default function TemplateCreatePage() {
             placeholder="Dear Hiring Manager,&#10;&#10;I hope you are doing well.&#10;&#10;I am writing to apply for..."
             rows={8}
             required
+            disabled={isDisabled}
           />
         </label>
 
         <label>
           CV (PDF)
-          <div className="file-upload-area">
+          <div className={`file-upload-area ${isDisabled ? 'disabled' : ''}`} style={isDisabled ? { opacity: 0.6, cursor: 'not-allowed' } : {}}>
             <input
               type="file"
               accept="application/pdf"
@@ -129,8 +145,9 @@ export default function TemplateCreatePage() {
               required
               id="cv-upload"
               style={{ display: 'none' }}
+              disabled={isDisabled}
             />
-            <label htmlFor="cv-upload" className="file-upload-label">
+            <label htmlFor={isDisabled ? "" : "cv-upload"} className="file-upload-label" style={isDisabled ? { cursor: 'not-allowed' } : {}}>
               <UploadCloud size={24} color="#3b82f6" />
               <span className="file-upload-text">Choose file or drag your resume</span>
               <span className="file-upload-hint">PDF only, up to 5 MB</span>
@@ -139,7 +156,7 @@ export default function TemplateCreatePage() {
           </div>
         </label>
 
-        <button type="submit" className="primary-btn" disabled={loading || !cvFile}>
+        <button type="submit" className="primary-btn" disabled={loading || isDisabled || !cvFile}>
           <UploadCloud size={18} />
           {loading ? "Creating Template..." : "Create Template"}
         </button>

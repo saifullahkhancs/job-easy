@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchTemplateV2, updateTemplateV2, updateTemplateCvV2 } from "../api/client";
-import { Save, UploadCloud, ArrowLeft, ShieldCheck } from "lucide-react";
+import { fetchTemplateV2, updateTemplateV2, updateTemplateCvV2, getCurrentUser } from "../api/client";
+import { Save, UploadCloud, ArrowLeft, ShieldCheck, Lock } from "lucide-react";
 
 export default function TemplateEditPage() {
   const { id } = useParams();
@@ -18,12 +18,24 @@ export default function TemplateEditPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetchData();
   }, [id]);
 
   const fetchData = async () => {
+    // Check auth status
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      try {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+      } catch {
+        setCurrentUser(null);
+      }
+    }
+
     try {
       const templateData = await fetchTemplateV2(id);
       setTemplate(templateData);
@@ -37,8 +49,13 @@ export default function TemplateEditPage() {
     }
   };
 
+  const isGuest = !currentUser;
+  const isVisitor = currentUser?.role === "visitor";
+  const isDisabled = isGuest || isVisitor;
+
   async function handleSubmit(event) {
     event.preventDefault();
+    if (isDisabled) return;
     setMessage("");
     setError("");
 
@@ -102,19 +119,22 @@ export default function TemplateEditPage() {
 
   return (
     <div className="page-container">
+      {(isGuest || isVisitor) && (
+        <div className="visitor-banner">
+          <Lock size={24} className="banner-icon" />
+          <div className="banner-content">
+            <h3>{isGuest ? "Preview Mode" : "Visitor Mode"}</h3>
+            <p>{isGuest ? "You need to log in to update templates." : "Your account is in Visitor mode. You need approval from an admin to update templates."}</p>
+          </div>
+        </div>
+      )}
+
       <div className="page-header">
-        <button 
-          className="back-btn"
-          onClick={() => navigate("/app/templates")}
-        >
-          <ArrowLeft size={20} />
-          Back to Templates
-        </button>
         <div>
           <h2>Edit Template</h2>
           <p className="muted">Update only the fields you need — subject, email body, or CV.</p>
         </div>
-        <button type="button" className="header-action" style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a' }}>
+        <button type="button" className="header-action" disabled={isDisabled} style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a', opacity: isDisabled ? 0.5 : 1 }}>
           <ShieldCheck size={16} />
           Safe patch mode
         </button>
@@ -123,6 +143,8 @@ export default function TemplateEditPage() {
       <form className="form" onSubmit={handleSubmit}>
         {error && <div className="error-message">{error}</div>}
         {message && <div className="success-message">{message}</div>}
+
+
 
         <label>
           Template Role
@@ -140,6 +162,7 @@ export default function TemplateEditPage() {
               type="checkbox"
               checked={updateTitle}
               onChange={(e) => setUpdateTitle(e.target.checked)}
+              disabled={isDisabled}
             />
             Update Subject
           </label>
@@ -149,6 +172,7 @@ export default function TemplateEditPage() {
               type="checkbox"
               checked={updateContext}
               onChange={(e) => setUpdateContext(e.target.checked)}
+              disabled={isDisabled}
             />
             Update Email Body
           </label>
@@ -157,7 +181,8 @@ export default function TemplateEditPage() {
             <input 
               type="checkbox" 
               checked={updateCv} 
-              onChange={(e) => setUpdateCv(e.target.checked)} 
+              onChange={(e) => setUpdateCv(e.target.checked)}
+              disabled={isDisabled}
             />
             Update CV File
           </label>
@@ -169,7 +194,7 @@ export default function TemplateEditPage() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            disabled={!updateTitle}
+            disabled={isDisabled || !updateTitle}
           />
         </label>
 
@@ -179,25 +204,25 @@ export default function TemplateEditPage() {
             value={context}
             onChange={(e) => setContext(e.target.value)}
             rows={8}
-            disabled={!updateContext}
+            disabled={isDisabled || !updateContext}
           />
         </label>
 
         <label>
           New CV File
-          <div className="file-upload-area">
+          <div className="file-upload-area" style={isDisabled ? { opacity: 0.5 } : {}}>
             <input
               type="file"
               accept="application/pdf"
-              disabled={!updateCv}
+              disabled={isDisabled || !updateCv}
               onChange={(e) => setCvFile(e.target.files?.[0] || null)}
               id="cv-upload-edit"
               style={{ display: 'none' }}
             />
-            <label htmlFor="cv-upload-edit" className="file-upload-label" style={{ opacity: updateCv ? 1 : 0.5 }}>
-              <UploadCloud size={24} color={updateCv ? "#3b82f6" : "#94a3b8"} />
+            <label htmlFor={isDisabled ? "" : "cv-upload-edit"} className="file-upload-label" style={{ opacity: (!isDisabled && updateCv) ? 1 : 0.5, cursor: isDisabled ? 'not-allowed' : 'pointer' }}>
+              <UploadCloud size={24} color={(!isDisabled && updateCv) ? "#3b82f6" : "#94a3b8"} />
               <span className="file-upload-text">
-                {updateCv ? "Choose new CV file" : "Enable CV update to select file"}
+                {isDisabled ? "Login required to update files" : updateCv ? "Choose new CV file" : "Enable CV update to select file"}
               </span>
               <span className="file-upload-hint">PDF only, up to 5 MB</span>
               {cvFile && <span className="file-upload-name">{cvFile.name}</span>}
@@ -208,7 +233,7 @@ export default function TemplateEditPage() {
           )}
         </label>
 
-        <button type="submit" className="primary-btn" disabled={submitting}>
+        <button type="submit" className="primary-btn" disabled={submitting || isDisabled}>
           <Save size={18} />
           {submitting ? "Saving..." : "Save Changes"}
         </button>

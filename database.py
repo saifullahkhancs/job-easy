@@ -3,7 +3,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from core.config import settings
 from models.user import Base, User, PasswordResetToken
 from models.job_template import JobTemplate
-from models.template_role_types import TemplateRoleType
 from models.user_templates import UserTemplate
 from models.user_email_info import UserEmailInfo
 from models.email_automation_requests import EmailAutomationRequest

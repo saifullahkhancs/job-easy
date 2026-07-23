@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from enum import Enum
-from sqlalchemy import Column, DateTime, Integer, String, LargeBinary, ForeignKey, Boolean, Enum as SQLEnum, UniqueConstraint
+from sqlalchemy import Column, DateTime, Integer, String, LargeBinary, ForeignKey, Boolean, Enum as SQLEnum, Index
 from sqlalchemy.orm import declarative_base, relationship
 from models.user import Base
 
@@ -28,7 +28,7 @@ class UserTemplate(Base):
     # Relationships
     owner = relationship("User", back_populates="templates")
 
-    # Unique constraint: template_role must be unique per user (or globally for default templates)
+    # Unique index: template_role must be unique per user (or globally for default templates)
     __table_args__ = (
-        UniqueConstraint('template_role', 'owner_user_id', name='uq_template_role_per_user'),
+        Index('idx_user_template_role_unique', 'template_role', 'owner_user_id', unique=True),
     )

@@ -3,7 +3,7 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
-from api.dependencies import get_current_user, get_db, require_roles
+from api.dependencies import get_current_user, get_current_user_optional, get_db, require_roles
 from models.roles import UserRole
 from models.user import User
 from models.user_templates import UserTemplate, TemplateScope
@@ -19,11 +19,20 @@ router = APIRouter(prefix="/api/v1/templates", tags=["templates"])
 
 @router.get("", response_model=list[UserTemplateResponse])
 async def list_templates(
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """List templates based on user role."""
-    if current_user.role == UserRole.ADMIN:
+    """List templates based on user role. Guests (unauthenticated) see default templates."""
+    if current_user is None:
+        # Guest users see only default templates
+        result = await db.execute(
+            select(UserTemplate).where(
+                UserTemplate.template_scope == TemplateScope.DEFAULT,
+                UserTemplate.is_active == True
+            ).order_by(UserTemplate.created_at.desc())
+        )
+        templates = result.scalars().all()
+    elif current_user.role == UserRole.ADMIN:
         # Admins see all templates
         result = await db.execute(select(UserTemplate).order_by(UserTemplate.created_at.desc()))
         templates = result.scalars().all()
@@ -37,11 +46,11 @@ async def list_templates(
         )
         templates = result.scalars().all()
     else:  # CUSTOMER
-        # Customers see only their own templates by default
+        # Customers see their own templates + default templates
         result = await db.execute(
             select(UserTemplate).where(
-                UserTemplate.owner_user_id == current_user.user_id,
-                UserTemplate.template_scope == TemplateScope.CUSTOMER,
+                ((UserTemplate.owner_user_id == current_user.user_id) & (UserTemplate.template_scope == TemplateScope.CUSTOMER)) |
+                (UserTemplate.template_scope == TemplateScope.DEFAULT),
                 UserTemplate.is_active == True
             ).order_by(UserTemplate.created_at.desc())
         )

@@ -4,6 +4,7 @@ from enum import Enum
 
 
 class ApprovalStatus(str, Enum):
+    NONE = "none"
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"

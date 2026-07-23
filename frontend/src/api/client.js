@@ -230,8 +230,10 @@ export async function listMyRequests() {
 // Updated Template API (v2)
 export async function fetchTemplatesV2() {
   const token = localStorage.getItem("access_token");
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`${API_BASE}/api/v1/templates`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers,
   });
   return handleResponse(response);
 }

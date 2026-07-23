@@ -32,7 +32,7 @@ class User(Base):
     # Relationships
     email_info = relationship("UserEmailInfo", back_populates="user", uselist=False)
     templates = relationship("UserTemplate", back_populates="owner")
-    automation_requests = relationship("EmailAutomationRequest", back_populates="user")
+    automation_requests = relationship("EmailAutomationRequest", back_populates="user", foreign_keys="EmailAutomationRequest.user_id")
 
 
 class PasswordResetToken(Base):

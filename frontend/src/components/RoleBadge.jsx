@@ -1,15 +1,16 @@
-import { Shield, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Shield, Clock, CheckCircle, XCircle, UserCircle } from "lucide-react";
 
 const ROLE_CONFIG = {
-  visitor: { label: "Visitor", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  customer: { label: "Customer", color: "bg-blue-100 text-blue-800", icon: Shield },
-  admin: { label: "Admin", color: "bg-purple-100 text-purple-800", icon: Shield },
+  visitor: { label: "Visitor", color: "badge-yellow", icon: Clock },
+  customer: { label: "Customer", color: "badge-blue", icon: Shield },
+  admin: { label: "Admin", color: "badge-purple", icon: Shield },
 };
 
 const APPROVAL_CONFIG = {
-  pending: { label: "Pending Approval", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  approved: { label: "Approved", color: "bg-green-100 text-green-800", icon: CheckCircle },
-  rejected: { label: "Rejected", color: "bg-red-100 text-red-800", icon: XCircle },
+  none: { label: "Visitor", color: "badge-gray", icon: UserCircle },
+  pending: { label: "Pending Approval", color: "badge-yellow", icon: Clock },
+  approved: { label: "Approved", color: "badge-green", icon: CheckCircle },
+  rejected: { label: "Rejected", color: "badge-red", icon: XCircle },
 };
 
 export function RoleBadge({ role }) {
@@ -17,7 +18,7 @@ export function RoleBadge({ role }) {
   const Icon = config.icon;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
+    <span className={`badge ${config.color}`}>
       <Icon size={14} />
       {config.label}
     </span>
@@ -29,7 +30,7 @@ export function ApprovalStatusBadge({ status }) {
   const Icon = config.icon;
 
   return (
-    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
+    <span className={`badge ${config.color}`}>
       <Icon size={14} />
       {config.label}
     </span>

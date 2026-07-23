@@ -44,12 +44,10 @@ export default function App() {
             <Route index element={<DashboardPage />} />
             <Route path="templates" element={<DashboardPage />} />
             
-            {/* Customer-only routes */}
-            <Route element={<RoleGuard allowedRoles={[ROLES.CUSTOMER, ROLES.ADMIN]} />}>
-              <Route path="templates/new" element={<TemplateCreatePage />} />
-              <Route path="templates/:id/edit" element={<TemplateEditPage />} />
-              <Route path="send" element={<SendPage />} />
-            </Route>
+            {/* Template create, edit, and send pages (now accessible but disabled for guests/visitors) */}
+            <Route path="templates/new" element={<TemplateCreatePage />} />
+            <Route path="templates/:id/edit" element={<TemplateEditPage />} />
+            <Route path="send" element={<SendPage />} />
             
             {/* Visitor routes */}
             <Route path="request-access" element={<RequestAccessPage />} />
