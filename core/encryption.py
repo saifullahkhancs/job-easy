@@ -28,35 +28,35 @@ def _get_encryption_key() -> bytes:
     return key
 
 
-def encrypt_app_password(password: str) -> str:
+def encrypt_data(data: str) -> str:
     """
-    Encrypt an app password for storage.
+    Encrypt data for storage.
     
     Args:
-        password: The plaintext app password
+        data: The plaintext data
         
     Returns:
         Encrypted password as base64 string
     """
     key = _get_encryption_key()
     fernet = Fernet(key)
-    encrypted = fernet.encrypt(password.encode())
+    encrypted = fernet.encrypt(data.encode())
     return base64.urlsafe_b64encode(encrypted).decode()
 
 
-def decrypt_app_password(encrypted_password: str) -> str:
+def decrypt_data(encrypted_data: str) -> str:
     """
-    Decrypt an app password for use in email sending.
+    Decrypt data for use.
     
     Args:
-        encrypted_password: The encrypted password (base64 string)
+        encrypted_data: The encrypted data (base64 string)
         
     Returns:
         The plaintext password
     """
     key = _get_encryption_key()
     fernet = Fernet(key)
-    encrypted_bytes = base64.urlsafe_b64decode(encrypted_password.encode())
+    encrypted_bytes = base64.urlsafe_b64decode(encrypted_data.encode())
     decrypted = fernet.decrypt(encrypted_bytes)
     return decrypted.decode()
 

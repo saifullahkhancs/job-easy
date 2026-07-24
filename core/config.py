@@ -19,14 +19,17 @@ class Settings(BaseSettings):
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
     PASSWORD_RESET_URL: str = os.environ.get("PASSWORD_RESET_URL", "")
     BACKEND_CORS_ORIGINS: str | None = None
-    SMTP_HOST: str = Field("smtp.gmail.com", env=["SMTP_HOST"])   
+
+    # SMTP configuration for system emails
+    SMTP_HOST: str = Field("smtp.resend.com", env=["SMTP_HOST"])
     SMTP_PORT: int = Field(587, env=["SMTP_PORT"])
-    SMTP_USERNAME: str = Field("", env=["SMTP_USERNAME"])
-    SMTP_PASSWORD: str = Field("", env=["SMTP_PASSWORD"])
-    SMTP_FROM_EMAIL: str = Field("", env=["SMTP_USERNAME"])
-    SMTP_FROM_NAME: str = "Saifullah Khan"
-    SMTP_USE_TLS: bool = True
-    SMTP_USE_SSL: bool = False
+    SMTP_USERNAME: str = Field("resend", env=["SMTP_USERNAME"])
+    SMTP_PASSWORD: str = Field("", env=["SMTP_PASSWORD"]) # Your Resend API key
+    SMTP_FROM_EMAIL: str = Field("saifullah2019@namal.edu.pk", env=["SMTP_FROM_EMAIL"])
+    SMTP_FROM_NAME: str = Field("Job Easy", env=["SMTP_FROM_NAME"])
+    SMTP_USE_TLS: bool = Field(True, env=["SMTP_USE_TLS"])
+    SMTP_USE_SSL: bool = Field(False, env=["SMTP_USE_SSL"])
+
     # Rate limiting settings
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 100
@@ -38,12 +41,6 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return v.strip().strip("'").strip('"')
         return v
-
-    @model_validator(mode="after")
-    def validate_smtp_security(self):
-        if self.SMTP_USE_TLS and self.SMTP_USE_SSL:
-            raise ValueError("SMTP_USE_TLS and SMTP_USE_SSL cannot both be true")
-        return self
 
     @model_validator(mode="after")
     def validate_jwt_secret(self):

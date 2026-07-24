@@ -21,16 +21,16 @@ def _build_admin_request_response(req: EmailAutomationRequest) -> EmailAutomatio
     """Helper to build the admin response for an approval request."""
     response_dict = {
         "id": req.id,
-        "user_id": req.user_id,
+        "user_email": req.user_email,
         "user_email_info_id": req.user_email_info_id,
         "status": req.status,
         "requested_at": req.requested_at,
         "reviewed_at": req.reviewed_at,
-        "reviewed_by_admin_id": req.reviewed_by_admin_id,
+        "reviewed_by_admin_email": req.reviewed_by_admin_email,
         "admin_notes": req.admin_notes,
         "user_email": None,
     }
-    
+
     if req.user_email_info:
         response_dict["user_email"] = {
             "id": req.user_email_info.id,
@@ -39,7 +39,7 @@ def _build_admin_request_response(req: EmailAutomationRequest) -> EmailAutomatio
             "sender_name": req.user_email_info.sender_name,
             "email_provider": req.user_email_info.email_provider,
         }
-    
+
     return EmailAutomationRequestAdminResponse(**response_dict)
 
 
@@ -52,12 +52,12 @@ async def list_users(
 ):
     """List all users with optional filtering."""
     query = select(User)
-    
+
     if role:
         query = query.where(User.role == role)
     if is_verified is not None:
         query = query.where(User.is_verified == is_verified)
-    
+
     query = query.order_by(User.created_at.desc())
     result = await db.execute(query)
     users = result.scalars().all()
@@ -73,13 +73,13 @@ async def get_user(
     """Get a specific user by ID."""
     result = await db.execute(select(User).where(User.user_id == user_id))
     user = result.scalars().first()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    
+
     return user
 
 
@@ -93,13 +93,13 @@ async def update_user(
     """Update a user (admin only)."""
     result = await db.execute(select(User).where(User.user_id == user_id))
     user = result.scalars().first()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    
+
     update_data = user_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         if field == "role":
@@ -109,7 +109,7 @@ async def update_user(
             user.hashed_password = hash_password(value)
         else:
             setattr(user, field, value)
-    
+
     await db.commit()
     await db.refresh(user)
     return user
@@ -126,14 +126,14 @@ async def list_approval_requests(
         selectinload(EmailAutomationRequest.user),
         selectinload(EmailAutomationRequest.user_email_info)
     )
-    
+
     if status:
         query = query.where(EmailAutomationRequest.status == status)
-    
+
     query = query.order_by(EmailAutomationRequest.requested_at.desc())
     result = await db.execute(query)
     requests = result.scalars().all()
-    
+
     return [_build_admin_request_response(req) for req in requests]
 
 
@@ -151,13 +151,13 @@ async def get_approval_request(
         ).where(EmailAutomationRequest.id == request_id)
     )
     request = result.scalars().first()
-    
+
     if not request:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Approval request not found",
         )
-    
+
     return _build_admin_request_response(request)
 
 
@@ -176,35 +176,35 @@ async def review_approval_request(
         ).where(EmailAutomationRequest.id == request_id)
     )
     request = result.scalars().first()
-    
+
     if not request:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Approval request not found",
         )
-    
+
     if request.status != RequestStatus.PENDING:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Request has already been reviewed",
         )
-    
+
     # Update request
     request.status = request_in.status
     request.reviewed_at = datetime.now(timezone.utc)
-    request.reviewed_by_admin_id = current_user.user_id
+    request.reviewed_by_admin_email = current_user.email
     request.admin_notes = request_in.admin_notes
-    
+
     # If approved, change user role to customer
     if request_in.status == RequestStatus.APPROVED:
-        result = await db.execute(select(User).where(User.user_id == request.user_id))
+        result = await db.execute(select(User).where(User.email == request.user_email))
         user = result.scalars().first()
         if user:
             user.role = UserRole.CUSTOMER
-    
+
     await db.commit()
     await db.refresh(request)
-    
+
     return _build_admin_request_response(request)
 
 
@@ -212,7 +212,7 @@ def _template_to_dict(tmpl: UserTemplate) -> dict:
     """Serialize a UserTemplate safely (excluding cv_bytes)."""
     return {
         "id": tmpl.id,
-        "owner_user_id": tmpl.owner_user_id,
+        "user_email": tmpl.user_email,
         "template_role": tmpl.template_role,
         "title": tmpl.title,
         "context": tmpl.context,
@@ -247,7 +247,7 @@ async def list_all_customer_templates(
 ):
     """List all customer templates with owner info (admin only)."""
     result = await db.execute(
-        select(UserTemplate, User).join(User, UserTemplate.owner_user_id == User.user_id).where(
+        select(UserTemplate, User).join(User, UserTemplate.user_email == User.email).where(
             UserTemplate.template_scope == TemplateScope.CUSTOMER,
             UserTemplate.is_active == True,
         ).order_by(UserTemplate.created_at.desc())
@@ -303,7 +303,7 @@ async def promote_to_default(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Template is already a default template")
 
     template.template_scope = TemplateScope.DEFAULT
-    template.owner_user_id = None  # Default templates are not owned by any user
+    template.user_email = None  # Default templates are not owned by any user
     await db.commit()
     await db.refresh(template)
     return {"message": "Template promoted to default successfully", "template_id": template.id}
@@ -324,11 +324,11 @@ async def create_default_template(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be a PDF",
         )
-    
+
     cv_bytes = await cv_pdf.read()
-    
+
     template = UserTemplate(
-        owner_user_id=None,  # Default templates have no owner
+        user_email=None,  # Default templates have no owner
         template_role=template_role,
         title=title,
         context=context,
@@ -336,9 +336,9 @@ async def create_default_template(
         filename=cv_pdf.filename or "cv.pdf",
         template_scope=TemplateScope.DEFAULT,
     )
-    
+
     db.add(template)
     await db.commit()
     await db.refresh(template)
-    
+
     return _template_to_dict(template)

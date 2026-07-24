@@ -25,13 +25,13 @@ class User(Base):
 
     # Relationships
     email_info = relationship("UserEmailInfo", back_populates="user", uselist=False)
-    templates = relationship("UserTemplate", back_populates="owner")
-    automation_requests = relationship("EmailAutomationRequest", back_populates="user", foreign_keys="EmailAutomationRequest.user_id")
+    templates = relationship("UserTemplate", back_populates="owner", foreign_keys="UserTemplate.user_email")
+    automation_requests = relationship("EmailAutomationRequest", back_populates="user", foreign_keys="EmailAutomationRequest.user_email")
 
 
 class PasswordResetToken(Base):
     __tablename__ = "password_reset_tokens"
 
     token_id = Column(String, primary_key=True, index=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, index=True)
+    email = Column(String, ForeignKey("users.email"), nullable=False, index=True)
     expires_at = Column(DateTime(timezone=True), nullable=False)

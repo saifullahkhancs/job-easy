@@ -8,7 +8,7 @@ class UserEmailInfo(Base):
     __tablename__ = "user_email_info"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, unique=True, index=True)
+    user_email = Column(String, ForeignKey("users.email"), nullable=False, unique=True, index=True)
     sender_email = Column(String, nullable=False)
     sender_name = Column(String, nullable=False)
     encrypted_app_password = Column(String, nullable=False)

@@ -73,12 +73,10 @@ Create a `.env` file in the project root:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://user:password@localhost/job_easy
-JWT_SECRET=your-secret-key
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=465
-SMTP_USERNAME=your@gmail.com
-SMTP_PASSWORD=your_app_password
-SMTP_SENDER_NAME=Your Name
+JWT_SECRET=your-strong-secret-key
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxx
+RESEND_FROM_EMAIL=your-verified-domain@example.com
+RESEND_FROM_NAME=Job Easy
 CORS_ORIGINS=http://localhost:5173
 ```
 

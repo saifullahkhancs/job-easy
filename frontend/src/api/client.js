@@ -157,7 +157,7 @@ export async function getCurrentUser() {
 }
 
 // Email Info API
-export async function createEmailInfo(senderEmail, senderName, appPassword, emailProvider = "gmail") {
+export async function createEmailInfo(senderEmail, senderName, apiKey, emailProvider = "resend") {
   const token = localStorage.getItem("access_token");
   const response = await fetch(`${API_BASE}/api/v1/user-email-info`, {
     method: "POST",
@@ -165,7 +165,7 @@ export async function createEmailInfo(senderEmail, senderName, appPassword, emai
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ sender_email: senderEmail, sender_name: senderName, app_password: appPassword, email_provider: emailProvider }),
+    body: JSON.stringify({ sender_email: senderEmail, sender_name: senderName, api_key: apiKey, email_provider: emailProvider }),
   });
   return handleResponse(response);
 }
@@ -178,12 +178,12 @@ export async function getEmailInfo() {
   return handleResponse(response);
 }
 
-export async function updateEmailInfo(senderEmail, senderName, appPassword, emailProvider) {
+export async function updateEmailInfo(senderEmail, senderName, apiKey, emailProvider) {
   const token = localStorage.getItem("access_token");
   const body = {};
   if (senderEmail !== undefined) body.sender_email = senderEmail;
   if (senderName !== undefined) body.sender_name = senderName;
-  if (appPassword !== undefined) body.app_password = appPassword;
+  if (apiKey !== undefined) body.api_key = apiKey;
   if (emailProvider !== undefined) body.email_provider = emailProvider;
   
   const response = await fetch(`${API_BASE}/api/v1/user-email-info`, {

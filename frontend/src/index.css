@@ -1073,20 +1073,7 @@ button:disabled {
   letter-spacing: 0.05em;
 }
 
-.sidebar-toggle {
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
 
-.sidebar-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
 
 .admin-nav {
   display: flex;

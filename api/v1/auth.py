@@ -201,10 +201,30 @@ async def login(request: Request, credentials: UserLogin, db: AsyncSession = Dep
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     if not user.is_verified:
-        raise HTTPException(status_code=403, detail="Please verify your email first")
+        # User exists and password is correct, but email is not verified.
+        # Resend verification code and prompt them to verify.
+        verification_code = generate_5_digit_code()
+        now = _utc_now()
+        user.verification_code = verification_code
+        user.verification_code_expires_at = now + timedelta(
+            minutes=VERIFICATION_CODE_TTL_MINUTES
+        )
+        user.verification_attempt_count = 0
+        user.verification_attempt_window_start = now
+
+        try:
+            await send_verification_email(user.email, verification_code)
+            await db.commit()
+        except EmailDeliveryError:
+            # Even if email fails, we don't want to block the user from knowing they need to verify.
+            # The frontend will still redirect them, and they can use the "resend" button.
+            pass
+
+        # Use a specific detail message for the frontend to handle redirection
+        raise HTTPException(status_code=403, detail="User not verified. A new verification code has been sent.")
 
     subject = {
-        "sub": str(user.user_id),
+        "sub": user.email,
         "role": user.role.value if hasattr(user.role, "value") else user.role,
     }
     access_token = create_access_token(subject)
@@ -314,24 +334,14 @@ async def refresh_token(data: RefreshTokenRequest, db: AsyncSession = Depends(ge
     except (JWTError, ValueError):
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
-    # Try to find user by email (for backward compatibility with old tokens)
     result = await db.execute(select(User).where(User.email == token_data.sub))
     user = result.scalars().first()
-    
-    # If not found by email, try by user_id (for new tokens)
-    if not user:
-        try:
-            user_id = int(token_data.sub)
-            result = await db.execute(select(User).where(User.user_id == user_id))
-            user = result.scalars().first()
-        except (ValueError, TypeError):
-            pass
 
     if user is None or not user.is_verified:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
     subject = {
-        "sub": str(user.user_id),
+        "sub": user.email,
         "role": user.role.value if hasattr(user.role, "value") else user.role,
     }
 
@@ -361,7 +371,7 @@ async def get_me(
         # Check if there's an approved request
         result = await db.execute(
             select(EmailAutomationRequest).where(
-                EmailAutomationRequest.user_id == current_user.user_id,
+                EmailAutomationRequest.user_email == current_user.email,
                 EmailAutomationRequest.status == "approved"
             )
         )
@@ -372,7 +382,7 @@ async def get_me(
             # Check for rejected request
             result = await db.execute(
                 select(EmailAutomationRequest).where(
-                    EmailAutomationRequest.user_id == current_user.user_id,
+                    EmailAutomationRequest.user_email == current_user.email,
                     EmailAutomationRequest.status == "rejected"
                 )
             )
@@ -383,7 +393,7 @@ async def get_me(
                 # Check for pending request
                 result = await db.execute(
                     select(EmailAutomationRequest).where(
-                        EmailAutomationRequest.user_id == current_user.user_id,
+                        EmailAutomationRequest.user_email == current_user.email,
                         EmailAutomationRequest.status == "pending"
                     )
                 )
@@ -395,14 +405,14 @@ async def get_me(
     
     # Check if user has email info
     result = await db.execute(
-        select(UserEmailInfo).where(UserEmailInfo.user_id == current_user.user_id)
+        select(UserEmailInfo).where(UserEmailInfo.user_email == current_user.email)
     )
     has_email_info = result.scalars().first() is not None
     
     # Count user's templates
     result = await db.execute(
         select(UserTemplate).where(
-            UserTemplate.owner_user_id == current_user.user_id,
+            UserTemplate.user_email == current_user.email,
             UserTemplate.template_scope == "customer"
         )
     )

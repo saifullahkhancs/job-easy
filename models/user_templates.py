@@ -14,7 +14,7 @@ class UserTemplate(Base):
     __tablename__ = "user_templates"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    owner_user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True, index=True)
+    user_email = Column(String, ForeignKey("users.email"), nullable=True, index=True)
     template_role = Column(String, nullable=False, index=True)
     title = Column(String, nullable=False)
     context = Column(String, nullable=False)
@@ -26,11 +26,11 @@ class UserTemplate(Base):
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
-    owner = relationship("User", back_populates="templates")
+    owner = relationship("User", back_populates="templates", foreign_keys=[user_email])
 
     # Unique index: template_role must be unique per user (or globally for default templates)
     __table_args__ = (
-        Index('idx_user_template_role_unique', 'template_role', 'owner_user_id', unique=True),
+        Index('idx_user_template_role_unique', 'template_role', 'user_email', unique=True),
     )
 
     @property

@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 
 from api.dependencies import get_current_user, get_db
-from core.encryption import encrypt_app_password, decrypt_app_password, mask_email
+from core.encryption import encrypt_data, decrypt_data, mask_email
 from models.roles import UserRole
 from models.user import User
 from models.user_email_info import UserEmailInfo
@@ -26,24 +26,24 @@ async def create_email_info(
 ):
     """Create email configuration for the current user."""
     # Check if user already has email info
-    result = await db.execute(
-        select(UserEmailInfo).where(UserEmailInfo.user_id == current_user.user_id)
-    )
+    result = await db.execute(select(UserEmailInfo).where(UserEmailInfo.user_email == current_user.email))
     existing = result.scalars().first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email configuration already exists. Use PUT to update.",
         )
-    
+
     # Encrypt the app password
-    encrypted_password = encrypt_app_password(email_info_in.app_password)
-    
+    if not email_info_in.app_password:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="App password is required.")
+    encrypted_app_password = encrypt_data(email_info_in.app_password)
+
     email_info = UserEmailInfo(
-        user_id=current_user.user_id,
+        user_email=current_user.email,
         sender_email=email_info_in.sender_email,
         sender_name=email_info_in.sender_name,
-        encrypted_app_password=encrypted_password,
+        encrypted_app_password=encrypted_app_password,
         email_provider=email_info_in.email_provider,
     )
     
@@ -68,7 +68,7 @@ async def get_email_info(
 ):
     """Get current user's email configuration (masked)."""
     result = await db.execute(
-        select(UserEmailInfo).where(UserEmailInfo.user_id == current_user.user_id)
+        select(UserEmailInfo).where(UserEmailInfo.user_email == current_user.email)
     )
     email_info = result.scalars().first()
     
@@ -81,7 +81,7 @@ async def get_email_info(
     # Return masked response (never expose password)
     return UserEmailInfoMaskedResponse(
         id=email_info.id,
-        user_id=email_info.user_id,
+        user_email=email_info.user_email,
         sender_email=mask_email(email_info.sender_email),
         sender_name=email_info.sender_name,
         email_provider=email_info.email_provider,
@@ -98,7 +98,7 @@ async def update_email_info(
 ):
     """Update current user's email configuration."""
     result = await db.execute(
-        select(UserEmailInfo).where(UserEmailInfo.user_id == current_user.user_id)
+        select(UserEmailInfo).where(UserEmailInfo.user_email == current_user.email)
     )
     email_info = result.scalars().first()
     
@@ -114,7 +114,7 @@ async def update_email_info(
     if email_info_in.sender_name is not None:
         email_info.sender_name = email_info_in.sender_name
     if email_info_in.app_password is not None:
-        email_info.encrypted_app_password = encrypt_app_password(email_info_in.app_password)
+        email_info.encrypted_app_password = encrypt_data(email_info_in.app_password)
     if email_info_in.email_provider is not None:
         email_info.email_provider = email_info_in.email_provider
     
@@ -130,7 +130,7 @@ async def update_email_info(
     
     return UserEmailInfoMaskedResponse(
         id=email_info.id,
-        user_id=email_info.user_id,
+        user_email=email_info.user_email,
         sender_email=mask_email(email_info.sender_email),
         sender_name=email_info.sender_name,
         email_provider=email_info.email_provider,
@@ -146,7 +146,7 @@ async def delete_email_info(
 ):
     """Delete current user's email configuration."""
     result = await db.execute(
-        select(UserEmailInfo).where(UserEmailInfo.user_id == current_user.user_id)
+        select(UserEmailInfo).where(UserEmailInfo.user_email == current_user.email)
     )
     email_info = result.scalars().first()
     

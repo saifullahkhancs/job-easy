@@ -9,7 +9,7 @@ export default function RequestAccessPage() {
   const [formData, setFormData] = useState({
     senderEmail: "",
     senderName: "",
-    appPassword: "",
+    apiKey: "", // Changed from appPassword to apiKey
     emailProvider: "gmail",
   });
   const [error, setError] = useState("");
@@ -29,7 +29,7 @@ export default function RequestAccessPage() {
           setFormData({
             senderEmail: info.sender_email,
             senderName: info.sender_name,
-            appPassword: "",
+            apiKey: "", // Changed from appPassword to apiKey
             emailProvider: info.email_provider,
           });
         }
@@ -49,8 +49,8 @@ export default function RequestAccessPage() {
       const data = await createEmailInfo(
         formData.senderEmail,
         formData.senderName,
-        formData.appPassword,
-        formData.emailProvider
+        formData.apiKey, // Changed from appPassword to apiKey
+        "resend" // Default to resend
       );
       setEmailInfoId(data.id);
       setStep("confirm");
@@ -89,19 +89,18 @@ export default function RequestAccessPage() {
           <div className="info-banner">
             <Info size={20} className="banner-icon" />
             <div>
-              <h3>Gmail App Password Required</h3>
-              <p>You need to create an app-specific password for Gmail to enable email automation.</p>
+              <h3>Resend API Key Required</h3>
+              <p>You need to provide your Resend API Key to enable email automation.</p>
             </div>
           </div>
 
           <div className="instructions-section">
-            <h3>How to Create a Gmail App Password:</h3>
+            <h3>How to Get Your Resend API Key:</h3>
             <ol className="instructions-list">
-              <li>Go to your Google Account settings</li>
-              <li>Navigate to Security → 2-Step Verification</li>
-              <li>Scroll down to "App passwords"</li>
-              <li>Click "Create" and enter a name (e.g., "Job Easy")</li>
-              <li>Copy the 16-character password generated</li>
+              <li>Go to your Resend Dashboard.</li>
+              <li>Navigate to "API Keys" section.</li>
+              <li>Create a new API Key with "Full Access" or appropriate permissions.</li>
+              <li>Copy the generated API Key.</li>
             </ol>
           </div>
 
@@ -109,7 +108,7 @@ export default function RequestAccessPage() {
             <Shield size={20} className="note-icon" />
             <div>
               <strong>Security Note:</strong> Your app password is encrypted and cannot be seen by admin. 
-              It's only used to send emails on your behalf.
+              Your Resend API Key is encrypted and cannot be seen by admin. It's only used to send emails on your behalf.
             </div>
           </div>
 
@@ -146,20 +145,20 @@ export default function RequestAccessPage() {
               </div>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="appPassword">Gmail App Password</label>
+            <div className="form-group"> 
+              <label htmlFor="apiKey">Resend API Key</label> {/* Changed label */}
               <div className="input-wrapper">
                 <Lock size={20} className="input-icon" />
                 <input
-                  id="appPassword"
+                  id="apiKey" // Changed ID
                   type="password"
-                  value={formData.appPassword}
-                  onChange={(e) => setFormData({ ...formData, appPassword: e.target.value })}
-                  placeholder="xxxx xxxx xxxx xxxx"
+                  value={formData.apiKey} // Changed from appPassword
+                  onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })} // Changed from appPassword
+                  placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxx" // Updated placeholder
                   required
                 />
               </div>
-              <p className="input-hint">Enter the 16-character app password from Google</p>
+              <p className="input-hint">Enter your Resend API Key</p> {/* Updated hint */}
             </div>
 
             <div className="preview-section">
@@ -205,7 +204,7 @@ export default function RequestAccessPage() {
             <div className="warning-banner">
               <AlertCircle size={20} className="banner-icon" />
               <div>
-                <strong>Before Submitting:</strong>
+                <strong>Before Submitting:</strong> {/* Updated instructions */}
                 <ul>
                   <li>Ensure your app password is correct</li>
                   <li>Test that you can send emails from this account</li>

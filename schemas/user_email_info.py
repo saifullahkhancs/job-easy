@@ -5,23 +5,23 @@ from datetime import datetime
 class UserEmailInfoBase(BaseModel):
     sender_email: EmailStr
     sender_name: str
-    email_provider: str = "gmail"
+    email_provider: str = "resend"
 
 
 class UserEmailInfoCreate(UserEmailInfoBase):
-    app_password: str
+    api_key: str
 
 
 class UserEmailInfoUpdate(BaseModel):
     sender_email: EmailStr | None = None
     sender_name: str | None = None
-    app_password: str | None = None
+    api_key: str | None = None
     email_provider: str | None = None
 
 
 class UserEmailInfoResponse(BaseModel):
     id: int
-    user_id: int
+    user_email: EmailStr
     sender_email: EmailStr
     sender_name: str
     email_provider: str
@@ -34,7 +34,7 @@ class UserEmailInfoResponse(BaseModel):
 
 class UserEmailInfoMaskedResponse(BaseModel):
     id: int
-    user_id: int
+    user_email: EmailStr
     sender_email: EmailStr
     sender_name: str
     email_provider: str

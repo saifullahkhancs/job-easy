@@ -32,12 +32,6 @@ export default function AdminLayout() {
               <span className="admin-badge">Admin Panel</span>
             </div>
           </div>
-          <button 
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
 
         <nav className="admin-nav">

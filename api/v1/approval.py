@@ -27,7 +27,7 @@ async def submit_approval_request(
     # Check if user already has a pending request
     result = await db.execute(
         select(EmailAutomationRequest).where(
-            EmailAutomationRequest.user_id == current_user.user_id,
+            EmailAutomationRequest.user_email == current_user.email,
             EmailAutomationRequest.status == RequestStatus.PENDING
         )
     )
@@ -42,7 +42,7 @@ async def submit_approval_request(
     result = await db.execute(
         select(UserEmailInfo).where(
             UserEmailInfo.id == request_in.user_email_info_id,
-            UserEmailInfo.user_id == current_user.user_id
+            UserEmailInfo.user_email == current_user.email
         )
     )
     email_info = result.scalars().first()
@@ -54,7 +54,7 @@ async def submit_approval_request(
     
     # Create the approval request
     automation_request = EmailAutomationRequest(
-        user_id=current_user.user_id,
+        user_email=current_user.email,
         user_email_info_id=request_in.user_email_info_id,
         status=RequestStatus.PENDING,
         requested_at=datetime.now(timezone.utc),
@@ -82,7 +82,7 @@ async def get_approval_status(
     """Get the current user's approval request status."""
     result = await db.execute(
         select(EmailAutomationRequest).where(
-            EmailAutomationRequest.user_id == current_user.user_id
+            EmailAutomationRequest.user_email == current_user.email
         ).order_by(EmailAutomationRequest.requested_at.desc())
     )
     request = result.scalars().first()
@@ -104,7 +104,7 @@ async def list_my_requests(
     """List all approval requests for the current user."""
     result = await db.execute(
         select(EmailAutomationRequest).where(
-            EmailAutomationRequest.user_id == current_user.user_id
+            EmailAutomationRequest.user_email == current_user.email
         ).order_by(EmailAutomationRequest.requested_at.desc())
     )
     requests = result.scalars().all()
