@@ -51,13 +51,13 @@ def _send_verification_email_sync(email: str, code: str) -> None:
         raise EmailDeliveryError("SMTP_FROM_EMAIL or SMTP_USERNAME must be set")
 
     message = EmailMessage()
-    message["Subject"] = "Verify your LinkeFlow account"
+    message["Subject"] = "Verify your Job Easy account"
     message["From"] = formataddr((settings.SMTP_FROM_NAME, from_email))
     message["To"] = email
     message.set_content(
         "\n".join(
             [
-                "Welcome to LinkeFlow.",
+                "Welcome to Job Easy.",
                 "",
                 f"Your verification code is: {code}",
                 "",
@@ -96,13 +96,13 @@ def _send_password_reset_email_sync(email: str, reset_link: str) -> None:
         raise EmailDeliveryError("SMTP_FROM_EMAIL or SMTP_USERNAME must be set")
 
     message = EmailMessage()
-    message["Subject"] = "Reset your LinkeFlow password"
+    message["Subject"] = "Reset your Job Easy password"
     message["From"] = formataddr((settings.SMTP_FROM_NAME, from_email))
     message["To"] = email
     message.set_content(
         "\n".join(
             [
-                "We received a request to reset your LinkeFlow password.",
+                "We received a request to reset your Job Easy password.",
                 "",
                 f"Reset your password here: {reset_link}",
                 "",
