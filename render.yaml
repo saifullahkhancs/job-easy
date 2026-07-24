@@ -1,0 +1,49 @@
+# render.yaml
+# Deployment configuration for Render.com
+# See https://render.com/docs/blueprint-spec for details
+
+services:
+  - type: web
+    name: job-easy-api
+    runtime: python
+    plan: free # Or your preferred plan
+    buildCommand: |
+      pip install -r requirements.txt
+      alembic upgrade head
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # --- Database ---
+      # Set your Supabase connection string in the Render dashboard.
+      # It should look like: postgresql+asyncpg://user:password@host/dbname
+      - key: DATABASE_URL
+        sync: false
+
+      # --- Security ---
+      # A strong secret key will be generated automatically by Render.
+      - key: JWT_SECRET
+        generateValue: true
+
+      # --- CORS ---
+      # Set this to your Vercel frontend URL in the Render dashboard
+      # after your frontend is deployed.
+      - key: BACKEND_CORS_ORIGINS
+        sync: false
+
+      # --- SMTP for sending emails ---
+      # Set these values in the Render dashboard.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_NAME
+        sync: false
+
+      # --- Password Reset ---
+      # Set this to your Vercel frontend's password reset page URL
+      # in the Render dashboard. e.g., https://your-app.vercel.app/reset-password
+      - key: PASSWORD_RESET_URL
+        sync: false
