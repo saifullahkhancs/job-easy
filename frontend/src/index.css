@@ -1993,8 +1993,8 @@ button:disabled {
 
 /* Dashboard Page Styles */
 .page-container {
-  max-width: 1100px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 0;
 }
 
@@ -2314,6 +2314,81 @@ button:disabled {
   font-weight: 600;
 }
 
+/* View Page Detail Section Styles */
+.detail-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.detail-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.form-main-panel h3 {
+  margin: 0 0 20px 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* Vertical layout for view page */
+.detail-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cv-preview-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.cv-preview-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* View page container - simple vertical layout */
+.view-page-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Horizontal layout for template details and email body */
+.detail-horizontal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 768px) {
+  .detail-horizontal {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.detail-panel h4 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
 .login-prompt-banner {
   background: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
   border: 1px solid #fde047;
@@ -2411,6 +2486,7 @@ button:disabled {
 }
 
 .patch-summary {
+  margin-top: 24px;
   color: #cbd5e1;
 }
 .patch-summary h3 {
@@ -2491,4 +2567,55 @@ button:disabled {
   margin-top: 8px;
   font-weight: 500;
   font-size: 0.9rem;
+}
+
+/* ─── Per-page accent headers ───────────────────────────────────────────── */
+.page-accent-header {
+  border-radius: 16px 16px 0 0;
+  padding: 20px 32px 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -32px -32px 28px -32px;   /* bleed to card edges */
+}
+
+.page-accent-header h2 {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.page-accent-header p {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.85;
+  color: #fff;
+}
+
+/* View Templates — blue */
+.accent-view    { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+
+/* New Template — green */
+.accent-create  { background: linear-gradient(135deg, #059669, #047857); }
+
+/* Update Template — amber */
+.accent-update  { background: linear-gradient(135deg, #d97706, #b45309); }
+
+/* Send Email — indigo */
+.accent-send    { background: linear-gradient(135deg, #4f46e5, #4338ca); }
+
+/* Request Status / Request Access — slate */
+.accent-request { background: linear-gradient(135deg, #475569, #334155); }
+
+.page-accent-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  flex-shrink: 0;
 }

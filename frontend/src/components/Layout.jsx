@@ -32,14 +32,14 @@ export default function Layout() {
   const handleLogout = () => {
     logout();
     setCurrentUser(null);
-    navigate("/app/templates/new", { replace: true });
+    navigate("/app/new", { replace: true });
   };
 
   const getNavItems = () => {
     if (!currentUser) {
       // For guest, show all pages (disabled state)
       return [
-        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
         { to: "/app/update", label: "Update Template", icon: Edit },
@@ -52,7 +52,7 @@ export default function Layout() {
 
     if (isVisitor) {
       return [
-        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
         { to: "/app/update", label: "Update Template", icon: Edit },
@@ -63,7 +63,7 @@ export default function Layout() {
 
     if (isCustomer) {
       return [
-        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
         { to: "/app/update", label: "Update Template", icon: Edit },
@@ -73,7 +73,7 @@ export default function Layout() {
 
     if (isAdmin) {
       return [
-        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
         { to: "/app/update", label: "Update Template", icon: Edit },

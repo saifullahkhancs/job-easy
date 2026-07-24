@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { LayoutTemplate } from "lucide-react";
 import { fetchCvBlobUrlV2, fetchTemplateV2, fetchTemplatesV2, getCvUrlV2 } from "../api/client";
 
 function formatBytes(bytes) {
@@ -99,8 +100,17 @@ export default function TemplateViewPage() {
   return (
     <div style={{ padding: "32px", alignSelf: "start" }}>
       <section className="card" style={{ minHeight: "auto", height: "auto" }}>
-        <h2>View Templates</h2>
-        <p className="muted">Browse stored job templates and preview CV details.</p>
+
+        {/* Blue accent header — View Templates */}
+        <div className="page-accent-header accent-view">
+          <div>
+            <h2>View Templates</h2>
+            <p>Browse stored job templates and preview CV details.</p>
+          </div>
+          <div className="page-accent-badge">
+            <LayoutTemplate size={22} />
+          </div>
+        </div>
 
         {error && <p className="error">{error}</p>}
 

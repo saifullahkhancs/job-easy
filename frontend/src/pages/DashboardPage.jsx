@@ -49,7 +49,7 @@ export default function DashboardPage() {
   };
 
   const handleCreateTemplate = () => {
-    navigate("/app/templates/new");
+    navigate("/app/new");
   };
 
   const handleSendEmail = () => {

@@ -7,7 +7,7 @@ import {
   updateTemplateCvV2,
   getCurrentUser,
 } from "../api/client";
-import { Save, UploadCloud, ShieldCheck, Lock } from "lucide-react";
+import { Save, UploadCloud, ShieldCheck, Lock, Edit } from "lucide-react";
 
 export default function TemplateUpdatePage() {
   const { id } = useParams(); // optional — pre-select from dashboard edit button

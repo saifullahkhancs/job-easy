@@ -249,21 +249,28 @@ export async function fetchTemplatesV2() {
 
 export async function fetchTemplateV2(templateId) {
   const token = localStorage.getItem("access_token");
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers,
   });
   return handleResponse(response);
 }
 
 export async function getCvUrlV2(templateId) {
   const token = localStorage.getItem("access_token");
-  return `${API_BASE}/api/v1/templates/${templateId}/cv?token=${token}`;
+  if (token) {
+    return `${API_BASE}/api/v1/templates/${templateId}/cv?token=${token}`;
+  }
+  return `${API_BASE}/api/v1/templates/${templateId}/cv`;
 }
 
 export async function fetchCvBlobUrlV2(templateId) {
   const token = localStorage.getItem("access_token");
+  const headers = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}/cv`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers,
   });
   if (!response.ok) {
     throw new Error("Failed to load CV preview");

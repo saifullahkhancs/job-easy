@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { fetchTemplate, fetchTemplates, patchTemplate } from "../api/client";
-import { ShieldCheck, Check, Save } from "lucide-react";
+import { fetchTemplateV2, fetchTemplatesV2, updateTemplateV2, updateTemplateCvV2, getCurrentUser } from "../api/client";
+import { ShieldCheck, Check, Save, Lock } from "lucide-react";
 
 export default function PatchPage() {
   const [templates, setTemplates] = useState([]);
-  const [selectedType, setSelectedType] = useState("");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [title, setTitle] = useState("");
   const [context, setContext] = useState("");
   const [cvFile, setCvFile] = useState(null);
@@ -17,29 +18,50 @@ export default function PatchPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchTemplates()
-      .then((items) => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("access_token");
+        if (token) {
+          const user = await getCurrentUser();
+          setCurrentUser(user);
+        }
+        const items = await fetchTemplatesV2();
         setTemplates(items);
-        if (items.length > 0) setSelectedType(items[0].type);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+        if (items.length > 0) {
+          setSelectedTemplateId(items[0].id);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    if (!selectedType) return;
+  const isGuest = !currentUser;
+  const isVisitor = currentUser?.role === "visitor";
+  const isDisabled = isGuest || isVisitor;
 
-    fetchTemplate(selectedType)
+  useEffect(() => {
+    if (!selectedTemplateId) return;
+
+    // Guests can see the form but not load data into it
+    if (isDisabled) {
+      setTitle("Example subject line for preview");
+      setContext("You can edit this email body content to see how it works...");
+      return;
+    }
+
+    fetchTemplateV2(selectedTemplateId)
       .then((detail) => {
         setTitle(detail.title);
         setContext(detail.context);
         setCvFile(null);
-        setUpdateTitle(false);
-        setUpdateContext(false);
-        setUpdateCv(false);
       })
       .catch((err) => setError(err.message));
-  }, [selectedType]);
+  }, [selectedTemplateId, isDisabled]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -51,11 +73,6 @@ export default function PatchPage() {
       return;
     }
 
-    const formData = new FormData();
-    if (updateTitle) formData.append("title", title);
-    if (updateContext) formData.append("context", context);
-    if (updateCv && cvFile) formData.append("cv_pdf", cvFile);
-
     if (updateCv && !cvFile) {
       setError("Choose a PDF file to update the CV.");
       return;
@@ -63,8 +80,24 @@ export default function PatchPage() {
 
     setSubmitting(true);
     try {
-      const result = await patchTemplate(selectedType, formData);
-      setMessage(`${result.message} Updated: ${result.updated_fields.join(", ")}`);
+      let updated_fields = [];
+      if (updateTitle || updateContext) {
+        const updateData = {};
+        if (updateTitle) {
+          updateData.title = title;
+          updated_fields.push("title");
+        }
+        if (updateContext) {
+          updateData.context = context;
+          updated_fields.push("context");
+        }
+        await updateTemplateV2(selectedTemplateId, updateData);
+      }
+      if (updateCv && cvFile) {
+        await updateTemplateCvV2(selectedTemplateId, cvFile);
+        updated_fields.push("CV");
+      }
+      setMessage(`Template updated successfully. Updated: ${updated_fields.join(", ")}`);
       setUpdateTitle(false);
       setUpdateContext(false);
       setUpdateCv(false);
@@ -80,13 +113,22 @@ export default function PatchPage() {
 
   return (
     <div className="page-container">
+      {(isGuest || isVisitor) && (
+        <div className="visitor-banner">
+          <Lock size={24} className="banner-icon" />
+          <div className="banner-content">
+            <h3>{isGuest ? "Preview Mode" : "Visitor Mode"}</h3>
+            <p>{isGuest ? "You need to log in to update templates." : "Your account is in Visitor mode. You need approval from an admin to update templates."}</p>
+          </div>
+        </div>
+      )}
       <section className="card" style={{ minHeight: 'auto', height: 'auto' }}>
       <div className="page-header">
         <div>
           <h2>Update Template</h2>
           <p className="muted">Patch only the fields you need — subject, email body, or CV.</p>
         </div>
-        <button type="button" className="header-action" style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a' }}>
+        <button type="button" className="header-action" disabled={isDisabled} style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a', opacity: isDisabled ? 0.5 : 1 }}>
           <ShieldCheck size={16} />
           Safe patch mode
         </button>
@@ -99,11 +141,11 @@ export default function PatchPage() {
           <div className="form-main-panel">
             <form className="form" onSubmit={handleSubmit}>
             <label>
-              Job Type
-              <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
+              Template
+              <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)}>
                 {templates.map((template) => (
-                  <option key={template.type} value={template.type}>
-                    {template.type}
+                  <option key={template.id} value={template.id}>
+                    {template.title} ({template.template_role})
                   </option>
                 ))}
               </select>
@@ -114,7 +156,8 @@ export default function PatchPage() {
                 <input
                   type="checkbox"
                   checked={updateTitle}
-                  onChange={(e) => setUpdateTitle(e.target.checked)}
+                  onChange={(e) => !isDisabled && setUpdateTitle(e.target.checked)}
+                  disabled={isDisabled}
                 />
                 Subject
               </label>
@@ -123,13 +166,14 @@ export default function PatchPage() {
                 <input
                   type="checkbox"
                   checked={updateContext}
-                  onChange={(e) => setUpdateContext(e.target.checked)}
+                  onChange={(e) => !isDisabled && setUpdateContext(e.target.checked)}
+                  disabled={isDisabled}
                 />
                 Email Body
               </label>
 
               <label className={`patch-option-card ${updateCv ? 'active' : ''}`}>
-                <input type="checkbox" checked={updateCv} onChange={(e) => setUpdateCv(e.target.checked)} />
+                <input type="checkbox" checked={updateCv} onChange={(e) => !isDisabled && setUpdateCv(e.target.checked)} disabled={isDisabled} />
                 CV File
               </label>
             </div>
@@ -140,7 +184,7 @@ export default function PatchPage() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                disabled={!updateTitle}
+                disabled={!isDisabled && !updateTitle}
               />
             </label>
 
@@ -150,7 +194,7 @@ export default function PatchPage() {
                 value={context}
                 onChange={(e) => setContext(e.target.value)}
                 rows={8}
-                disabled={!updateContext}
+                disabled={!isDisabled && !updateContext}
               />
             </label>
 
@@ -159,12 +203,12 @@ export default function PatchPage() {
               <input
                 type="file"
                 accept="application/pdf"
-                disabled={!updateCv}
+                disabled={isDisabled || !updateCv}
                 onChange={(e) => setCvFile(e.target.files?.[0] || null)}
               />
             </label>
 
-            <button type="submit" disabled={submitting} style={{ marginTop: '16px' }}>
+            <button type="submit" disabled={submitting || isDisabled} style={{ marginTop: '16px' }}>
               <Save size={18} />
               {submitting ? "Saving..." : "Save Changes"}
             </button>
@@ -172,7 +216,7 @@ export default function PatchPage() {
           </div>
 
           <div className="form-side-panel">
-            <div className="dark-preview-card" style={{ height: 'auto' }}>
+            <div className="dark-preview-card patch-summary" style={{ height: 'auto' }}>
             <div className="dark-preview-header" style={{ marginBottom: '12px' }}>
               <span style={{ color: '#fff', fontSize: '1.1rem' }}>Patch summary</span>
             </div>
@@ -190,7 +234,7 @@ export default function PatchPage() {
 
             <div style={{ background: '#1e293b', padding: '12px 16px', borderRadius: '8px' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#3b82f6', letterSpacing: '0.05em', marginBottom: '4px' }}>CURRENT TEMPLATE</div>
-              <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{selectedType} · {templates.find(t => t.type === selectedType)?.cv_filename || "CV file attached"}</div>
+              <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{templates.find(t => t.id === selectedTemplateId)?.title || "No template selected"}</div>
             </div>
             </div>
           </div>

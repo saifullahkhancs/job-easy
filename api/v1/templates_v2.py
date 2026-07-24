@@ -62,10 +62,10 @@ async def list_templates(
 @router.get("/{template_id}", response_model=UserTemplateDetailResponse)
 async def get_template(
     template_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a specific template by ID."""
+    """Get a specific template by ID. Guests can access default templates."""
     result = await db.execute(select(UserTemplate).where(UserTemplate.id == template_id))
     template = result.scalars().first()
     
@@ -76,7 +76,14 @@ async def get_template(
         )
     
     # Authorization check
-    if current_user.role == UserRole.VISITOR:
+    if current_user is None:
+        # Guests can only access default templates
+        if template.template_scope != TemplateScope.DEFAULT:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Guests can only access default templates",
+            )
+    elif current_user.role == UserRole.VISITOR:
         if template.template_scope != TemplateScope.DEFAULT:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -95,10 +102,10 @@ async def get_template(
 @router.get("/{template_id}/cv")
 async def download_cv(
     template_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """Download CV for a specific template."""
+    """Download CV for a specific template. Guests can access default templates."""
     result = await db.execute(select(UserTemplate).where(UserTemplate.id == template_id))
     template = result.scalars().first()
     
@@ -109,7 +116,14 @@ async def download_cv(
         )
     
     # Authorization check
-    if current_user.role == UserRole.VISITOR:
+    if current_user is None:
+        # Guests can only access default templates
+        if template.template_scope != TemplateScope.DEFAULT:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Guests can only access default templates",
+            )
+    elif current_user.role == UserRole.VISITOR:
         if template.template_scope != TemplateScope.DEFAULT:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

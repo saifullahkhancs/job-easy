@@ -15,8 +15,6 @@ import RequestStatusPage from "./pages/RequestStatusPage";
 import DashboardPage from "./pages/DashboardPage";
 import TemplateCreatePage from "./pages/TemplateCreatePage";
 import TemplateEditPage from "./pages/TemplateEditPage";
-import TemplateViewPage from "./pages/TemplateViewPage";
-import TemplateUpdatePage from "./pages/TemplateUpdatePage";
 import AdminDashboardPage from "./admin/AdminDashboardPage";
 import AdminRequestsPage from "./admin/AdminRequestsPage";
 import AdminUsersPage from "./admin/AdminUsersPage";
@@ -40,25 +38,19 @@ export default function App() {
           <Route path="default-templates" element={<AdminDefaultTemplatesPage />} />
         </Route>
         
-        {/* Protected authenticated routes */}
-        <Route element={<AuthGuard />}>
-          <Route path="/app" element={<Layout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="templates" element={<DashboardPage />} />
+        {/* Main application routes with shared layout */}
+        <Route path="/app" element={<Layout />}>
+          {/* Publicly accessible routes (components handle guest/visitor state) */}
+          <Route index element={<Navigate to="new" replace />} />
+          <Route path="templates" element={<DashboardPage />} />
+          <Route path="new" element={<TemplateCreatePage />} />
+          <Route path="send" element={<SendPage />} />
+          <Route path="view" element={<ViewPage />} />
+          <Route path="update" element={<PatchPage />} />
 
-            {/* Standalone view-templates page (dropdown selector) */}
-            <Route path="view" element={<TemplateViewPage />} />
-
-            {/* Standalone update-template page (dropdown selector) */}
-            <Route path="update" element={<TemplateUpdatePage />} />
-            
-            {/* Template create, edit, and send pages (now accessible but disabled for guests/visitors) */}
-            <Route path="templates/new" element={<TemplateCreatePage />} />
-            <Route path="templates/:id" element={<TemplateViewPage />} />
-            <Route path="templates/:id/edit" element={<TemplateUpdatePage />} />
-            <Route path="send" element={<SendPage />} />
-            
-            {/* Visitor routes */}
+          {/* Protected routes that require authentication */}
+          <Route element={<AuthGuard />}>
+            <Route path="templates/:id/edit" element={<TemplateEditPage />} />
             <Route path="request-access" element={<RequestAccessPage />} />
             <Route path="request-status" element={<RequestStatusPage />} />
           </Route>

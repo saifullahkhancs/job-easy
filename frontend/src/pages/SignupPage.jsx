@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, RefreshCw, Link as LinkIcon } from "lucide-react";
-import { register, verifyEmail, resendVerification } from "../api/client";
+import { Mail, Lock, User, ArrowRight, RefreshCw } from "lucide-react";
+import { register, verifyEmail, resendVerification, login } from "../api/client";
 
 export default function SignupPage() {
   const [step, setStep] = useState("register"); // "register" or "verify"
@@ -45,10 +45,15 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const data = await verifyEmail(formData.email, verificationCode);
-      setMessage(data.message);
-      // Auto-login after verification
-      setTimeout(() => navigate("/login"), 1500);
+      await verifyEmail(formData.email, verificationCode);
+
+      // Auto-login after successful verification
+      const loginData = await login(formData.email, formData.password);
+      localStorage.setItem("access_token", loginData.access_token);
+      localStorage.setItem("refresh_token", loginData.refresh_token);
+
+      setMessage("Verification successful! Redirecting...");
+      setTimeout(() => navigate("/app/new"), 1500);
     } catch (err) {
       setError(err.message);
     } finally {
