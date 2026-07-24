@@ -80,7 +80,7 @@ export default function PatchPage() {
 
   return (
     <div className="page-container">
-      <section className="card">
+      <section className="card" style={{ minHeight: 'auto', height: 'auto' }}>
       <div className="page-header">
         <div>
           <h2>Update Template</h2>

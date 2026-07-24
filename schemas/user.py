@@ -7,7 +7,6 @@ class UserResponse(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
-    linkedin_url: str | None
     is_verified: bool
     role: UserRole
 

@@ -104,6 +104,21 @@ export async function listAdminDefaultTemplates() {
   return handleResponse(response);
 }
 
+export async function listAllCustomerTemplates() {
+  const response = await fetch(`${API_BASE}/api/v1/admin/all-customer-templates`, {
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function promoteTemplateToDefault(templateId) {
+  const response = await fetch(`${API_BASE}/api/v1/admin/default-templates/promote/${templateId}`, {
+    method: "POST",
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+}
+
 export async function createAdminDefaultTemplate(formData) {
   const response = await fetch(`${API_BASE}/api/v1/admin/default-templates`, {
     method: "POST",

@@ -27,7 +27,7 @@ export default function SignupPage() {
       const data = await register(
         formData.firstName, 
         formData.lastName, 
-        formData.email, 
+        formData.email,
         formData.password
       );
       setMessage(data.message);

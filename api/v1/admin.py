@@ -208,6 +208,23 @@ async def review_approval_request(
     return _build_admin_request_response(request)
 
 
+def _template_to_dict(tmpl: UserTemplate) -> dict:
+    """Serialize a UserTemplate safely (excluding cv_bytes)."""
+    return {
+        "id": tmpl.id,
+        "owner_user_id": tmpl.owner_user_id,
+        "template_role": tmpl.template_role,
+        "title": tmpl.title,
+        "context": tmpl.context,
+        "filename": tmpl.filename,
+        "file_size_bytes": tmpl.file_size_bytes,
+        "template_scope": tmpl.template_scope,
+        "is_active": tmpl.is_active,
+        "created_at": tmpl.created_at,
+        "updated_at": tmpl.updated_at,
+    }
+
+
 @router.get("/default-templates")
 async def list_default_templates(
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
@@ -220,7 +237,76 @@ async def list_default_templates(
         ).order_by(UserTemplate.created_at.desc())
     )
     templates = result.scalars().all()
+    return [_template_to_dict(t) for t in templates]
+
+
+@router.get("/all-customer-templates")
+async def list_all_customer_templates(
+    current_user: User = Depends(require_roles([UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all customer templates with owner info (admin only)."""
+    result = await db.execute(
+        select(UserTemplate, User).join(User, UserTemplate.owner_user_id == User.user_id).where(
+            UserTemplate.template_scope == TemplateScope.CUSTOMER,
+            UserTemplate.is_active == True,
+        ).order_by(UserTemplate.created_at.desc())
+    )
+    rows = result.all()
+    templates = []
+    for tmpl, owner in rows:
+        templates.append({
+            "id": tmpl.id,
+            "template_role": tmpl.template_role,
+            "title": tmpl.title,
+            "context": tmpl.context,
+            "filename": tmpl.filename,
+            "file_size_bytes": tmpl.file_size_bytes,
+            "template_scope": tmpl.template_scope,
+            "is_active": tmpl.is_active,
+            "created_at": tmpl.created_at,
+            "owner": {
+                "user_id": owner.user_id,
+                "first_name": owner.first_name,
+                "last_name": owner.last_name,
+                "email": owner.email,
+            },
+        })
     return templates
+
+
+@router.post("/default-templates/promote/{template_id}")
+async def promote_to_default(
+    template_id: int,
+    current_user: User = Depends(require_roles([UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+):
+    """Promote a customer template to a default template (admin only). Max 2 default templates."""
+    # Check current default count
+    result = await db.execute(
+        select(UserTemplate).where(UserTemplate.template_scope == TemplateScope.DEFAULT)
+    )
+    existing_defaults = result.scalars().all()
+    if len(existing_defaults) >= 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Maximum of 2 default templates allowed. Remove an existing default template first.",
+        )
+
+    # Get the target template
+    result = await db.execute(select(UserTemplate).where(UserTemplate.id == template_id))
+    template = result.scalars().first()
+    if not template:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+
+    if template.template_scope == TemplateScope.DEFAULT:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Template is already a default template")
+
+    template.template_scope = TemplateScope.DEFAULT
+    template.owner_user_id = None  # Default templates are not owned by any user
+    await db.commit()
+    await db.refresh(template)
+    return {"message": "Template promoted to default successfully", "template_id": template.id}
 
 
 @router.post("/default-templates", status_code=status.HTTP_201_CREATED)
@@ -255,4 +341,4 @@ async def create_default_template(
     await db.commit()
     await db.refresh(template)
     
-    return template
+    return _template_to_dict(template)

@@ -17,7 +17,9 @@ export default function AdminLayout() {
       <aside className={`admin-sidebar ${sidebarOpen ? "open" : "closed"}`}>
         <div className="admin-sidebar-header">
           <div className="admin-brand">
-            <Shield size={24} className="brand-icon" />
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Shield size={22} color="white" />
+            </div>
             <div>
               <h2>Job Easy</h2>
               <span className="admin-badge">Admin Panel</span>

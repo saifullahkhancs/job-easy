@@ -67,7 +67,7 @@ export default function DashboardPage() {
   // Guest mode (not logged in) - show default templates with disabled actions
   if (isGuest) {
     return (
-      <div className="page-container">
+      <div className="page-container page-container-full-width" style={{ width: "100%", margin: 0 }}>
         <div className="visitor-banner">
           <Lock size={24} className="banner-icon" />
           <div className="banner-content">
@@ -129,7 +129,7 @@ export default function DashboardPage() {
   // Visitor mode (logged in, not approved) - read-only default templates
   if (isVisitor) {
     return (
-      <div className="page-container">
+      <div className="page-container page-container-full-width" style={{ width: "100%", margin: 0 }}>
         <div className="visitor-banner">
           <Lock size={24} className="banner-icon" />
           <div className="banner-content">
@@ -199,7 +199,7 @@ export default function DashboardPage() {
     const canCreateMore = currentUser.current_template_count < currentUser.template_limit;
 
     return (
-      <div className="page-container">
+      <div className="page-container page-container-full-width" style={{ width: "100%", margin: 0 }}>
         <div className="page-header">
           <h1>My Templates</h1>
           <div className="header-badges">

@@ -139,12 +139,21 @@ export async function refreshToken(refreshToken) {
 }
 
 // Get current user profile
+const _userCache = { data: null, timestamp: 0 };
+const USER_CACHE_TTL = 30_000; // 30 seconds
+
 export async function getCurrentUser() {
+  if (_userCache.data && Date.now() - _userCache.timestamp < USER_CACHE_TTL) {
+    return _userCache.data;
+  }
   const token = localStorage.getItem("access_token");
   const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  _userCache.data = data;
+  _userCache.timestamp = Date.now();
+  return data;
 }
 
 // Email Info API
@@ -277,7 +286,10 @@ export async function updateTemplateV2(templateId, formData) {
   const token = localStorage.getItem("access_token");
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
     method: "PUT",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(formData),
   });
   return handleResponse(response);
@@ -308,4 +320,6 @@ export async function deleteTemplateV2(templateId) {
 export function logout() {
   localStorage.removeItem("access_token");
   localStorage.removeItem("refresh_token");
+  _userCache.data = null;
+  _userCache.timestamp = 0;
 }

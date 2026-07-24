@@ -18,3 +18,4 @@ class UserEmailInfo(Base):
 
     # Relationships
     user = relationship("User", back_populates="email_info")
+    automation_requests = relationship("EmailAutomationRequest", back_populates="user_email_info")

@@ -15,7 +15,6 @@ class UserProfileResponse(BaseModel):
     first_name: str
     last_name: str
     email: str
-    linkedin_url: str | None
     is_verified: bool
     role: UserRole
     approval_status: ApprovalStatus

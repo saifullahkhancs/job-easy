@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginMode, setLoginMode] = useState("customer");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function LoginPage() {
       const data = await login(email, password);
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("refresh_token", data.refresh_token);
-      navigate("/app/templates/new");
+      navigate(loginMode === "admin" ? "/admin/dashboard" : "/app/templates/new");
     } catch (err) {
       setError(err.message);
     } finally {
@@ -43,6 +44,40 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
+          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
+            <button
+              type="button"
+              onClick={() => setLoginMode("customer")}
+              style={{
+                flex: 1,
+                padding: "0.5rem",
+                borderRadius: "6px",
+                border: "1px solid #3b82f6",
+                background: loginMode === "customer" ? "#3b82f6" : "transparent",
+                color: loginMode === "customer" ? "#fff" : "#3b82f6",
+                cursor: "pointer",
+                fontWeight: 500,
+              }}
+            >
+              Customer
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginMode("admin")}
+              style={{
+                flex: 1,
+                padding: "0.5rem",
+                borderRadius: "6px",
+                border: "1px solid #3b82f6",
+                background: loginMode === "admin" ? "#3b82f6" : "transparent",
+                color: loginMode === "admin" ? "#fff" : "#3b82f6",
+                cursor: "pointer",
+                fontWeight: 500,
+              }}
+            >
+              Admin
+            </button>
+          </div>
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-group">

@@ -7,7 +7,6 @@ class UserRegister(BaseModel):
     last_name: str
     email: EmailStr
     password: str
-    linkedin_url: HttpUrl
 
 class UserResponse(BaseModel):
     first_name: str

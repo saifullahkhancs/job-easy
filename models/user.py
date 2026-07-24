@@ -13,8 +13,6 @@ class User(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True, index=True)
-    linkedin_url = Column(String, nullable=True)
-    linkedin_url_normalized = Column(String, nullable=True, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     verification_code = Column(String, nullable=True)
@@ -24,10 +22,6 @@ class User(Base):
     role = Column(SQLEnum(UserRole), default=UserRole.VISITOR, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
-
-    __table_args__ = (
-        UniqueConstraint('email', 'linkedin_url_normalized', name='uq_user_email_linkedin'),
-    )
 
     # Relationships
     email_info = relationship("UserEmailInfo", back_populates="user", uselist=False)

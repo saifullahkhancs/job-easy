@@ -68,7 +68,7 @@ export default function TemplateCreatePage() {
   }
 
   return (
-    <div className="page-container page-container-full-width">
+    <div className="page-container page-container-full-width" style={{ width: "100%", margin: 0 }}>
       {(isGuest || isVisitor) && (
         <div className="visitor-banner">
           <Lock size={24} className="banner-icon" />
@@ -79,7 +79,7 @@ export default function TemplateCreatePage() {
         </div>
       )}
 
-      <section className="card">
+      <section className="card" style={{ minHeight: 'auto', height: 'auto' }}>
       <div className="page-header">
         <div>
           <h2>Create New Template</h2>
@@ -156,7 +156,7 @@ export default function TemplateCreatePage() {
         </div>
 
         <div className="form-side-panel">
-          <div className="dark-preview-card" style={{ height: '100%' }}>
+          <div className="dark-preview-card" style={{ height: 'auto' }}>
             <div className="dark-preview-header">
               <span>Email Body</span>
             </div>

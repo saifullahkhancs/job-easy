@@ -26,3 +26,4 @@ class EmailAutomationRequest(Base):
     # Relationships
     user = relationship("User", back_populates="automation_requests", foreign_keys=[user_id])
     reviewed_by_admin = relationship("User", foreign_keys=[reviewed_by_admin_id])
+    user_email_info = relationship("UserEmailInfo", back_populates="automation_requests")

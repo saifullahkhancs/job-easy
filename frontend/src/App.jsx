@@ -15,6 +15,8 @@ import RequestStatusPage from "./pages/RequestStatusPage";
 import DashboardPage from "./pages/DashboardPage";
 import TemplateCreatePage from "./pages/TemplateCreatePage";
 import TemplateEditPage from "./pages/TemplateEditPage";
+import TemplateViewPage from "./pages/TemplateViewPage";
+import TemplateUpdatePage from "./pages/TemplateUpdatePage";
 import AdminDashboardPage from "./admin/AdminDashboardPage";
 import AdminRequestsPage from "./admin/AdminRequestsPage";
 import AdminUsersPage from "./admin/AdminUsersPage";
@@ -43,10 +45,17 @@ export default function App() {
           <Route path="/app" element={<Layout />}>
             <Route index element={<DashboardPage />} />
             <Route path="templates" element={<DashboardPage />} />
+
+            {/* Standalone view-templates page (dropdown selector) */}
+            <Route path="view" element={<TemplateViewPage />} />
+
+            {/* Standalone update-template page (dropdown selector) */}
+            <Route path="update" element={<TemplateUpdatePage />} />
             
             {/* Template create, edit, and send pages (now accessible but disabled for guests/visitors) */}
             <Route path="templates/new" element={<TemplateCreatePage />} />
-            <Route path="templates/:id/edit" element={<TemplateEditPage />} />
+            <Route path="templates/:id" element={<TemplateViewPage />} />
+            <Route path="templates/:id/edit" element={<TemplateUpdatePage />} />
             <Route path="send" element={<SendPage />} />
             
             {/* Visitor routes */}
@@ -57,8 +66,8 @@ export default function App() {
         
         {/* Legacy route redirects */}
         <Route path="/" element={<Navigate to="/app" replace />} />
-        <Route path="/view" element={<Navigate to="/app/templates" replace />} />
-        <Route path="/update" element={<Navigate to="/app/templates" replace />} />
+        <Route path="/view" element={<Navigate to="/app/view" replace />} />
+        <Route path="/update" element={<Navigate to="/app/update" replace />} />
         
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/login" replace />} />

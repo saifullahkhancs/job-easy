@@ -40,9 +40,9 @@ export default function Layout() {
       // For guest, show all pages (disabled state)
       return [
         { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
-        { to: "/app", label: "View Templates", end: true, icon: LayoutTemplate },
+        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
-        { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
+        { to: "/app/update", label: "Update Template", icon: Edit },
       ];
     }
 
@@ -53,9 +53,9 @@ export default function Layout() {
     if (isVisitor) {
       return [
         { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
-        { to: "/app", label: "View Templates", end: true, icon: LayoutTemplate },
+        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
-        { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
+        { to: "/app/update", label: "Update Template", icon: Edit },
         { to: "/app/request-access", label: "Request Access", icon: Clock },
         { to: "/app/request-status", label: "Request Status", icon: CheckCircle2 },
       ];
@@ -64,15 +64,20 @@ export default function Layout() {
     if (isCustomer) {
       return [
         { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
-        { to: "/app", label: "View Templates", end: true, icon: LayoutTemplate },
+        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
-        { to: "/app/templates", label: "Update Template", end: true, icon: Edit },
+        { to: "/app/update", label: "Update Template", icon: Edit },
         { to: "/app/request-status", label: "Request Status", icon: CheckCircle2 },
       ];
     }
 
     if (isAdmin) {
-      return []; // Admin should use separate admin interface
+      return [
+        { to: "/app/templates/new", label: "New Template", icon: UploadCloud },
+        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
+        { to: "/app/send", label: "Send Email", icon: Send },
+        { to: "/app/update", label: "Update Template", icon: Edit },
+      ];
     }
 
     return [];
@@ -148,7 +153,7 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className="app-main-content">
+      <main className="app-main-content" style={{ gridTemplateColumns: "1fr" }}>
         <Outlet key={currentUser?.user_id || 'guest'} />
       </main>
     </div>

@@ -49,7 +49,7 @@ export default function UploadPage() {
 
   return (
     <div className="page-container">
-      <section className="card">
+      <section className="card" style={{ minHeight: 'auto', height: 'auto' }}>
         <div className="page-header">
           <div>
             <h2>Upload New Template</h2>
@@ -120,7 +120,7 @@ export default function UploadPage() {
             </div>
 
             <div className="form-side-panel">
-              <div className="dark-preview-card" style={{ height: '100%' }}>
+              <div className="dark-preview-card" style={{ height: 'auto' }}>
                 <div className="dark-preview-header">
                   <span>Email Body</span>
                   <div className="dark-preview-dots">

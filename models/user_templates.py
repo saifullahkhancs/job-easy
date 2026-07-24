@@ -32,3 +32,8 @@ class UserTemplate(Base):
     __table_args__ = (
         Index('idx_user_template_role_unique', 'template_role', 'owner_user_id', unique=True),
     )
+
+    @property
+    def file_size_bytes(self) -> int:
+        """Calculate the size of the CV in bytes."""
+        return len(self.cv_bytes)

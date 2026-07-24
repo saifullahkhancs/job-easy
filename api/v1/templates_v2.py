@@ -161,11 +161,27 @@ async def create_template(
                 detail="Maximum limit of 2 templates reached",
             )
     
+    # Normalize template role to lowercase for consistency and check for uniqueness
+    normalized_template_role = template_role.lower()
+    owner_id_for_check = current_user.user_id if current_user.role == UserRole.CUSTOMER else None
+
+    result = await db.execute(
+        select(UserTemplate).where(
+            UserTemplate.owner_user_id == owner_id_for_check,
+            UserTemplate.template_role == normalized_template_role
+        )
+    )
+    if result.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A template with the role '{template_role}' already exists.",
+        )
+
     cv_bytes = await cv_pdf.read()
     
     template = UserTemplate(
         owner_user_id=current_user.user_id if current_user.role == UserRole.CUSTOMER else None,
-        template_role=template_role,
+        template_role=normalized_template_role,
         title=title,
         context=context,
         cv_bytes=cv_bytes,

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { fetchCvBlobUrl, fetchTemplate, fetchTemplates, getCvUrl } from "../api/client";
+import { useEffect, useState, useCallback } from "react";
+import { fetchCvBlobUrlV2, fetchTemplateV2, fetchTemplatesV2, getCvUrlV2, getCurrentUser } from "../api/client";
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -77,7 +77,7 @@ export default function ViewPage() {
   if (loading) return <p className="muted">Loading templates...</p>;
 
   return (
-    <section className="card">
+    <section className="card" style={{ minHeight: 'auto', height: 'auto' }}>
       <h2>View Templates</h2>
       <p className="muted">Browse stored job templates and preview CV details.</p>
 

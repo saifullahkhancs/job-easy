@@ -1705,6 +1705,7 @@ button:disabled {
   align-items: center;
   gap: 12px;
   flex: 1;
+  position: relative;
 }
 
 .search-icon {

@@ -24,7 +24,6 @@ from core.security import (
     hash_password,
     verify_password,
 )
-from core.utils import normalize_linkedin_url, validate_linkedin_url
 from models.roles import UserRole
 from models.user import PasswordResetToken, User
 from schemas.auth import (
@@ -70,29 +69,12 @@ async def register(
     response: Response,
     db: AsyncSession = Depends(get_db),
 ):
-    # Validate LinkedIn URL
-    linkedin_url_str = str(user_in.linkedin_url)
-    if not validate_linkedin_url(linkedin_url_str):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid LinkedIn URL. Must be a valid LinkedIn profile URL."
-        )
-    
-    linkedin_normalized = normalize_linkedin_url(linkedin_url_str)
-    
     # Check for existing user by email
     result = await db.execute(select(User).where(User.email == user_in.email))
     existing_user = result.scalars().first()
     if existing_user is not None:
         response.status_code = status.HTTP_200_OK
         return {"message": "User already exists"}
-    
-    # Check for existing user by normalized LinkedIn URL
-    result = await db.execute(select(User).where(User.linkedin_url_normalized == linkedin_normalized))
-    existing_linkedin = result.scalars().first()
-    if existing_linkedin is not None:
-        response.status_code = status.HTTP_200_OK
-        return {"message": "LinkedIn account already registered"}
 
     verification_code = generate_5_digit_code()
     now = _utc_now()
@@ -100,8 +82,6 @@ async def register(
         first_name=user_in.first_name,
         last_name=user_in.last_name,
         email=user_in.email,
-        linkedin_url=linkedin_url_str,
-        linkedin_url_normalized=linkedin_normalized,
         hashed_password=hash_password(user_in.password),
         is_verified=False,
         verification_code=verification_code,
@@ -438,7 +418,6 @@ async def get_me(
         first_name=current_user.first_name,
         last_name=current_user.last_name,
         email=current_user.email,
-        linkedin_url=current_user.linkedin_url,
         is_verified=current_user.is_verified,
         role=current_user.role,
         approval_status=approval_status,
