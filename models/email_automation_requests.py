@@ -14,7 +14,7 @@ class RequestStatus(str, Enum):
 class EmailAutomationRequest(Base):
     __tablename__ = "email_automation_requests"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, index=True)
     user_email_info_id = Column(Integer, ForeignKey("user_email_info.id"), nullable=False)
     status = Column(SQLEnum(RequestStatus), default=RequestStatus.PENDING, nullable=False)

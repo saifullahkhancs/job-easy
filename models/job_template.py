@@ -8,7 +8,7 @@ from models.user import Base
 class JobTemplate(Base):
     __tablename__ = "job_templates"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True)
     owner_user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True)  # null for default templates
     template_role = Column(String, nullable=False, index=True)
     title = Column(String, nullable=False)

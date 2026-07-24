@@ -13,7 +13,7 @@ class TemplateScope(str, Enum):
 class UserTemplate(Base):
     __tablename__ = "user_templates"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     owner_user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True, index=True)
     template_role = Column(String, nullable=False, index=True)
     title = Column(String, nullable=False)
