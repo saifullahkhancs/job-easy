@@ -44,8 +44,11 @@ if config.config_file_name is not None:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
-# 4. Dynamically load the database URL from your .env file
-config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
+# 4. Dynamically load and clean the database URL from your .env file
+database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    raise ValueError("DATABASE_URL environment variable not set for Alembic")
+config.set_main_option("sqlalchemy.url", database_url.strip().strip("'").strip('"'))
 
 
 

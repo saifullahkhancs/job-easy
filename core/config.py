@@ -2,7 +2,7 @@
 from dataclasses import field
 import os
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -31,6 +31,13 @@ class Settings(BaseSettings):
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 100
     RATE_LIMIT_PERIOD: int = 60  # seconds
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def clean_db_url(cls, v: str) -> str:
+        if isinstance(v, str):
+            return v.strip().strip("'").strip('"')
+        return v
 
     @model_validator(mode="after")
     def validate_smtp_security(self):
