@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, ArrowRight } from "lucide-react";
-import { login } from "../api/client";
+import { login, getCurrentUser } from "../api/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,7 +26,14 @@ export default function LoginPage() {
       const data = await login(email, password);
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("refresh_token", data.refresh_token);
-      navigate("/app/new");
+      
+      // Fetch user to check role and redirect accordingly
+      const user = await getCurrentUser();
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/app/new");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -40,6 +47,29 @@ export default function LoginPage() {
         <div className="auth-header">
           <h1>Welcome Back</h1>
           <p>Sign in to your account</p>
+        </div>
+
+        <div className="quick-login-buttons">
+          <button 
+            type="button" 
+            className="quick-login-btn"
+            onClick={() => {
+              setEmail("admin@example.com");
+              setPassword("admin123");
+            }}
+          >
+            Login as Admin
+          </button>
+          <button 
+            type="button" 
+            className="quick-login-btn"
+            onClick={() => {
+              setEmail("customer@example.com");
+              setPassword("customer123");
+            }}
+          >
+            Login as Customer
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">

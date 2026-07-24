@@ -1,9 +1,16 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Shield, LayoutDashboard, Users, FileText, Menu, X } from "lucide-react";
+import { Shield, LayoutDashboard, Users, FileText, Menu, X, LogOut } from "lucide-react";
+import { logout } from "../api/client";
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const navItems = [
     { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -55,6 +62,13 @@ export default function AdminLayout() {
           <div className="admin-header-title">
             <h1>Admin Dashboard</h1>
           </div>
+          <button 
+            className="admin-logout-btn"
+            onClick={handleLogout}
+          >
+            <LogOut size={18} />
+            <span>Logout</span>
+          </button>
         </header>
         <div className="admin-content">
           <Outlet />

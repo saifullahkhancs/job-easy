@@ -745,6 +745,34 @@ button:disabled {
   text-decoration: underline;
 }
 
+/* Quick login buttons */
+.quick-login-buttons {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+
+.quick-login-btn {
+  margin: 4px;
+  padding: 8px 16px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-login-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
 .error-message {
   background: #fef2f2;
   color: #b91c1c;
