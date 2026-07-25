@@ -19,10 +19,16 @@ build/
 .mypy_cache/
 
 # Node / React
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.env
 frontend/.env.local
+
+# Cloudflare / Wrangler
+.wrangler/
+.dev.vars
+.dev.vars.*
 
 # IDE
 .vscode/

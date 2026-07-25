@@ -1,0 +1,26 @@
+name = "job-easy"
+main = "src/index.ts"
+compatibility_date = "2026-07-25"
+
+# Non-secret runtime defaults passed to the Worker. Secrets are added with
+# `npx wrangler secret put ...` and then forwarded to the container by src/index.ts.
+[vars]
+ENVIRONMENT = "production"
+DEBUG = "false"
+RATE_LIMIT_ENABLED = "true"
+
+[[containers]]
+class_name = "BackendContainer"
+image = "./Dockerfile"
+max_instances = 1
+
+[[durable_objects.bindings]]
+name = "BACKEND_CONTAINER"
+class_name = "BackendContainer"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = [ "BackendContainer" ]
+
+[observability]
+enabled = true

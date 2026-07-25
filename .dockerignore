@@ -1,0 +1,51 @@
+# Git / local metadata
+.git
+.gitignore
+.arena
+.cursor
+.kiro
+.vscode
+.idea
+
+# Secrets and local env files
+.env
+.env.*
+.dev.vars
+*.pem
+*.key
+
+# Python caches / virtualenvs
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.venv/
+venv/
+ENV/
+*.egg-info/
+build/
+dist/
+coverage/
+
+# Node / frontend / Worker files are not needed in the backend image
+node_modules/
+package.json
+package-lock.json
+wrangler.toml
+src/
+frontend/node_modules/
+frontend/dist/
+frontend/.env*
+frontend/
+
+# Logs / OS files
+*.log
+.DS_Store
+Thumbs.db
+
+# Tests/docs are not needed at runtime
+tests/
+README.md
+BACKEND_README.md
+CLOUDFLARE_BACKEND_DEPLOYMENT.md
