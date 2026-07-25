@@ -49,3 +49,5 @@ Thumbs.db
 
 tests/
 /tests/
+
+.deploy_env
