@@ -89,7 +89,7 @@ https://your-frontend.pages.dev,http://localhost:5173
 Also set your frontend production build variable:
 
 ```text
-VITE_API_URL=https://job-easy-backend.<your-workers-subdomain>.workers.dev
+VITE_API_URL=https://job-easy.<your-workers-subdomain>.workers.dev
 ```
 
 ## Local deployment flow
@@ -112,7 +112,7 @@ npx wrangler tail
 Health check:
 
 ```bash
-curl https://job-easy-backend.<your-workers-subdomain>.workers.dev/api/health
+curl https://job-easy.<your-workers-subdomain>.workers.dev/api/health
 ```
 
 Expected response:
