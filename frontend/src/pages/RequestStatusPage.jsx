@@ -1,8 +1,55 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Clock, CheckCircle, XCircle, RefreshCw, ArrowRight, AlertCircle } from "lucide-react";
-import { getApprovalStatus, listMyRequests, getCurrentUser } from "../api/client";
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+  ArrowRight,
+  AlertCircle,
+  Inbox,
+  CalendarClock,
+  ShieldCheck,
+  FileText,
+} from "lucide-react";
+import { getApprovalStatus, getCurrentUser } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
+
+const STATUS_CONFIG = {
+  pending: {
+    icon: Clock,
+    accent: "pending",
+    title: "Pending Approval",
+    description: "Your request is in the queue and being reviewed by an admin.",
+    hint: "Most requests are reviewed within one business day.",
+  },
+  approved: {
+    icon: CheckCircle,
+    accent: "approved",
+    title: "Approved",
+    description:
+      "Congratulations! You now have full access to Job Easy's email automation features.",
+    hint: "Head to Templates to create your first application template.",
+    actionText: "Go to Templates",
+    actionPath: "/app/templates",
+  },
+  rejected: {
+    icon: XCircle,
+    accent: "rejected",
+    title: "Rejected",
+    description:
+      "Your request was not approved. Review the admin notes below, then submit a new request.",
+    hint: "Fixing the issue mentioned in the notes usually resolves it.",
+    actionText: "Submit New Request",
+    actionPath: "/app/request-access",
+  },
+};
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+}
 
 export default function RequestStatusPage() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -13,14 +60,18 @@ export default function RequestStatusPage() {
 
   const fetchStatus = async () => {
     try {
-      const [user, status] = await Promise.all([
-        getCurrentUser(),
-        getApprovalStatus()
-      ]);
+      const user = await getCurrentUser();
       setCurrentUser(user);
+    } catch (err) {
+      console.error("Failed to fetch user:", err);
+    }
+
+    try {
+      const status = await getApprovalStatus();
       setRequest(status);
-    } catch (error) {
-      console.error("Failed to fetch status:", error);
+    } catch {
+      // A 404 simply means the user has not submitted a request yet.
+      setRequest(null);
     } finally {
       setLoading(false);
     }
@@ -44,105 +95,101 @@ export default function RequestStatusPage() {
     );
   }
 
-  // Admins don't have approval requests — redirect them away
+  // Admins don't have approval requests — point them at the admin panel.
   if (currentUser?.role === "admin") {
     return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", padding: "2rem" }}>
-        <div style={{ width: "100%", maxWidth: "480px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: "16px", padding: "2.5rem", textAlign: "center" }}>
-          <AlertCircle size={48} color="#3b82f6" style={{ marginBottom: "1rem" }} />
-          <h2 style={{ color: "#1e293b", margin: "0 0 0.5rem" }}>Not Available for Admins</h2>
-          <p style={{ color: "#64748b", margin: "0 0 1.5rem" }}>Approval requests are for customer accounts only. Use the Admin Panel to review requests.</p>
-          <button className="primary-btn" onClick={() => navigate("/admin/requests")} style={{ width: "100%", justifyContent: "center" }}>
-            Go to Admin Panel
-            <ArrowRight size={16} className="btn-icon" />
-          </button>
-        </div>
+      <div className="page-container page-container-full-width">
+        <section className="card" style={{ minHeight: "auto", height: "auto" }}>
+          <div className="page-accent-header accent-request">
+            <div>
+              <h2>Approval Requests</h2>
+              <p>Approval requests are for customer accounts only.</p>
+            </div>
+            <div className="page-accent-badge">
+              <ShieldCheck size={22} />
+            </div>
+          </div>
+
+          <div className="result-panel">
+            <div className="result-icon-ring result-icon-info">
+              <AlertCircle size={44} />
+            </div>
+            <h2>Not Available for Admins</h2>
+            <p>Use the Admin Panel to review and action requests submitted by customers.</p>
+            <div className="action-buttons centered">
+              <button className="primary-btn" onClick={() => navigate("/admin/requests")}>
+                Go to Admin Panel
+                <ArrowRight size={18} className="btn-icon" />
+              </button>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
 
-  const getStatusConfig = (status) => {
-    switch (status) {
-      case "pending":
-        return {
-          icon: Clock,
-          color: "yellow",
-          cardBg: "#fef9c3",
-          cardBorder: "#fde047",
-          cardColor: "#92400e",
-          title: "Pending Approval",
-          description: "Your request is currently being reviewed by an admin.",
-          action: null,
-        };
-      case "approved":
-        return {
-          icon: CheckCircle,
-          color: "green",
-          cardBg: "#dcfce7",
-          cardBorder: "#86efac",
-          cardColor: "#166534",
-          title: "Approved",
-          description: "Congratulations! Your request has been approved. You now have full access to email automation features.",
-          action: () => navigate("/app"),
-          actionText: "Go to Dashboard",
-        };
-      case "rejected":
-        return {
-          icon: XCircle,
-          color: "red",
-          cardBg: "#fee2e2",
-          cardBorder: "#fca5a5",
-          cardColor: "#991b1b",
-          title: "Rejected",
-          description: "Your request was not approved. Please review the admin notes below and submit a new request if needed.",
-          action: () => navigate("/app/request-access"),
-          actionText: "Submit New Request",
-        };
-      default:
-        return {
-          icon: Clock,
-          color: "gray",
-          cardBg: "#f1f5f9",
-          cardBorder: "#cbd5e1",
-          cardColor: "#334155",
-          title: "Unknown Status",
-          description: "Unable to determine your approval status.",
-          action: null,
-        };
-    }
-  };
-
-  const statusConfig = request ? getStatusConfig(request.status) : getStatusConfig("pending");
-  const StatusIcon = statusConfig.icon;
-  const { cardBg, cardBorder, cardColor } = statusConfig;
+  const config = request ? STATUS_CONFIG[request.status] : null;
+  const StatusIcon = config?.icon;
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", padding: "2rem" }}>
-      <div style={{ width: "100%", maxWidth: "560px" }}>
-
-        {/* Status Card */}
-        <div style={{
-          background: cardBg,
-          border: `2px solid ${cardBorder}`,
-          borderRadius: "16px",
-          padding: "2.5rem",
-          textAlign: "center",
-          marginBottom: "1.5rem",
-        }}>
-          <StatusIcon size={56} color={cardColor} style={{ marginBottom: "1rem" }} />
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: cardColor, margin: "0 0 0.5rem" }}>
-            {statusConfig.title}
-          </h1>
-          <p style={{ color: cardColor, opacity: 0.8, margin: 0 }}>
-            {statusConfig.description}
-          </p>
+    <div className="page-container page-container-full-width">
+      <section className="card" style={{ minHeight: "auto", height: "auto" }}>
+        <div className="page-accent-header accent-request">
+          <div>
+            <h2>Request Status</h2>
+            <p>Track your email automation approval request.</p>
+          </div>
+          <div className="page-accent-badge">
+            <Inbox size={22} />
+          </div>
         </div>
 
-        {/* Controls row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-          <h2 style={{ margin: 0, fontSize: "1.1rem", color: "#334155" }}>Approval Request Status</h2>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            {request && (
+        {/* Status hero */}
+        {config ? (
+          <div className={`status-hero status-hero-${config.accent}`}>
+            <div className="status-hero-icon">
+              <StatusIcon size={40} />
+            </div>
+            <div className="status-hero-content">
+              <div className="status-hero-title-row">
+                <h2>{config.title}</h2>
+                {currentUser && (
+                  <div className="header-badges">
+                    <RoleBadge role={currentUser.role} />
+                    <ApprovalStatusBadge status={request.status} />
+                  </div>
+                )}
+              </div>
+              <p>{config.description}</p>
+              {config.hint && <span className="status-hero-hint">{config.hint}</span>}
+            </div>
+          </div>
+        ) : (
+          <div className="result-panel">
+            <div className="result-icon-ring result-icon-muted">
+              <FileText size={44} />
+            </div>
+            <h2>No Request Found</h2>
+            <p>
+              You haven't submitted an approval request yet. Set up your sender identity to get
+              started with email automation.
+            </p>
+            <div className="action-buttons centered">
+              <button className="primary-btn" onClick={() => navigate("/app/request-access")}>
+                Submit a Request
+                <ArrowRight size={18} className="btn-icon" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {request && (
+          <>
+            <div className="section-header">
+              <div>
+                <h2>Request Details</h2>
+                <p className="section-description">A timeline of your submission.</p>
+              </div>
               <button
                 className="secondary-btn"
                 onClick={handleRefresh}
@@ -152,68 +199,58 @@ export default function RequestStatusPage() {
                 <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
                 {refreshing ? "Refreshing..." : "Refresh"}
               </button>
-            )}
-            {!request && (
-              <button className="primary-btn" onClick={() => navigate("/app/request-access")}>
-                Submit New Request
-                <ArrowRight size={16} className="btn-icon" />
-              </button>
-            )}
-            {/* <div style={{ display: "flex", gap: "0.5rem" }}>
-              {currentUser && <RoleBadge role={currentUser.role} />}
-              {request && <ApprovalStatusBadge status={request.approval_status || request.status} />}
-            </div> */}
-          </div>
-        </div>
-
-        {/* Request Details */}
-        {request && (
-          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "1.5rem", marginBottom: "1rem" }}>
-            <h3 style={{ margin: "0 0 1rem", color: "#1e293b" }}>Request Details</h3>
-
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid #f1f5f9" }}>
-              <span style={{ color: "#64748b", fontWeight: 500 }}>Requested At</span>
-              <span style={{ color: "#1e293b" }}>{new Date(request.requested_at).toLocaleString()}</span>
             </div>
 
-            {request.reviewed_at && (
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid #f1f5f9" }}>
-                <span style={{ color: "#64748b", fontWeight: 500 }}>Reviewed At</span>
-                <span style={{ color: "#1e293b" }}>{new Date(request.reviewed_at).toLocaleString()}</span>
+            <div className="detail-stats-grid">
+              <div className="detail-stat">
+                <span className="detail-stat-label">
+                  <CalendarClock size={15} /> Requested
+                </span>
+                <span className="detail-stat-value">{formatDate(request.requested_at)}</span>
               </div>
-            )}
+              <div className="detail-stat">
+                <span className="detail-stat-label">
+                  <ShieldCheck size={15} /> Reviewed
+                </span>
+                <span className="detail-stat-value">
+                  {request.reviewed_at ? formatDate(request.reviewed_at) : "Awaiting review"}
+                </span>
+              </div>
+              <div className="detail-stat">
+                <span className="detail-stat-label">
+                  <Inbox size={15} /> Status
+                </span>
+                <span className="detail-stat-value" style={{ textTransform: "capitalize" }}>
+                  {request.status}
+                </span>
+              </div>
+            </div>
 
             {request.admin_notes && (
-              <div style={{ marginTop: "1rem", background: "#fef9c3", border: "1px solid #fde047", borderRadius: "8px", padding: "1rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                  <AlertCircle size={16} color="#92400e" />
-                  <span style={{ fontWeight: 600, color: "#92400e" }}>Admin Notes</span>
+              <div className="admin-notes-card">
+                <div className="admin-notes-header">
+                  <AlertCircle size={16} />
+                  Admin Notes
                 </div>
-                <p style={{ margin: 0, color: "#78350f" }}>{request.admin_notes}</p>
+                <p>{request.admin_notes}</p>
               </div>
             )}
-          </div>
-        )}
 
-        {/* No request state */}
-        {!request && (
-          <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "12px", padding: "2rem", textAlign: "center" }}>
-            <AlertCircle size={32} color="#94a3b8" style={{ marginBottom: "0.75rem" }} />
-            <h3 style={{ color: "#1e293b", margin: "0 0 0.5rem" }}>No Request Found</h3>
-            <p style={{ color: "#64748b", margin: 0 }}>You haven't submitted an approval request yet. Click the button above to get started.</p>
-          </div>
+            {config?.actionPath && (
+              <div className="action-buttons" style={{ marginTop: "24px" }}>
+                <button
+                  className="primary-btn"
+                  onClick={() => navigate(config.actionPath)}
+                  style={{ width: "100%", justifyContent: "center" }}
+                >
+                  {config.actionText}
+                  <ArrowRight size={18} className="btn-icon" />
+                </button>
+              </div>
+            )}
+          </>
         )}
-
-        {/* Action button */}
-        {statusConfig.action && (
-          <div style={{ marginTop: "1rem" }}>
-            <button className="primary-btn" onClick={statusConfig.action} style={{ width: "100%", justifyContent: "center" }}>
-              {statusConfig.actionText}
-              <ArrowRight size={20} className="btn-icon" />
-            </button>
-          </div>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

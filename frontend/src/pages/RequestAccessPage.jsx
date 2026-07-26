@@ -1,15 +1,55 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, Info, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  User,
+  ArrowRight,
+  ArrowLeft,
+  Info,
+  CheckCircle,
+  AlertCircle,
+  Mail,
+  ShieldCheck,
+  Send,
+  Sparkles,
+  Clock,
+  PartyPopper,
+} from "lucide-react";
 import { createEmailInfo, submitApprovalRequest, getEmailInfo } from "../api/client";
-import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
+
+const PLATFORM_EMAIL = "info@jobeasy.online";
+
+const STEPS = [
+  { key: "setup", label: "Configure", icon: User },
+  { key: "confirm", label: "Review", icon: ShieldCheck },
+  { key: "submitted", label: "Submitted", icon: PartyPopper },
+];
+
+function StepIndicator({ current }) {
+  const currentIndex = STEPS.findIndex((s) => s.key === current);
+
+  return (
+    <ol className="stepper">
+      {STEPS.map((step, index) => {
+        const Icon = step.icon;
+        const state =
+          index < currentIndex ? "done" : index === currentIndex ? "active" : "upcoming";
+        return (
+          <li key={step.key} className={`stepper-item stepper-${state}`}>
+            <span className="stepper-bullet">
+              {state === "done" ? <CheckCircle size={16} /> : <Icon size={16} />}
+            </span>
+            <span className="stepper-label">{step.label}</span>
+            {index < STEPS.length - 1 && <span className="stepper-line" aria-hidden="true" />}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 export default function RequestAccessPage() {
   const [step, setStep] = useState("setup");
-  const [formData, setFormData] = useState({
-    senderName: "",
-    senderEmail: "", // Only for display, not used for sending
-  });
+  const [formData, setFormData] = useState({ senderName: "", senderEmail: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailInfoId, setEmailInfoId] = useState(null);
@@ -28,8 +68,8 @@ export default function RequestAccessPage() {
             senderEmail: info.sender_email || "",
           });
         }
-      } catch (error) {
-        // No existing email info, that's fine
+      } catch {
+        // No existing email info — that's fine, the user is setting it up now.
       }
     };
     checkExistingEmailInfo();
@@ -47,12 +87,7 @@ export default function RequestAccessPage() {
     setLoading(true);
 
     try {
-      const data = await createEmailInfo(
-        "info@jobeasy.online", // Platform email
-        formData.senderName,
-        "", // No API key needed - using platform's Resend
-        "resend"
-      );
+      const data = await createEmailInfo(PLATFORM_EMAIL, formData.senderName, "", "resend");
       setEmailInfoId(data.id);
       setStep("confirm");
     } catch (err) {
@@ -76,175 +111,245 @@ export default function RequestAccessPage() {
     }
   };
 
+  const previewName = formData.senderName || "Your Name";
+
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div>
-        <h1>Request Email Automation Access</h1>
-        <p>Set up your email configuration to send automated job applications</p>
+    <div className="page-container page-container-full-width">
+      <section className="card" style={{ minHeight: "auto", height: "auto" }}>
+        {/* Slate accent header, matching the rest of the app */}
+        <div className="page-accent-header accent-request">
+          <div>
+            <h2>Request Email Automation Access</h2>
+            <p>Set up your sender identity, then send it to an admin for approval.</p>
+          </div>
+          <div className="page-accent-badge">
+            <ShieldCheck size={22} />
+          </div>
         </div>
-      </div>
 
-      {step === "setup" && (
-        <div className="content-card">
-          <div className="info-banner">
-            <Info size={20} className="banner-icon" />
-            <div>
-              <h3>Email Automation Setup</h3>
-              <p>Configure your email display name for sending job applications.</p>
-            </div>
+        <StepIndicator current={step} />
+
+        {error && (
+          <div className="error-message" style={{ marginBottom: "20px" }}>
+            {error}
           </div>
+        )}
 
-          <div className="instructions-section">
-            <h3>Free Tier Information:</h3>
-            <p className="note-text">
-              For now, we are using Resend's free tier with our own email to send job applications.
-              This allows us to provide email automation without requiring you to set up your own SMTP credentials.
-            </p>
-            <p className="note-text">
-              <strong>Note:</strong> When the app is fully supported, you'll be able to use your own email service (Gmail SMTP or Resend) with custom credentials.
-            </p>
-            <p className="note-text">
-              Resend free tier provides limited daily quota for email sending.
-            </p>
-          </div>
-
-          <div className="security-note">
-            <CheckCircle size={20} className="note-icon" />
-            <div>
-              <strong>Current Setup:</strong> 
-              <ul>
-                <li>Emails are sent from our verified Resend email</li>
-                <li>Your display name will be shown as the sender</li>
-                <li>Daily sending limits apply due to free tier</li>
-              </ul>
-            </div>
-          </div>
-
-          <form onSubmit={handleSetup} className="form">
-            {error && <div className="error-message">{error}</div>}
-
-            <div className="form-group">
-              <label htmlFor="senderName">Sender Display Name</label>
-              <div className="input-wrapper">
-                <User size={20} className="input-icon" />
-                <input
-                  id="senderName"
-                  type="text"
-                  value={formData.senderName}
-                  onChange={(e) => setFormData({ ...formData, senderName: e.target.value })}
-                  placeholder="John Doe"
-                  required
-                />
+        {/* ── Step 1: Configure ───────────────────────────────────────────── */}
+        {step === "setup" && (
+          <div className="form-page-layout">
+            <div className="form-main-panel">
+              <div className="info-banner" style={{ marginBottom: "24px" }}>
+                <Info size={20} className="banner-icon" />
+                <div>
+                  <h3>Email Automation Setup</h3>
+                  <p>Choose the display name recruiters will see on your applications.</p>
+                </div>
               </div>
-              <p className="input-hint">This name will be displayed as the sender in emails</p>
+
+              <form onSubmit={handleSetup} className="form">
+                <label>
+                  Sender Display Name
+                  <div className="input-wrapper">
+                    <User size={18} className="input-icon" />
+                    <input
+                      id="senderName"
+                      type="text"
+                      value={formData.senderName}
+                      onChange={(e) => setFormData({ ...formData, senderName: e.target.value })}
+                      placeholder="John Doe"
+                      required
+                    />
+                  </div>
+                  <p className="input-hint">This name appears as the sender in every email.</p>
+                </label>
+
+                <button type="submit" className="primary-btn" disabled={loading}>
+                  {loading ? "Saving..." : "Continue to Review"}
+                  {!loading && <ArrowRight size={18} className="btn-icon" />}
+                </button>
+              </form>
             </div>
 
-            <div className="preview-section">
-              <h4>Email Preview:</h4>
-              <div className="preview-box">
-                <strong>{formData.senderName || "Your Name"} &lt;info@jobeasy.online&gt;</strong>
+            <div className="form-side-panel">
+              {/* Live email preview */}
+              <div className="email-preview-card">
+                <div className="email-preview-top">
+                  <span className="email-preview-dot" style={{ background: "#ef4444" }} />
+                  <span className="email-preview-dot" style={{ background: "#f59e0b" }} />
+                  <span className="email-preview-dot" style={{ background: "#10b981" }} />
+                  <span className="email-preview-title">Email Preview</span>
+                </div>
+                <div className="email-preview-body">
+                  <div className="email-preview-avatar">
+                    {previewName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="email-preview-meta">
+                    <strong>{previewName}</strong>
+                    <span>&lt;{PLATFORM_EMAIL}&gt;</span>
+                  </div>
+                </div>
+                <div className="email-preview-subject">
+                  <Mail size={14} />
+                  Application for Software Engineer
+                </div>
               </div>
-              <p className="preview-note">Emails will be sent from our platform email with your display name</p>
-            </div>
 
-            <button type="submit" className="primary-btn" disabled={loading}>
-              {loading ? "Saving..." : "Continue to Review"}
-              {!loading && <ArrowRight size={20} className="btn-icon" />}
-            </button>
-          </form>
-        </div>
-      )}
-
-      {step === "confirm" && (
-        <div className="content-card">
-          <div className="confirm-section">
-            <h2>Review Your Email Configuration</h2>
-            
-            <div className="review-item">
-              <label>Sender Display Name:</label>
-              <span>{formData.senderName}</span>
-            </div>
-            
-            <div className="review-item">
-              <label>Email From:</label>
-              <span>info@jobeasy.online (Platform Email)</span>
-            </div>
-
-            <div className="review-item">
-              <label>Email Preview:</label>
-              <span className="preview-text">{formData.senderName || "Your Name"} &lt;info@jobeasy.online&gt;</span>
-            </div>
-
-            <div className="warning-banner">
-              <AlertCircle size={20} className="banner-icon" />
-              <div>
-                <strong>Before Submitting:</strong>
-                <ul>
-                  <li>Ensure your display name is correct</li>
-                  <li>Emails will be sent from our platform email</li>
-                  <li>Once submitted, an admin will review your request</li>
+              <div className="fact-card">
+                <div className="fact-card-header">
+                  <Sparkles size={16} />
+                  How sending works today
+                </div>
+                <ul className="fact-list">
+                  <li>Emails go out from our verified Resend address.</li>
+                  <li>Your display name is shown as the sender.</li>
+                  <li>Daily sending limits apply on the free tier.</li>
+                  <li>Custom SMTP / your own domain is coming later.</li>
                 </ul>
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="action-buttons">
-              <button 
-                type="button" 
-                className="secondary-btn"
-                onClick={() => setStep("setup")}
-              >
-                Back to Edit
-              </button>
-              <button 
-                type="button" 
-                className="primary-btn"
-                onClick={handleSubmitRequest}
-                disabled={loading}
-              >
-                {loading ? "Submitting..." : "Submit Approval Request"}
-                {!loading && <ArrowRight size={20} className="btn-icon" />}
-              </button>
+        {/* ── Step 2: Review ──────────────────────────────────────────────── */}
+        {step === "confirm" && (
+          <div className="form-page-layout">
+            <div className="form-main-panel">
+              <h3 className="review-heading">Review Your Email Configuration</h3>
+
+              <div className="review-list">
+                <div className="review-row">
+                  <span className="review-label">
+                    <User size={15} /> Sender Display Name
+                  </span>
+                  <span className="review-value">{formData.senderName || "—"}</span>
+                </div>
+                <div className="review-row">
+                  <span className="review-label">
+                    <Mail size={15} /> Email From
+                  </span>
+                  <span className="review-value">{PLATFORM_EMAIL}</span>
+                </div>
+                <div className="review-row">
+                  <span className="review-label">
+                    <Send size={15} /> Appears As
+                  </span>
+                  <span className="review-value">
+                    {previewName} &lt;{PLATFORM_EMAIL}&gt;
+                  </span>
+                </div>
+              </div>
+
+              <div className="limit-warning" style={{ marginTop: "24px" }}>
+                <AlertCircle size={20} className="warning-icon" />
+                <div>
+                  <strong style={{ color: "#92400e" }}>Before submitting</strong>
+                  <ul className="tight-list">
+                    <li>Double-check that your display name is spelled correctly.</li>
+                    <li>Emails will be sent from the platform address above.</li>
+                    <li>An admin reviews every request manually.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="action-buttons">
+                <button type="button" className="secondary-btn" onClick={() => setStep("setup")}>
+                  <ArrowLeft size={18} />
+                  Back to Edit
+                </button>
+                <button
+                  type="button"
+                  className="primary-btn"
+                  onClick={handleSubmitRequest}
+                  disabled={loading}
+                >
+                  {loading ? "Submitting..." : "Submit Approval Request"}
+                  {!loading && <ArrowRight size={18} className="btn-icon" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="form-side-panel">
+              <div className="fact-card">
+                <div className="fact-card-header">
+                  <Clock size={16} />
+                  What happens next
+                </div>
+                <ol className="timeline-list">
+                  <li>
+                    <strong>Admin review</strong>
+                    <span>Your configuration is checked by our team.</span>
+                  </li>
+                  <li>
+                    <strong>Decision</strong>
+                    <span>You'll be notified once it's approved or rejected.</span>
+                  </li>
+                  <li>
+                    <strong>Full access</strong>
+                    <span>Create templates and send applications right away.</span>
+                  </li>
+                </ol>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {step === "submitted" && (
-        <div className="content-card">
-          <div className="success-state">
-            <div className="success-icon">✓</div>
+        {/* ── Step 3: Submitted ───────────────────────────────────────────── */}
+        {step === "submitted" && (
+          <div className="result-panel result-success">
+            <div className="result-icon-ring">
+              <CheckCircle size={44} />
+            </div>
             <h2>Request Submitted Successfully</h2>
-            <p>Your email automation request has been submitted for admin review.</p>
-            
-            <div className="next-steps">
-              <h3>What happens next:</h3>
-              <ul>
-                <li>An admin will review your email configuration</li>
-                <li>You'll be notified once your request is approved or rejected</li>
-                <li>Upon approval, you'll gain access to create templates and send emails</li>
-              </ul>
+            <p>
+              Your email automation request is now in the review queue. We'll let you know as soon
+              as an admin makes a decision.
+            </p>
+
+            <div className="result-steps">
+              <div className="result-step">
+                <span className="result-step-index">1</span>
+                <div>
+                  <strong>Admin reviews your configuration</strong>
+                  <p>Usually within one business day.</p>
+                </div>
+              </div>
+              <div className="result-step">
+                <span className="result-step-index">2</span>
+                <div>
+                  <strong>You get a decision</strong>
+                  <p>Approved or rejected, with notes if anything needs fixing.</p>
+                </div>
+              </div>
+              <div className="result-step">
+                <span className="result-step-index">3</span>
+                <div>
+                  <strong>Start automating</strong>
+                  <p>Create templates and send job applications instantly.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="action-buttons">
-              <button 
-                type="button" 
+            <div className="action-buttons centered">
+              <button
+                type="button"
                 className="primary-btn"
                 onClick={() => navigate("/app/request-status")}
               >
                 Check Request Status
+                <ArrowRight size={18} className="btn-icon" />
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="secondary-btn"
-                onClick={() => navigate("/app")}
+                onClick={() => navigate("/app/templates")}
               >
-                Return to Dashboard
+                Return to Templates
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </section>
     </div>
   );
 }

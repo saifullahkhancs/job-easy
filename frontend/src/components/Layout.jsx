@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutGrid, LayoutTemplate, Send, LogOut, User, Clock, UploadCloud, Edit, CheckCircle2 } from "lucide-react";
+import { LayoutGrid, LayoutTemplate, Send, LogOut, User, Clock, UploadCloud, Edit, CheckCircle2, FolderKanban } from "lucide-react";
 import { getCurrentUser, logout } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "./RoleBadge";
 import { ROLES } from "./RoleGuard";
@@ -39,6 +39,7 @@ export default function Layout() {
     if (!currentUser) {
       // For guest, show all pages (disabled state)
       return [
+        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
         { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
@@ -52,6 +53,7 @@ export default function Layout() {
 
     if (isVisitor) {
       return [
+        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
         { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
@@ -63,6 +65,7 @@ export default function Layout() {
 
     if (isCustomer) {
       return [
+        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
         { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },
@@ -73,6 +76,7 @@ export default function Layout() {
 
     if (isAdmin) {
       return [
+        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
         { to: "/app/new", label: "New Template", icon: UploadCloud },
         { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
         { to: "/app/send", label: "Send Email", icon: Send },

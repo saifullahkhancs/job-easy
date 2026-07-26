@@ -15,6 +15,7 @@ import RequestStatusPage from "./pages/RequestStatusPage";
 import DashboardPage from "./pages/DashboardPage";
 import TemplateCreatePage from "./pages/TemplateCreatePage";
 import TemplateEditPage from "./pages/TemplateEditPage";
+import TemplateViewPage from "./pages/TemplateViewPage";
 import AdminDashboardPage from "./admin/AdminDashboardPage";
 import AdminRequestsPage from "./admin/AdminRequestsPage";
 import AdminUsersPage from "./admin/AdminUsersPage";
@@ -43,6 +44,7 @@ export default function App() {
           {/* Publicly accessible routes (components handle guest/visitor state) */}
           <Route index element={<Navigate to="new" replace />} />
           <Route path="templates" element={<DashboardPage />} />
+          <Route path="templates/:id" element={<TemplateViewPage />} />
           <Route path="new" element={<TemplateCreatePage />} />
           <Route path="send" element={<SendPage />} />
           <Route path="view" element={<ViewPage />} />

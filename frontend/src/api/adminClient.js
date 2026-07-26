@@ -119,6 +119,14 @@ export async function promoteTemplateToDefault(templateId) {
   return handleResponse(response);
 }
 
+export async function revertDefaultTemplate(templateId) {
+  const response = await fetch(`${API_BASE}/api/v1/admin/default-templates/revert/${templateId}`, {
+    method: "POST",
+    headers: getHeaders(),
+  });
+  return handleResponse(response);
+}
+
 export async function createAdminDefaultTemplate(formData) {
   const response = await fetch(`${API_BASE}/api/v1/admin/default-templates`, {
     method: "POST",

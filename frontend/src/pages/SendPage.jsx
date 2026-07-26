@@ -27,10 +27,13 @@ export default function SendPage() {
 
       try {
         const items = await fetchTemplatesV2();
-        // Filter to show only customer's personal templates for sending
-        const personalTemplates = items.filter(t => t.template_scope === "customer");
-        setTemplates(personalTemplates);
-        if (personalTemplates.length > 0) setSelectedTemplateId(personalTemplates[0].id);
+        // Show the templates this user authored: their personal ones plus any
+        // of their CVs an admin promoted to a platform default (`is_mine`).
+        const sendableTemplates = items.filter(
+          (t) => t.template_scope === "customer" || t.is_mine
+        );
+        setTemplates(sendableTemplates);
+        if (sendableTemplates.length > 0) setSelectedTemplateId(sendableTemplates[0].id);
       } catch (err) {
         setError(err.message);
       }
