@@ -773,6 +773,55 @@ button:disabled {
   color: #0f172a;
 }
 
+/* Admin destination selector */
+.admin-destination-selector {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.selector-label {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.radio-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #475569;
+  cursor: pointer;
+  padding: 10px 20px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.radio-label input[type="radio"] {
+  cursor: pointer;
+}
+
+.radio-label:has(input:checked) {
+  border-color: #f97316;
+  background: #fff7ed;
+}
+
+.radio-label:has(input:checked) span {
+  color: #f97316;
+  font-weight: 600;
+}
+
 .error-message {
   background: #fef2f2;
   color: #b91c1c;
@@ -1129,6 +1178,26 @@ button:disabled {
   font-size: 1.5rem;
   color: #0f172a;
   font-weight: 700;
+}
+
+.admin-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-logout-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
 }
 
 .admin-content {

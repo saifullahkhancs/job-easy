@@ -107,13 +107,18 @@ async def send_job_application_email(
     cv_filename: str,
 ) -> None:
     """Send job application email with CV attachment via SMTP."""
+    # Use platform email for sending, but display user's name
+    # Fallback to sender_email if sender_name is not provided
+    display_name = sender_name if sender_name else sender_email
+    from_email = settings.SMTP_FROM_EMAIL  # Always use platform email
+    
     await asyncio.to_thread(
         email_sender.send_email,
         to_email=recipient_email,
         subject=subject,
         html_content=html_content,
-        from_name=sender_name,
-        from_email=sender_email,
+        from_name=display_name,
+        from_email=from_email,
         attachment_bytes=cv_bytes,
         attachment_filename=cv_filename,
     )

@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [adminDestination, setAdminDestination] = useState("admin"); // "admin" or "app"
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,7 +42,12 @@ export default function LoginPage() {
       // Fetch user to check role and redirect accordingly
       const user = await getCurrentUser();
       if (user.role === "admin") {
-        navigate("/admin");
+        // Admin can choose to go to admin dashboard or app
+        if (adminDestination === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/app/new");
+        }
       } else {
         navigate("/app/new");
       }
@@ -132,6 +138,7 @@ export default function LoginPage() {
             onClick={() => {
               setEmail("admin@example.com");
               setPassword("admin123");
+              setAdminDestination("admin");
             }}
           >
             Login as Admin
@@ -147,6 +154,31 @@ export default function LoginPage() {
             Login as Customer
           </button>
         </div>
+
+        {email === "admin@example.com" && (
+          <div className="admin-destination-selector">
+            <div className="radio-group">
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="admin"
+                  checked={adminDestination === "admin"}
+                  onChange={() => setAdminDestination("admin")}
+                />
+                <span>Dashboard</span>
+              </label>
+              <label className="radio-label">
+                <input
+                  type="radio"
+                  value="app"
+                  checked={adminDestination === "app"}
+                  onChange={() => setAdminDestination("app")}
+                />
+                <span>App</span>
+              </label>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}

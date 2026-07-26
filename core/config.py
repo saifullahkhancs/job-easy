@@ -20,12 +20,12 @@ class Settings(BaseSettings):
     PASSWORD_RESET_URL: str = os.environ.get("PASSWORD_RESET_URL", "")
     BACKEND_CORS_ORIGINS: str | None = None
 
-    # SMTP configuration for system emails
+    # SMTP configuration for system emails (Resend)
     SMTP_HOST: str = Field("smtp.resend.com", env=["SMTP_HOST"])
     SMTP_PORT: int = Field(587, env=["SMTP_PORT"])
     SMTP_USERNAME: str = Field("resend", env=["SMTP_USERNAME"])
     SMTP_PASSWORD: str = Field("", env=["SMTP_PASSWORD"]) # Your Resend API key
-    SMTP_FROM_EMAIL: str = Field("saifullah2019@namal.edu.pk", env=["SMTP_FROM_EMAIL"])
+    SMTP_FROM_EMAIL: str = Field("info@jobeasy.online", env=["SMTP_FROM_EMAIL"])
     SMTP_FROM_NAME: str = Field("Job Easy", env=["SMTP_FROM_NAME"])
     SMTP_USE_TLS: bool = Field(True, env=["SMTP_USE_TLS"])
     SMTP_USE_SSL: bool = Field(False, env=["SMTP_USE_SSL"])

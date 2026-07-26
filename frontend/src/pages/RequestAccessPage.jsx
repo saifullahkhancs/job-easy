@@ -1,16 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, Info, Shield, AlertCircle } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, Info, CheckCircle, AlertCircle } from "lucide-react";
 import { createEmailInfo, submitApprovalRequest, getEmailInfo } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
 
 export default function RequestAccessPage() {
   const [step, setStep] = useState("setup"); // "setup", "confirm", "submitted"
   const [formData, setFormData] = useState({
-    senderEmail: "",
     senderName: "",
-    apiKey: "", // Changed from appPassword to apiKey
-    emailProvider: "gmail",
+    senderEmail: "", // Only for display, not used for sending
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,10 +25,8 @@ export default function RequestAccessPage() {
         if (info) {
           setEmailInfoId(info.id);
           setFormData({
-            senderEmail: info.sender_email,
-            senderName: info.sender_name,
-            apiKey: "", // Changed from appPassword to apiKey
-            emailProvider: info.email_provider,
+            senderName: info.sender_name || "",
+            senderEmail: info.sender_email || "",
           });
         }
       } catch (error) {
@@ -49,8 +45,8 @@ export default function RequestAccessPage() {
       const data = await createEmailInfo(
         formData.senderEmail,
         formData.senderName,
-        formData.apiKey, // Changed from appPassword to apiKey
-        "resend" // Default to resend
+        "", // No API key needed - using platform's Resend
+        "resend"
       );
       setEmailInfoId(data.id);
       setStep("confirm");
@@ -75,13 +71,13 @@ export default function RequestAccessPage() {
     }
   };
 
-  const senderPreview = `${formData.senderName} <${formData.senderEmail}>`;
-
   return (
     <div className="page-container">
       <div className="page-header">
+        <div>
         <h1>Request Email Automation Access</h1>
         <p>Set up your email configuration to send automated job applications</p>
+        </div>
       </div>
 
       {step === "setup" && (
@@ -89,46 +85,39 @@ export default function RequestAccessPage() {
           <div className="info-banner">
             <Info size={20} className="banner-icon" />
             <div>
-              <h3>Resend API Key Required</h3>
-              <p>You need to provide your Resend API Key to enable email automation.</p>
+              <h3>Email Automation Setup</h3>
+              <p>Configure your email display name for sending job applications.</p>
             </div>
           </div>
 
           <div className="instructions-section">
-            <h3>How to Get Your Resend API Key:</h3>
-            <ol className="instructions-list">
-              <li>Go to your Resend Dashboard.</li>
-              <li>Navigate to "API Keys" section.</li>
-              <li>Create a new API Key with "Full Access" or appropriate permissions.</li>
-              <li>Copy the generated API Key.</li>
-            </ol>
+            <h3>Free Tier Information:</h3>
+            <p className="note-text">
+              For now, we are using Resend's free tier with our own email to send job applications.
+              This allows us to provide email automation without requiring you to set up your own SMTP credentials.
+            </p>
+            <p className="note-text">
+              <strong>Note:</strong> When the app is fully supported, you'll be able to use your own email service (Gmail SMTP or Resend) with custom credentials.
+            </p>
+            <p className="note-text">
+              Resend free tier provides limited daily quota for email sending.
+            </p>
           </div>
 
           <div className="security-note">
-            <Shield size={20} className="note-icon" />
+            <CheckCircle size={20} className="note-icon" />
             <div>
-              <strong>Security Note:</strong> Your app password is encrypted and cannot be seen by admin. 
-              Your Resend API Key is encrypted and cannot be seen by admin. It's only used to send emails on your behalf.
+              <strong>Current Setup:</strong> 
+              <ul>
+                <li>Emails are sent from our verified Resend email</li>
+                <li>Your display name will be shown as the sender</li>
+                <li>Daily sending limits apply due to free tier</li>
+              </ul>
             </div>
           </div>
 
           <form onSubmit={handleSetup} className="form">
             {error && <div className="error-message">{error}</div>}
-
-            <div className="form-group">
-              <label htmlFor="senderEmail">Sender Email</label>
-              <div className="input-wrapper">
-                <Mail size={20} className="input-icon" />
-                <input
-                  id="senderEmail"
-                  type="email"
-                  value={formData.senderEmail}
-                  onChange={(e) => setFormData({ ...formData, senderEmail: e.target.value })}
-                  placeholder="your-email@gmail.com"
-                  required
-                />
-              </div>
-            </div>
 
             <div className="form-group">
               <label htmlFor="senderName">Sender Display Name</label>
@@ -143,29 +132,15 @@ export default function RequestAccessPage() {
                   required
                 />
               </div>
-            </div>
-
-            <div className="form-group"> 
-              <label htmlFor="apiKey">Resend API Key</label> {/* Changed label */}
-              <div className="input-wrapper">
-                <Lock size={20} className="input-icon" />
-                <input
-                  id="apiKey" // Changed ID
-                  type="password"
-                  value={formData.apiKey} // Changed from appPassword
-                  onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })} // Changed from appPassword
-                  placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxxx" // Updated placeholder
-                  required
-                />
-              </div>
-              <p className="input-hint">Enter your Resend API Key</p> {/* Updated hint */}
+              <p className="input-hint">This name will be displayed as the sender in emails</p>
             </div>
 
             <div className="preview-section">
               <h4>Email Preview:</h4>
               <div className="preview-box">
-                <strong>{senderPreview}</strong>
+                <strong>{formData.senderName || "Your Name"} &lt;info@jobeasy.online&gt;</strong>
               </div>
+              <p className="preview-note">Emails will be sent from our platform email with your display name</p>
             </div>
 
             <button type="submit" className="primary-btn" disabled={loading}>
@@ -182,32 +157,27 @@ export default function RequestAccessPage() {
             <h2>Review Your Email Configuration</h2>
             
             <div className="review-item">
-              <label>Sender Email:</label>
-              <span>{formData.senderEmail}</span>
-            </div>
-            
-            <div className="review-item">
-              <label>Sender Name:</label>
+              <label>Sender Display Name:</label>
               <span>{formData.senderName}</span>
             </div>
             
             <div className="review-item">
-              <label>Email Provider:</label>
-              <span>{formData.emailProvider}</span>
+              <label>Email From:</label>
+              <span>info@jobeasy.online (Platform Email)</span>
             </div>
 
             <div className="review-item">
               <label>Email Preview:</label>
-              <span className="preview-text">{senderPreview}</span>
+              <span className="preview-text">{formData.senderName || "Your Name"} &lt;info@jobeasy.online&gt;</span>
             </div>
 
             <div className="warning-banner">
               <AlertCircle size={20} className="banner-icon" />
               <div>
-                <strong>Before Submitting:</strong> {/* Updated instructions */}
+                <strong>Before Submitting:</strong>
                 <ul>
-                  <li>Ensure your app password is correct</li>
-                  <li>Test that you can send emails from this account</li>
+                  <li>Ensure your display name is correct</li>
+                  <li>Emails will be sent from our platform email</li>
                   <li>Once submitted, an admin will review your request</li>
                 </ul>
               </div>

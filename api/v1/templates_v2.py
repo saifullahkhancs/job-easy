@@ -90,7 +90,8 @@ async def get_template(
                 detail="Visitors can only access default templates",
             )
     elif current_user.role == UserRole.CUSTOMER:
-        if template.owner_user_id != current_user.user_id:
+        # Customers can access their own templates OR default templates
+        if template.template_scope == TemplateScope.CUSTOMER and template.owner_user_id != current_user.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only access your own templates",
@@ -130,7 +131,8 @@ async def download_cv(
                 detail="Visitors can only access default templates",
             )
     elif current_user.role == UserRole.CUSTOMER:
-        if template.owner_user_id != current_user.user_id:
+        # Customers can access their own templates OR default templates
+        if template.template_scope == TemplateScope.CUSTOMER and template.owner_user_id != current_user.user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only access your own templates",
