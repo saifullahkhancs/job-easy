@@ -22,13 +22,11 @@ def _build_admin_request_response(req: EmailAutomationRequest) -> EmailAutomatio
     response_dict = {
         "id": req.id,
         "user_email": req.user_email,
-        "user_id": req.user.user_id if req.user else None,
         "user_email_info_id": req.user_email_info_id,
         "status": req.status,
         "requested_at": req.requested_at,
         "reviewed_at": req.reviewed_at,
         "reviewed_by_admin_email": req.reviewed_by_admin_email,
-        "reviewed_by_admin_id": req.reviewed_by_admin_id,
         "admin_notes": req.admin_notes,
         "user_email_info": None,
     }
@@ -66,14 +64,14 @@ async def list_users(
     return users
 
 
-@router.get("/users/{user_id}", response_model=UserResponse)
+@router.get("/users/{email}", response_model=UserResponse)
 async def get_user(
-    user_id: int,
+    email: str,
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
     """Get a specific user by ID."""
-    result = await db.execute(select(User).where(User.user_id == user_id))
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
 
     if not user:
@@ -85,15 +83,15 @@ async def get_user(
     return user
 
 
-@router.patch("/users/{user_id}", response_model=UserResponse)
+@router.patch("/users/{email}", response_model=UserResponse)
 async def update_user(
-    user_id: int,
+    email: str,
     user_in: UserUpdate,
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
     """Update a user (admin only)."""
-    result = await db.execute(select(User).where(User.user_id == user_id))
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
 
     if not user:
@@ -268,7 +266,7 @@ async def list_all_customer_templates(
             "is_active": tmpl.is_active,
             "created_at": tmpl.created_at,
             "owner": {
-                "user_id": owner.user_id,
+                "user_email": owner.email,
                 "first_name": owner.first_name,
                 "last_name": owner.last_name,
                 "email": owner.email,

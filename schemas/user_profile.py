@@ -11,7 +11,6 @@ class ApprovalStatus(str, Enum):
 
 
 class UserProfileResponse(BaseModel):
-    user_id: int
     first_name: str
     last_name: str
     email: str

@@ -110,7 +110,7 @@ class TestUserRoleTransitions:
         
         # Create email info
         email_info = UserEmailInfo(
-            user_id=user.user_id,
+            user_email=user.email,
             sender_email="john@gmail.com",
             sender_name="John Doe",
             encrypted_app_password="encrypted",
@@ -120,7 +120,7 @@ class TestUserRoleTransitions:
         
         # Create approval request
         request = EmailAutomationRequest(
-            user_id=user.user_id,
+            user_email=user.email,
             user_email_info_id=email_info.id,
             status=RequestStatus.PENDING,
         )
@@ -156,7 +156,7 @@ class TestUserRoleTransitions:
         
         # Create email info
         email_info = UserEmailInfo(
-            user_id=user.user_id,
+            user_email=user.email,
             sender_email="jane@gmail.com",
             sender_name="Jane Smith",
             encrypted_app_password="encrypted",
@@ -166,7 +166,7 @@ class TestUserRoleTransitions:
         
         # Create approval request
         request = EmailAutomationRequest(
-            user_id=user.user_id,
+            user_email=user.email,
             user_email_info_id=email_info.id,
             status=RequestStatus.PENDING,
         )
@@ -206,7 +206,7 @@ class TestTemplateLimit:
         # Create 2 templates (should succeed)
         for i in range(2):
             template = UserTemplate(
-                owner_user_id=user.user_id,
+                owner_user_email=user.email,
                 template_role_type_id=1,
                 title=f"Template {i+1}",
                 context=f"Context {i+1}",
@@ -220,7 +220,7 @@ class TestTemplateLimit:
         # Count templates
         result = await db.execute(
             select(UserTemplate).where(
-                UserTemplate.owner_user_id == user.user_id,
+                UserTemplate.user_email == user.email,
                 UserTemplate.template_scope == TemplateScope.CUSTOMER
             )
         )
@@ -247,7 +247,7 @@ class TestTemplateLimit:
         # Create 2 customer templates
         for i in range(2):
             template = UserTemplate(
-                owner_user_id=user.user_id,
+                owner_user_email=user.email,
                 template_role_type_id=1,
                 title=f"Customer Template {i+1}",
                 context=f"Context {i+1}",
@@ -260,7 +260,7 @@ class TestTemplateLimit:
         # Create default templates (should not count against limit)
         for i in range(5):
             default_template = UserTemplate(
-                owner_user_id=None,  # No owner for default templates
+                user_email=None,  # No owner for default templates
                 template_role_type_id=1,
                 title=f"Default Template {i+1}",
                 context=f"Default Context {i+1}",
@@ -275,7 +275,7 @@ class TestTemplateLimit:
         # Count only customer templates
         result = await db.execute(
             select(UserTemplate).where(
-                UserTemplate.owner_user_id == user.user_id,
+                UserTemplate.user_email == user.email,
                 UserTemplate.template_scope == TemplateScope.CUSTOMER
             )
         )
@@ -305,7 +305,7 @@ class TestEmailInfoOneToOne:
         
         # Create email info
         email_info = UserEmailInfo(
-            user_id=user.user_id,
+            user_email=user.email,
             sender_email="charlie@gmail.com",
             sender_name="Charlie Brown",
             encrypted_app_password="encrypted",
@@ -316,7 +316,7 @@ class TestEmailInfoOneToOne:
         # Try to create another email info for the same user
         # This should fail due to unique constraint
         email_info2 = UserEmailInfo(
-            user_id=user.user_id,
+            user_email=user.email,
             sender_email="charlie2@gmail.com",
             sender_name="Charlie Brown",
             encrypted_app_password="encrypted2",

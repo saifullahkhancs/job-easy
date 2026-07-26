@@ -56,6 +56,6 @@ class RefreshTokenRequest(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: str  # Can be email (old) or user_id (new)
+    sub: str  # User email
     role: UserRole
     token_type: str | None = None

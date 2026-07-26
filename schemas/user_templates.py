@@ -28,7 +28,7 @@ class UserTemplateUpdate(BaseModel):
 
 class UserTemplateResponse(UserTemplateBase):
     id: int
-    owner_user_id: int | None
+    user_email: str | None
     filename: str
     file_size_bytes: int
     is_active: bool

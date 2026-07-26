@@ -51,15 +51,15 @@ export async function listAdminUsers(role, isVerified) {
   return handleResponse(response);
 }
 
-export async function getAdminUser(userId) {
-  const response = await fetch(`${API_BASE}/api/v1/admin/users/${userId}`, {
+export async function getAdminUser(email) {
+  const response = await fetch(`${API_BASE}/api/v1/admin/users/${encodeURIComponent(email)}`, {
     headers: getHeaders(),
   });
   return handleResponse(response);
 }
 
-export async function updateAdminUser(userId, userData) {
-  const response = await fetch(`${API_BASE}/api/v1/admin/users/${userId}`, {
+export async function updateAdminUser(email, userData) {
+  const response = await fetch(`${API_BASE}/api/v1/admin/users/${encodeURIComponent(email)}`, {
     method: "PATCH",
     headers: getHeaders({ 
       "Content-Type": "application/json",

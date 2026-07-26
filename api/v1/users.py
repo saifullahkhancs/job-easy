@@ -20,13 +20,13 @@ async def get_users(
     return result.scalars().all()
 
 
-@router.get("/{user_id}", response_model=UserResponse)
+@router.get("/{email}", response_model=UserResponse)
 async def get_user(
-    user_id: int,
+    email: str,
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(get_current_user),
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
 
     if user is None:
@@ -35,14 +35,14 @@ async def get_user(
     return user
 
 
-@router.patch("/{user_id}", response_model=UserResponse)
+@router.patch("/{email}", response_model=UserResponse)
 async def update_user(
-    user_id: int,
+    email: str,
     user_in: UserUpdate,
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_roles([UserRole.ADMIN.value])),
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
 
     if user is None:
@@ -66,13 +66,13 @@ async def update_user(
     return user
 
 
-@router.delete("/{user_id}", response_model=UserDeleteResponse)
+@router.delete("/{email}", response_model=UserDeleteResponse)
 async def delete_user(
-    user_id: int,
+    email: str,
     db: AsyncSession = Depends(get_db),
     _current_user: User = Depends(require_roles([UserRole.ADMIN.value])),
 ):
-    result = await db.execute(select(User).where(User.user_id == user_id))
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
 
     if user is None:
