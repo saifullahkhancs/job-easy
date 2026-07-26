@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = Field(True, env=["SMTP_USE_TLS"])
     SMTP_USE_SSL: bool = Field(False, env=["SMTP_USE_SSL"])
 
+    # Map Resend API key from the existing SMTP_PASSWORD env var for compatibility
+    EMAIL_FROM: str = Field("info@jobeasy.online", env=["EMAIL_FROM"])
+    EMAIL_FROM_NAME:str = Field("Job Easy", env=["EMAIL_FROM_NAME"])
+    RESEND_API_KEY: str = Field("RESEND_API_KEY", env=["SMTP_PASSWORD"])
     # Rate limiting settings
     RATE_LIMIT_ENABLED: bool = True
     RATE_LIMIT_REQUESTS: int = 100
