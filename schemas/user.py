@@ -3,7 +3,6 @@ from models.roles import UserRole
 
 
 class UserResponse(BaseModel):
-    user_id: int
     first_name: str
     last_name: str
     email: EmailStr

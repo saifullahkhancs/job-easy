@@ -424,7 +424,6 @@ async def get_me(
     template_limit = 2 if current_user.role == UserRole.CUSTOMER else 0
     
     return UserProfileResponse(
-        user_id=current_user.user_id,
         first_name=current_user.first_name,
         last_name=current_user.last_name,
         email=current_user.email,

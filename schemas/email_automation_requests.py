@@ -20,12 +20,12 @@ class EmailAutomationRequestUpdate(BaseModel):
 
 class EmailAutomationRequestResponse(BaseModel):
     id: int
-    user_id: int
+    user_email: str
     user_email_info_id: int
     status: RequestStatus
     requested_at: datetime
     reviewed_at: datetime | None
-    reviewed_by_admin_id: int | None
+    reviewed_by_admin_email: str | None
     admin_notes: str | None
 
     class Config:
@@ -33,4 +33,4 @@ class EmailAutomationRequestResponse(BaseModel):
 
 
 class EmailAutomationRequestAdminResponse(EmailAutomationRequestResponse):
-    user_email: dict | None = None
+    pass

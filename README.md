@@ -133,7 +133,7 @@ VITE_API_URL=http://127.0.0.1:8000
 
 ### Admin (No Authentication - Internal/Dev-Only)
 - GET `/api/v1/admin/users` - List users
-- PATCH `/api/v1/admin/users/{user_id}` - Update user role/status
+- PATCH `/api/v1/admin/users/{email}` - Update user role/status
 - GET `/api/v1/admin/approval-requests` - List approval requests
 - PATCH `/api/v1/admin/approval-requests/{request_id}` - Approve/reject request
 - GET `/api/v1/admin/default-templates` - List default templates

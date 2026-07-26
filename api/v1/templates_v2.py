@@ -49,7 +49,7 @@ async def list_templates(
         # Customers see their own templates + default templates
         result = await db.execute(
             select(UserTemplate).where(
-                ((UserTemplate.owner_user_id == current_user.user_id) & (UserTemplate.template_scope == TemplateScope.CUSTOMER)) |
+                ((UserTemplate.user_email == current_user.email) & (UserTemplate.template_scope == TemplateScope.CUSTOMER)) |
                 (UserTemplate.template_scope == TemplateScope.DEFAULT),
                 UserTemplate.is_active == True
             ).order_by(UserTemplate.created_at.desc())
@@ -91,7 +91,7 @@ async def get_template(
             )
     elif current_user.role == UserRole.CUSTOMER:
         # Customers can access their own templates OR default templates
-        if template.template_scope == TemplateScope.CUSTOMER and template.owner_user_id != current_user.user_id:
+        if template.template_scope == TemplateScope.CUSTOMER and template.user_email != current_user.email:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only access your own templates",
@@ -132,7 +132,7 @@ async def download_cv(
             )
     elif current_user.role == UserRole.CUSTOMER:
         # Customers can access their own templates OR default templates
-        if template.template_scope == TemplateScope.CUSTOMER and template.owner_user_id != current_user.user_id:
+        if template.template_scope == TemplateScope.CUSTOMER and template.user_email != current_user.email:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only access your own templates",
@@ -166,7 +166,7 @@ async def create_template(
     if current_user.role == UserRole.CUSTOMER:
         result = await db.execute(
             select(UserTemplate).where(
-                UserTemplate.owner_user_id == current_user.user_id,
+                UserTemplate.user_email == current_user.email,
                 UserTemplate.template_scope == TemplateScope.CUSTOMER
             )
         )
@@ -179,11 +179,11 @@ async def create_template(
     
     # Normalize template role to lowercase for consistency and check for uniqueness
     normalized_template_role = template_role.lower()
-    owner_id_for_check = current_user.user_id if current_user.role == UserRole.CUSTOMER else None
+    owner_email_for_check = current_user.email if current_user.role == UserRole.CUSTOMER else None
 
     result = await db.execute(
         select(UserTemplate).where(
-            UserTemplate.owner_user_id == owner_id_for_check,
+            UserTemplate.user_email == owner_email_for_check,
             UserTemplate.template_role == normalized_template_role
         )
     )
@@ -196,7 +196,7 @@ async def create_template(
     cv_bytes = await cv_pdf.read()
     
     template = UserTemplate(
-        owner_user_id=current_user.user_id if current_user.role == UserRole.CUSTOMER else None,
+        user_email=current_user.email if current_user.role == UserRole.CUSTOMER else None,
         template_role=normalized_template_role,
         title=title,
         context=context,
@@ -231,7 +231,7 @@ async def update_template(
     
     # Authorization check
     if current_user.role == UserRole.CUSTOMER:
-        if template.owner_user_id != current_user.user_id:
+        if template.user_email != current_user.email:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only update your own templates",
@@ -273,7 +273,7 @@ async def update_template_cv(
     
     # Authorization check
     if current_user.role == UserRole.CUSTOMER:
-        if template.owner_user_id != current_user.user_id:
+        if template.user_email != current_user.email:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only update your own templates",
@@ -306,7 +306,7 @@ async def delete_template(
     
     # Authorization check
     if current_user.role == UserRole.CUSTOMER:
-        if template.owner_user_id != current_user.user_id:
+        if template.user_email != current_user.email:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only delete your own templates",

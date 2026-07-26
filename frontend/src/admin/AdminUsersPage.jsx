@@ -53,7 +53,7 @@ export default function AdminUsersPage() {
 
   const handleSave = async () => {
     try {
-      await updateAdminUser(editingUser.user_id, editForm);
+      await updateAdminUser(editingUser.email, editForm);
       setMessage("User updated successfully");
       setEditingUser(null);
       await fetchUsers();
@@ -185,7 +185,7 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {filteredUsers.map((user) => (
-                <tr key={user.user_id}>
+                <tr key={user.email}>
                   <td>
                     <div className="admin-user-cell">
                       <div className="admin-user-avatar">

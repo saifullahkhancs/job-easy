@@ -154,7 +154,7 @@ export default function Layout() {
       </aside>
 
       <main className="app-main-content" style={{ gridTemplateColumns: "1fr" }}>
-        <Outlet key={currentUser?.user_id || 'guest'} />
+        <Outlet key={currentUser?.email || 'guest'} />
       </main>
     </div>
   );

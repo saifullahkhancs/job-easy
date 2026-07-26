@@ -15,8 +15,7 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 ### Database Schema
 
 #### Users Table
-- `user_id` (PK): Internal user identifier
-- `email`: Unique email address
+- `email` (PK): Canonical user identity and login address
 - `first_name`, `last_name`: User name
 - `hashed_password`: Bcrypt hashed password
 - `is_verified`: Email verification status
@@ -26,7 +25,7 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 
 #### User Email Info Table
 - `id` (PK): Email configuration ID
-- `user_id` (FK, Unique): One-to-one with users
+- `email` (FK, Unique): One-to-one with users
 - `sender_email`: User's email for sending
 - `sender_name`: Display name for emails
 - `encrypted_app_password`: Encrypted app password (never exposed)
@@ -35,7 +34,7 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 
 #### User Templates Table
 - `id` (PK): Template ID
-- `owner_user_id` (FK, Nullable): Owner (null for default templates)
+- `user_email` (FK, Nullable): Owner (null for default templates)
 - `template_role_type_id` (FK): Role type reference
 - `title`, `context`: Template content
 - `filename`, `cv_bytes`: CV file data
@@ -47,11 +46,11 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 
 #### Email Automation Requests Table
 - `id` (PK): Request ID
-- `user_id` (FK): Requesting user
+- `email` (FK): Requesting user
 - `user_email_info_id` (FK): Email configuration being approved
 - `status`: Enum (pending, approved, rejected)
 - `requested_at`, `reviewed_at`: Timestamps
-- `reviewed_by_admin_id` (FK): Admin who reviewed
+- `reviewed_by_admin_email` (FK): Admin who reviewed
 - `admin_notes`: Review notes
 - **Rules**: One active request per user at a time
 
@@ -64,7 +63,7 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 
 #### Password Reset Tokens Table
 - `token_id` (PK): Token ID
-- `user_id` (FK): User reference
+- `email` (FK): User reference
 - `expires_at`: Expiration timestamp
 
 ## API Routes
@@ -151,7 +150,6 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 - **Response**:
   ```json
   {
-    "user_id": 1,
     "first_name": "John",
     "last_name": "Doe",
     "email": "john@example.com",
@@ -272,11 +270,11 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 - **Authentication**: Admin only
 - **Query Params**: `role`, `is_verified`
 
-#### GET `/api/v1/admin/users/{user_id}`
+#### GET `/api/v1/admin/users/{email}`
 - **Description**: Get specific user
 - **Authentication**: Admin only
 
-#### PATCH `/api/v1/admin/users/{user_id}`
+#### PATCH `/api/v1/admin/users/{email}`
 - **Description**: Update user (including role)
 - **Authentication**: Admin only
 
@@ -347,7 +345,7 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
   - Password reset: 5/minute
 
 ### JWT Security
-- JWT tokens use user_id as subject (backward compatible with email)
+- JWT tokens use email as subject (backward compatible with email)
 - Access tokens expire in 15 minutes
 - Refresh tokens expire in 7 days
 - Production mode rejects weak/default JWT secrets
@@ -410,13 +408,10 @@ alembic upgrade head
 ```
 
 The migration:
-1. Adds user_id as primary key to users table
-2. Adds linkedin_url and linkedin_url_normalized columns
-3. Updates role enum to include visitor
-4. Creates new tables: template_role_types, user_templates, user_email_info, email_automation_requests
-5. Updates password_reset_tokens to use user_id
-6. Adds indexes and constraints
-7. Inserts default template role types
+1. Preserves existing users and makes `users.email` the primary key
+2. Removes the surrogate `users.user_id` column
+3. Keeps all user-owned foreign keys on email
+4. Adds indexes and constraints
 
 ## Testing
 
@@ -449,7 +444,7 @@ Tests cover:
 
 ## Important Notes
 
-- **Backward Compatibility**: JWT tokens support both email (old) and user_id (new) as subject
+- **Backward Compatibility**: JWT tokens support both email (old) and email as subject
 - **Password Security**: Never store or log app passwords in plaintext
 - **Rate Limiting**: All sensitive endpoints are rate-limited
 - **Role Transitions**: Only admin can change user roles via approval workflow

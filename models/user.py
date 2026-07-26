@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, ForeignKey, UniqueConstraint, Enum as SQLEnum
+from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, Enum as SQLEnum
 from sqlalchemy.orm import declarative_base, relationship
 from models.roles import UserRole
 
@@ -9,10 +9,10 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(Integer, primary_key=True, autoincrement=True)
+    # Email is the stable identity used by every user-owned record.
+    email = Column(String, primary_key=True, nullable=False)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
-    email = Column(String, nullable=False, unique=True, index=True)
     hashed_password = Column(String, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     verification_code = Column(String, nullable=True)
