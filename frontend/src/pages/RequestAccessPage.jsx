@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, User, ArrowRight, Info, CheckCircle, AlertCircle } from "lucide-react";
 import { createEmailInfo, submitApprovalRequest, getEmailInfo } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
 
 export default function RequestAccessPage() {
-  const [step, setStep] = useState("setup"); // "setup", "confirm", "submitted"
+  const [step, setStep] = useState("setup");
   const [formData, setFormData] = useState({
     senderName: "",
     senderEmail: "", // Only for display, not used for sending
@@ -16,8 +16,7 @@ export default function RequestAccessPage() {
   const [existingEmailInfo, setExistingEmailInfo] = useState(null);
   const navigate = useNavigate();
 
-  // Check if email info already exists
-  useState(() => {
+  useEffect(() => {
     const checkExistingEmailInfo = async () => {
       try {
         const info = await getEmailInfo();
@@ -34,16 +33,22 @@ export default function RequestAccessPage() {
       }
     };
     checkExistingEmailInfo();
-  });
+  }, []);
 
   const handleSetup = async (e) => {
     e.preventDefault();
+
+    if (existingEmailInfo) {
+      setStep("confirm");
+      return;
+    }
+
     setError("");
     setLoading(true);
 
     try {
       const data = await createEmailInfo(
-        formData.senderEmail,
+        "info@jobeasy.online", // Platform email
         formData.senderName,
         "", // No API key needed - using platform's Resend
         "resend"

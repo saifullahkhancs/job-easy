@@ -7,6 +7,10 @@ import {
   MailCheck,
   AlertCircle,
   Send,
+  Shield,
+  User,
+  LayoutDashboard,
+  Smartphone,
 } from "lucide-react";
 import { login, getCurrentUser, verifyEmail, resendVerification } from "../api/client";
 
@@ -18,7 +22,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [adminDestination, setAdminDestination] = useState("admin"); // "admin" or "app"
+  const [adminDestination, setAdminDestination] = useState("app"); // "admin" or "app"
+  const [selectedQuickLogin, setSelectedQuickLogin] = useState("customer"); // "admin" or "customer"
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -134,48 +139,50 @@ export default function LoginPage() {
         <div className="quick-login-buttons">
           <button 
             type="button" 
-            className="quick-login-btn"
+            className={`quick-login-btn ${selectedQuickLogin === "admin" ? "active" : ""}`}
             onClick={() => {
               setEmail("admin@example.com");
               setPassword("admin123");
               setAdminDestination("admin");
+              setSelectedQuickLogin("admin");
             }}
           >
-            Login as Admin
+            <Shield size={16} />
+            <span>Login as Admin</span>
           </button>
           <button 
             type="button" 
-            className="quick-login-btn"
+            className={`quick-login-btn ${selectedQuickLogin === "customer" ? "active" : ""}`}
             onClick={() => {
               setEmail("customer@example.com");
               setPassword("customer123");
+              setSelectedQuickLogin("customer");
             }}
           >
-            Login as Customer
+            <User size={16} />
+            <span>Login as Customer</span>
           </button>
         </div>
 
         {email === "admin@example.com" && (
           <div className="admin-destination-selector">
-            <div className="radio-group">
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  value="admin"
-                  checked={adminDestination === "admin"}
-                  onChange={() => setAdminDestination("admin")}
-                />
+            <div className="toggle-switch">
+              <button
+                type="button"
+                className={`toggle-option ${adminDestination === "admin" ? "active" : ""}`}
+                onClick={() => setAdminDestination("admin")}
+              >
+                <LayoutDashboard size={16} />
                 <span>Dashboard</span>
-              </label>
-              <label className="radio-label">
-                <input
-                  type="radio"
-                  value="app"
-                  checked={adminDestination === "app"}
-                  onChange={() => setAdminDestination("app")}
-                />
+              </button>
+              <button
+                type="button"
+                className={`toggle-option ${adminDestination === "app" ? "active" : ""}`}
+                onClick={() => setAdminDestination("app")}
+              >
+                <Smartphone size={16} />
                 <span>App</span>
-              </label>
+              </button>
             </div>
           </div>
         )}

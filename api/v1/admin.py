@@ -22,19 +22,21 @@ def _build_admin_request_response(req: EmailAutomationRequest) -> EmailAutomatio
     response_dict = {
         "id": req.id,
         "user_email": req.user_email,
+        "user_id": req.user.user_id if req.user else None,
         "user_email_info_id": req.user_email_info_id,
         "status": req.status,
         "requested_at": req.requested_at,
         "reviewed_at": req.reviewed_at,
         "reviewed_by_admin_email": req.reviewed_by_admin_email,
+        "reviewed_by_admin_id": req.reviewed_by_admin_id,
         "admin_notes": req.admin_notes,
-        "user_email": None,
+        "user_email_info": None,
     }
 
     if req.user_email_info:
-        response_dict["user_email"] = {
+        response_dict["user_email_info"] = {
             "id": req.user_email_info.id,
-            "user_id": req.user_email_info.user_id,
+            "user_email": req.user_email_info.user_email,
             "sender_email": mask_email(req.user_email_info.sender_email),
             "sender_name": req.user_email_info.sender_name,
             "email_provider": req.user_email_info.email_provider,

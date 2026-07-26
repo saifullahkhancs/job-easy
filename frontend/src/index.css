@@ -586,7 +586,7 @@ button:disabled {
   padding: 40px;
   box-shadow: 0 8px 32px rgba(226, 118, 94, 0.1);
   width: 100%;
-  max-width: 420px;
+  max-width: 500px;
 }
 
 .auth-header {
@@ -751,13 +751,16 @@ button:disabled {
   padding-bottom: 24px;
   border-bottom: 1px solid #e2e8f0;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 
 
 .quick-login-btn {
-  margin: 4px;
-  padding: 8px 16px;
-  background: #f1f5f9;
+  margin: 0;
+  padding: 10px 20px;
+  background: white;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   color: #475569;
@@ -765,12 +768,26 @@ button:disabled {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .quick-login-btn:hover {
-  background: #e2e8f0;
+  background: #f1f5f9;
   border-color: #94a3b8;
-  color: #0f172a;
+}
+
+.quick-login-btn.active {
+  background: #f97316;
+  border-color: #ea580c;
+  color: white;
+  font-weight: 600;
+}
+
+.quick-login-btn.active:hover {
+  background: #ea580c;
+  border-color: #c2410c;
 }
 
 /* Admin destination selector */
@@ -789,37 +806,41 @@ button:disabled {
   font-weight: 500;
 }
 
-.radio-group {
+.toggle-switch {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
+  background: #f1f5f9;
+  border-radius: 24px;
+  padding: 4px;
+  gap: 4px;
 }
 
-.radio-label {
+.toggle-option {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #64748b;
+  cursor: pointer;
+  padding: 10px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  background: transparent;
+  border: none;
+  font-weight: 500;
+}
+
+.toggle-option:hover {
   color: #475569;
-  cursor: pointer;
-  padding: 10px 20px;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  transition: all 0.2s;
+  background: transparent;
 }
 
-.radio-label input[type="radio"] {
-  cursor: pointer;
-}
-
-.radio-label:has(input:checked) {
-  border-color: #f97316;
-  background: #fff7ed;
-}
-
-.radio-label:has(input:checked) span {
+.toggle-option.active {
+  background: white;
   color: #f97316;
   font-weight: 600;
+  border: 1px solid #f97316;
 }
 
 .error-message {

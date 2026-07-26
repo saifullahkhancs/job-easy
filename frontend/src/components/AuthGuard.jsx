@@ -38,5 +38,9 @@ export default function AuthGuard({ children }) {
     );
   }
 
+  if (!isAuthenticated) {
+    return <Navigate to="/app" state={{ from: location }} replace />;
+  }
+
   return children || <Outlet />;
 }
