@@ -17,6 +17,17 @@ from schemas.user_templates import (
 router = APIRouter(prefix="/api/v1/templates", tags=["templates"])
 
 
+def _to_response(template: UserTemplate, current_user: User | None) -> UserTemplateResponse:
+    """Build a template response, flagging templates authored by the requester."""
+    response = UserTemplateResponse.model_validate(template)
+    response.is_mine = bool(
+        current_user is not None
+        and template.user_email is not None
+        and template.user_email == current_user.email
+    )
+    return response
+
+
 @router.get("", response_model=list[UserTemplateResponse])
 async def list_templates(
     current_user: User | None = Depends(get_current_user_optional),
@@ -56,7 +67,7 @@ async def list_templates(
         )
         templates = result.scalars().all()
     
-    return templates
+    return [_to_response(t, current_user) for t in templates]
 
 
 @router.get("/{template_id}", response_model=UserTemplateDetailResponse)
@@ -97,7 +108,13 @@ async def get_template(
                 detail="You can only access your own templates",
             )
     
-    return template
+    response = UserTemplateDetailResponse.model_validate(template)
+    response.is_mine = bool(
+        current_user is not None
+        and template.user_email is not None
+        and template.user_email == current_user.email
+    )
+    return response
 
 
 @router.get("/{template_id}/cv")

@@ -16,6 +16,11 @@ from schemas.user import UserUpdate, UserResponse
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
+# Maximum number of templates a customer may own at once.
+CUSTOMER_TEMPLATE_LIMIT = 2
+# Maximum number of templates that can be showcased as platform defaults.
+MAX_DEFAULT_TEMPLATES = 2
+
 
 def _build_admin_request_response(req: EmailAutomationRequest) -> EmailAutomationRequestAdminResponse:
     """Helper to build the admin response for an approval request."""
@@ -208,9 +213,9 @@ async def review_approval_request(
     return _build_admin_request_response(request)
 
 
-def _template_to_dict(tmpl: UserTemplate) -> dict:
+def _template_to_dict(tmpl: UserTemplate, owner: User | None = None) -> dict:
     """Serialize a UserTemplate safely (excluding cv_bytes)."""
-    return {
+    data = {
         "id": tmpl.id,
         "user_email": tmpl.user_email,
         "template_role": tmpl.template_role,
@@ -222,7 +227,16 @@ def _template_to_dict(tmpl: UserTemplate) -> dict:
         "is_active": tmpl.is_active,
         "created_at": tmpl.created_at,
         "updated_at": tmpl.updated_at,
+        "owner": None,
     }
+    if owner is not None:
+        data["owner"] = {
+            "user_email": owner.email,
+            "first_name": owner.first_name,
+            "last_name": owner.last_name,
+            "email": owner.email,
+        }
+    return data
 
 
 @router.get("/default-templates")
@@ -230,14 +244,18 @@ async def list_default_templates(
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all default templates (admin only)."""
+    """List all default templates with their original owner (admin only).
+
+    Default templates keep a reference to the customer who created them so an
+    admin can revert them back to that customer instead of deleting them.
+    """
     result = await db.execute(
-        select(UserTemplate).where(
-            UserTemplate.template_scope == TemplateScope.DEFAULT
-        ).order_by(UserTemplate.created_at.desc())
+        select(UserTemplate, User)
+        .outerjoin(User, UserTemplate.user_email == User.email)
+        .where(UserTemplate.template_scope == TemplateScope.DEFAULT)
+        .order_by(UserTemplate.created_at.desc())
     )
-    templates = result.scalars().all()
-    return [_template_to_dict(t) for t in templates]
+    return [_template_to_dict(tmpl, owner) for tmpl, owner in result.all()]
 
 
 @router.get("/all-customer-templates")
@@ -281,16 +299,23 @@ async def promote_to_default(
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
-    """Promote a customer template to a default template (admin only). Max 2 default templates."""
+    """Promote a customer template to a default template (admin only). Max 2 default templates.
+
+    The original owner is preserved on the row so the promotion can later be
+    reverted back to the customer instead of deleting their work.
+    """
     # Check current default count
     result = await db.execute(
         select(UserTemplate).where(UserTemplate.template_scope == TemplateScope.DEFAULT)
     )
     existing_defaults = result.scalars().all()
-    if len(existing_defaults) >= 2:
+    if len(existing_defaults) >= MAX_DEFAULT_TEMPLATES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum of 2 default templates allowed. Remove an existing default template first.",
+            detail=(
+                f"Maximum of {MAX_DEFAULT_TEMPLATES} default templates allowed. "
+                "Revert or remove an existing default template first."
+            ),
         )
 
     # Get the target template
@@ -302,11 +327,76 @@ async def promote_to_default(
     if template.template_scope == TemplateScope.DEFAULT:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Template is already a default template")
 
+    # Keep `user_email` so the template can be handed back to its owner later.
     template.template_scope = TemplateScope.DEFAULT
-    template.user_email = None  # Default templates are not owned by any user
     await db.commit()
     await db.refresh(template)
     return {"message": "Template promoted to default successfully", "template_id": template.id}
+
+
+@router.post("/default-templates/revert/{template_id}")
+async def revert_default_to_customer(
+    template_id: int,
+    current_user: User = Depends(require_roles([UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+):
+    """Revert a default template back to its owning customer (admin only).
+
+    This is the non-destructive counterpart of deleting a default template:
+    the CV goes back to the customer's personal templates untouched.
+    """
+    result = await db.execute(select(UserTemplate).where(UserTemplate.id == template_id))
+    template = result.scalars().first()
+    if not template:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+
+    if template.template_scope != TemplateScope.DEFAULT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Template is not a default template",
+        )
+
+    if not template.user_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "This default template has no original owner (it was created by an admin), "
+                "so it cannot be reverted. Delete it instead."
+            ),
+        )
+
+    # Make sure the owner still exists before handing the template back.
+    result = await db.execute(select(User).where(User.email == template.user_email))
+    owner = result.scalars().first()
+    if not owner:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The original owner of this template no longer exists. Delete it instead.",
+        )
+
+    # Respect the customer template limit of 2.
+    result = await db.execute(
+        select(UserTemplate).where(
+            UserTemplate.user_email == template.user_email,
+            UserTemplate.template_scope == TemplateScope.CUSTOMER,
+        )
+    )
+    if len(result.scalars().all()) >= CUSTOMER_TEMPLATE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"{owner.first_name} {owner.last_name} already has "
+                f"{CUSTOMER_TEMPLATE_LIMIT} personal templates, so this one cannot be returned."
+            ),
+        )
+
+    template.template_scope = TemplateScope.CUSTOMER
+    await db.commit()
+    await db.refresh(template)
+    return {
+        "message": f"Template returned to {owner.first_name} {owner.last_name}.",
+        "template_id": template.id,
+    }
 
 
 @router.post("/default-templates", status_code=status.HTTP_201_CREATED)

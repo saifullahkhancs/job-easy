@@ -34,6 +34,10 @@ class UserTemplateResponse(UserTemplateBase):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    # True when the requesting user is the original author of this template.
+    # A default template can still be owned by the customer who created it,
+    # which lets the UI congratulate them instead of showing an empty state.
+    is_mine: bool = False
 
     class Config:
         from_attributes = True
