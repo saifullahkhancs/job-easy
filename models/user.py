@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, Enum as SQLEnum, Integer
 from sqlalchemy.orm import declarative_base, relationship
 from models.roles import UserRole
 
