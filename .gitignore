@@ -51,3 +51,7 @@ tests/
 /tests/
 
 .deploy_env
+
+.dev.vars*
+!.dev.vars.example
+!.env.example

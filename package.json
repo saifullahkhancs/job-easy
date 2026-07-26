@@ -6,7 +6,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "tail": "wrangler tail",
-    "containers:list": "wrangler containers list"
+    "containers:list": "wrangler containers list",
+    "preview": "wrangler dev"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7"
