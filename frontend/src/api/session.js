@@ -1,3 +1,5 @@
+import { clearTokens, getAccessToken } from "./tokenStorage";
+
 export const SESSION_EXPIRED_EVENT = "job-easy:session-expired";
 
 const DEFAULT_SESSION_EXPIRED_MESSAGE =
@@ -26,8 +28,7 @@ function responsePath(response) {
 }
 
 export function clearStoredSession() {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
+  clearTokens();
 }
 
 export function resetSessionExpiredState() {
@@ -58,7 +59,7 @@ export function shouldNotifySessionExpired(response) {
     return false;
   }
 
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   if (!token) {
     return false;
   }

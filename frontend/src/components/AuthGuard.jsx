@@ -1,6 +1,7 @@
 import { Navigate, useLocation, Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getCurrentUser, logout } from "../api/client";
+import { getAccessToken } from "../api/tokenStorage";
 
 export default function AuthGuard({ children }) {
   const [isLoading, setIsLoading] = useState(true);
@@ -9,7 +10,7 @@ export default function AuthGuard({ children }) {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem("access_token");
+      const token = getAccessToken();
       if (!token) {
         setIsLoading(false);
         return;

@@ -30,6 +30,21 @@ async def send_email_v2(
             detail=f"Template with id '{payload.template_id}' not found.",
         )
 
+    # Customers may only send with templates they authored, even if those
+    # templates were later promoted to default by an admin. Admins can send
+    # with any template. This enforces that promoted defaults remain usable
+    # for their original owner.
+    # NOTE: we allow `is_active` check implicitly via existence, but we also
+    # explicitly verify ownership for non-admins.
+    from models.roles import UserRole
+    if current_user.role == UserRole.CUSTOMER:
+        # Must be owned by this customer (scope can be customer or default)
+        if template.user_email != current_user.email:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only send emails using your own templates. Promoted defaults that you own are still usable.",
+            )
+
     # Fetch user's email sending configuration
     async with async_session() as session:
         result = await session.execute(

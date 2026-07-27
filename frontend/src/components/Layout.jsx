@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { LayoutGrid, LayoutTemplate, Send, LogOut, User, Clock, UploadCloud, Edit, CheckCircle2, FolderKanban } from "lucide-react";
 import { getCurrentUser, logout } from "../api/client";
+import { getAccessToken } from "../api/tokenStorage";
 import { RoleBadge, ApprovalStatusBadge } from "./RoleBadge";
 import { ROLES } from "./RoleGuard";
 
@@ -14,7 +15,7 @@ export default function Layout() {
   }, []);
 
   const fetchCurrentUser = async () => {
-    const token = localStorage.getItem("access_token");
+    const token = getAccessToken();
     if (!token) {
       setCurrentUser(null);
       return;
