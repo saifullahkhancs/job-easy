@@ -2251,8 +2251,34 @@ button:disabled {
 .template-card:hover,
 .template-card:focus-within {
   transform: translateY(-2px);
-  border-color: var(--brand-orange);
+  border-color: var(--brand-orange) !important;
   box-shadow: 0 12px 28px rgba(231, 123, 96, 0.16);
+  background: #ffe5d9 !important;
+}
+
+.template-card:hover h3,
+.template-card:hover .template-context,
+.template-card:focus-within h3,
+.template-card:focus-within .template-context {
+  color: #000000 !important;
+}
+
+.template-card:hover .template-action-btn,
+.template-card:focus-within .template-action-btn {
+  border-color: #000000 !important;
+  color: #000000 !important;
+  background: transparent !important;
+}
+
+.template-card:hover .template-action-btn:hover,
+.template-card:focus-within .template-action-btn:hover {
+  background: #000000 !important;
+  color: #ffe5d9 !important;
+}
+
+.template-card:hover .template-action-btn svg,
+.template-card:focus-within .template-action-btn svg {
+  stroke: currentColor !important;
 }
 
 .template-card.selected {
@@ -2836,6 +2862,36 @@ button:disabled {
   border-color: var(--quick-accent, #e77b60);
   box-shadow: 0 14px 30px rgba(231, 123, 96, 0.16), 0 0 0 4px var(--brand-orange-ring);
   outline: none;
+  background: #ffe5d9 !important;
+}
+
+.quick-card:hover:not(.disabled) .quick-card-title,
+.quick-card:hover:not(.disabled) .quick-card-description,
+.quick-card:hover:not(.disabled) .quick-card-cta {
+  color: #000000 !important;
+}
+
+.quick-card:hover:not(.disabled) .quick-card-cta svg {
+  stroke: #000000 !important;
+}
+
+.quick-card:hover:not(.disabled) .quick-card-icon {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #000000 !important;
+}
+
+.quick-card:hover:not(.disabled) .quick-card-icon svg {
+  stroke: #000000 !important;
+}
+
+.quick-card:hover:not(.disabled) .quick-card-icon-badge {
+  background: #000000 !important;
+  color: #ffe5d9 !important;
+  border-color: #ffe5d9 !important;
+}
+
+.quick-card:hover:not(.disabled) .quick-card-icon-badge svg {
+  stroke: #ffe5d9 !important;
 }
 
 .quick-card:active:not(.disabled) {

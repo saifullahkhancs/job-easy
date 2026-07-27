@@ -27,18 +27,31 @@ export default function ViewPage() {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
+        let user = null;
         if (token) {
-          const user = await getCurrentUser();
+          user = await getCurrentUser();
           setCurrentUser(user);
         }
         
         // fetchTemplatesV2 already handles guest access (returns default templates for unauthenticated users)
         const items = await fetchTemplatesV2();
-        setTemplates(items);
         
-        if (items.length > 0) {
-          const requestedTemplate = items.find((template) => String(template.id) === requestedTemplateId);
-          setSelectedTemplateId(String(requestedTemplate?.id || items[0].id));
+        let visibleTemplates = items;
+        if (user && user.role === "customer") {
+          visibleTemplates = items.filter(
+            (t) => t.template_scope === "default" || t.is_mine || t.user_email === user.email
+          );
+        } else if (user && user.role === "visitor") {
+          visibleTemplates = items.filter((t) => t.template_scope === "default");
+        }
+        
+        setTemplates(visibleTemplates);
+        
+        if (visibleTemplates.length > 0) {
+          const requestedTemplate = visibleTemplates.find((template) => String(template.id) === requestedTemplateId);
+          setSelectedTemplateId(String(requestedTemplate?.id || visibleTemplates[0].id));
+        } else {
+          setSelectedTemplateId("");
         }
       } catch (err) {
         setError(err.message);
@@ -125,7 +138,7 @@ export default function ViewPage() {
               <select id="template-select" value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.template_role || 'Default'}
+                    {template.title} ({template.template_role})
                   </option>
                 ))}
               </select>

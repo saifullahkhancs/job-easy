@@ -354,8 +354,9 @@ export default function DashboardPage() {
     const authoredTemplateCount = personalTemplates.length + myPromotedTemplates.length;
     const usedSlots = currentUser.current_template_count ?? authoredTemplateCount;
     const remainingSlots = Math.max(templateLimit - usedSlots, 0);
-    const canCreateMore = remainingSlots > 0;
     const hasPromoted = myPromotedTemplates.length > 0;
+    const allTemplatesPromoted = hasPromoted && personalTemplates.length === 0;
+    const canCreateMore = !allTemplatesPromoted && remainingSlots > 0;
     const allAuthoredTemplatesPromoted = hasPromoted && personalTemplates.length === 0;
     const promotedNoun = myPromotedTemplates.length === 1 ? "CV" : "CVs";
     const promotedVerb = myPromotedTemplates.length === 1 ? "was" : "were";
@@ -447,12 +448,10 @@ export default function DashboardPage() {
             {hasPromoted ? (
               <>
                 <h3>
-                  Congratulations! Your {promotedNoun} {promotedVerb} selected as {promotedTemplatePhrase}.
+                  Congrats! Your email selected as default. It is now on the website and visitor can see them.
                 </h3>
                 <p>
-                  {promotedPronoun} now live for every visitor on Job Easy. {remainingSlots === 0
-                    ? "Your template allowance is used up, so there are no open personal slots right now."
-                    : `You still have ${remainingSlots} open slot${remainingSlots === 1 ? "" : "s"}.`}
+                  Both of your templates have been assigned to default status by the admin, so you cannot create any more templates.
                 </p>
               </>
             ) : (
