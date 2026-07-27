@@ -167,8 +167,8 @@ export default function AdminRequestsPage() {
                       </div>
                     </div>
                   </td>
-                  <td>{request.user_email?.sender_email || "N/A"}</td>
-                  <td>{request.user_email?.sender_name || "N/A"}</td>
+                  <td>{request.user_email || "N/A"}</td>
+                  <td>{request.user_email_info?.sender_name || "N/A"}</td>
                   <td>{new Date(request.requested_at).toLocaleString()}</td>
                   <td>{getStatusBadge(request.status)}</td>
                   <td>
