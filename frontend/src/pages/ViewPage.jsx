@@ -18,6 +18,7 @@ export default function ViewPage() {
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [detail, setDetail] = useState(null);
   const [cvPreviewUrl, setCvPreviewUrl] = useState("");
+  const [cvOpenUrl, setCvOpenUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [cvLoading, setCvLoading] = useState(false);
@@ -81,6 +82,7 @@ export default function ViewPage() {
   useEffect(() => {
     if (!selectedTemplateId) {
       setCvPreviewUrl("");
+      setCvOpenUrl("");
       return;
     }
 
@@ -88,6 +90,8 @@ export default function ViewPage() {
     let objectUrl = "";
     setError("");
     setCvLoading(true);
+    setCvPreviewUrl("");
+    setCvOpenUrl("");
 
     fetchCvBlobUrlV2(selectedTemplateId)
       .then((url) => {
@@ -104,6 +108,10 @@ export default function ViewPage() {
       .finally(() => {
         if (active) setCvLoading(false);
       });
+
+    getCvUrlV2(selectedTemplateId).then((url) => {
+      if (active) setCvOpenUrl(url);
+    });
 
     return () => {
       active = false;
@@ -208,14 +216,16 @@ export default function ViewPage() {
                     className="cv-preview"
                   />
                 )}
-                <a 
-                  className="link-button" 
-                  href={getCvUrlV2(selectedTemplateId)} 
-                  target="_blank" 
-                  rel="noreferrer"
-                >
-                  Open CV in new tab
-                </a>
+                {cvOpenUrl && (
+                  <a 
+                    className="link-button" 
+                    href={cvOpenUrl} 
+                    target="_blank" 
+                    rel="noreferrer"
+                  >
+                    Open CV in new tab
+                  </a>
+                )}
               </div>
             </div>
           )}

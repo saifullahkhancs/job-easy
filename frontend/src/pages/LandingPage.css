@@ -1653,7 +1653,7 @@
 
 .landing-header-inner-left {
   max-width: none;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 24px;
 }
 
@@ -1662,24 +1662,38 @@
 }
 
 .landing-header-actions-left {
-  margin-left: 0;
+  margin-left: auto;
 }
 
-/* The Resend note sits centered above the mock cards instead of hiding under them. */
+/* White background and light orange hover for App & Dashboard navbar buttons */
+.landing-header-actions-left .landing-ghost-btn,
+.landing-header-actions-left .landing-primary-btn {
+  background: #ffffff !important;
+  color: #e77b60 !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.landing-header-actions-left .landing-ghost-btn:hover,
+.landing-header-actions-left .landing-primary-btn:hover {
+  background: #fff3ef !important; /* light orange background */
+  color: #d95e40 !important;
+  border-color: #e77b60 !important;
+}
+
+/* The Resend note sits beautifully on the left and bottom without covering other cards. */
 .landing-mock-card.mock-card-float {
-  left: 50%;
-  bottom: 18px;
+  position: absolute;
+  left: 24px;
+  bottom: -40px;
   z-index: 5;
   width: max-content;
   max-width: min(360px, calc(100% - 32px));
-  justify-content: center;
-  text-align: center;
-  animation-name: floatUpCentered;
-}
-
-@keyframes floatUpCentered {
-  0%, 100% { transform: translate(-50%, 0); }
-  50% { transform: translate(-50%, -6px); }
+  justify-content: flex-start;
+  text-align: left;
+  animation-name: floatUp;
 }
 
 @media (max-width: 1023px) {
@@ -1735,5 +1749,30 @@
 @media (width: 1024px) {
   .landing-root.app-layout .landing-main {
     padding-top: 0;
+  }
+}
+
+/* Mobile-only enhancements: aligns elements and changes font families when viewed on mobile screen */
+@media (max-width: 768px) {
+  /* Set a clean, high-end mobile UI font family specifically for mobile screens */
+  body, button, input, select, textarea, .landing-root, .landing-root * {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  }
+
+  /* Center-align the hero CTAs on mobile so they align beautifully */
+  .landing-hero-ctas {
+    justify-content: center !important;
+    width: 100% !important;
+  }
+
+  /* Center the social-proof trust rating on mobile */
+  .landing-trust {
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .landing-trust-text {
+    text-align: left !important;
   }
 }

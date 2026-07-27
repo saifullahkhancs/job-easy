@@ -320,8 +320,7 @@ export default function LandingPage() {
               <div className="landing-mock-card mock-card-float">
                 <Clock size={16} />
                 <span>
-                  Fast delivery via Resend
-                  <span className="landing-demo-note"> • typically seconds • demo estimate</span>
+                  Fast delivery via Resend • typically seconds
                 </span>
               </div>
             </div>
