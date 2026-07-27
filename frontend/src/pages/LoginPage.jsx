@@ -138,9 +138,6 @@ export default function LoginPage() {
         <div className="auth-header">
           <h1>Welcome Back</h1>
           <p>Sign in to your account</p>
-          <p className="muted" style={{ fontSize: "0.85rem", marginTop: "4px" }}>
-            Each browser tab now keeps its own login (sessionStorage). You can be admin in one tab and customer in another.
-          </p>
         </div>
 
         <div className="quick-login-buttons">
