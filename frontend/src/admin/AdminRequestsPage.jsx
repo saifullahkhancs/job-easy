@@ -1,6 +1,37 @@
 import { useState, useEffect } from "react";
 import { CheckCircle, XCircle, Clock, Eye, Filter, RefreshCw } from "lucide-react";
 import { listAdminRequests, reviewAdminRequest } from "../api/adminClient";
+import { getAccessToken } from "../api/tokenStorage";
+
+const DUMMY_REQUESTS = [
+  {
+    id: 101,
+    user_email: "visitor@example.com",
+    user: { first_name: "John", last_name: "Doe", email: "john.doe@example.com" },
+    user_email_info: { sender_name: "John Doe" },
+    status: "pending",
+    requested_at: new Date().toISOString(),
+    admin_notes: "",
+  },
+  {
+    id: 102,
+    user_email: "user2@example.com",
+    user: { first_name: "Jane", last_name: "Smith", email: "jane.smith@example.com" },
+    user_email_info: { sender_name: "Jane Smith" },
+    status: "approved",
+    requested_at: new Date(Date.now() - 86400000).toISOString(),
+    admin_notes: "Looks good",
+  },
+  {
+    id: 103,
+    user_email: "user3@example.com",
+    user: { first_name: "Bob", last_name: "Brown", email: "bob.brown@example.com" },
+    user_email_info: { sender_name: "Bob Brown" },
+    status: "rejected",
+    requested_at: new Date(Date.now() - 172800000).toISOString(),
+    admin_notes: "Incomplete info",
+  },
+];
 
 export default function AdminRequestsPage() {
   const [requests, setRequests] = useState([]);
@@ -18,6 +49,15 @@ export default function AdminRequestsPage() {
 
   const fetchRequests = async () => {
     setLoading(true);
+    if (!getAccessToken()) {
+      const filtered = DUMMY_REQUESTS.filter(
+        (r) => statusFilter === "all" || r.status === statusFilter
+      );
+      setRequests(DUMMY_REQUESTS);
+      setFilteredRequests(filtered);
+      setLoading(false);
+      return;
+    }
     try {
       const data = await listAdminRequests(statusFilter === "all" ? undefined : statusFilter);
       setRequests(data);

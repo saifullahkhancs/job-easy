@@ -39,7 +39,11 @@ export default function SendPage() {
         // after admin promotion the customer can still use his own templates.
         const ownerEmail = fetchedUser?.email || currentUser?.email;
         const sendableTemplates = items.filter(
-          (t) => t.template_scope === "customer" || t.is_mine || (ownerEmail && t.user_email === ownerEmail)
+          (t) =>
+            t.template_scope === "default" ||
+            t.template_scope === "customer" ||
+            t.is_mine ||
+            (ownerEmail && t.user_email === ownerEmail)
         );
         setTemplates(sendableTemplates);
         if (sendableTemplates.length > 0) {
@@ -97,14 +101,14 @@ export default function SendPage() {
           <h2>Send Email</h2>
           <p className="muted">Choose a template, add the recipient, and send the application with its CV attachment.</p>
         </div>
-        <button type="button" className="header-action" disabled={isDisabled} style={{ background: '#1e3a8a', color: 'white', border: 'none', padding: '12px', borderRadius: '16px', opacity: isDisabled ? 0.5 : 1 }}>
+        <button type="button" className="header-action" disabled={isDisabled} title={isDisabled ? "Login to use it" : ""} style={{ background: '#1e3a8a', color: 'white', border: 'none', padding: '12px', borderRadius: '16px', opacity: isDisabled ? 0.5 : 1 }}>
           <Send size={20} />
         </button>
       </div>
 
 
 
-      {!isDisabled && templates.length === 0 ? (
+      {templates.length === 0 ? (
         <div className="empty-state">
           <p className="muted">No personal templates available. Create a template first to send emails.</p>
           <p className="muted" style={{ marginTop: "8px", fontSize: "0.85rem" }}>
@@ -117,8 +121,7 @@ export default function SendPage() {
             <form className="form" onSubmit={handleSubmit}>
             <label>
               Select Template
-              <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} required disabled={isDisabled}>
-                {isDisabled && <option value="">— Login required —</option>}
+              <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} required disabled={false}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.title} {template.template_scope === "default" ? "(Default - Yours)" : ""}
@@ -135,11 +138,11 @@ export default function SendPage() {
                 onChange={(e) => setRecipientEmail(e.target.value)}
                 placeholder="hr@company.com"
                 required
-                disabled={isDisabled}
+                disabled={false}
               />
             </label>
 
-            <button type="submit" disabled={loading || isDisabled || !selectedTemplateId} style={{ marginTop: '16px' }}>
+            <button type="submit" disabled={loading || isDisabled || !selectedTemplateId} title={isDisabled ? "Login to use it" : ""} style={{ marginTop: '16px' }}>
               <Send size={18} />
               {loading ? "Sending..." : "Send Email"}
             </button>

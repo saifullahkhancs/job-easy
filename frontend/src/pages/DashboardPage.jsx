@@ -248,7 +248,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <QuickActionCards disabled disabledReason={disabledReason} onNavigate={navigate} />
+        <QuickActionCards onNavigate={navigate} />
 
         <div className="section-header">
           <div>
