@@ -53,12 +53,12 @@ export default function App() {
           <Route path="send" element={<SendPage />} />
           <Route path="view" element={<ViewPage />} />
           <Route path="update" element={<PatchPage />} />
+          <Route path="request-access" element={<RequestAccessPage />} />
+          <Route path="request-status" element={<RequestStatusPage />} />
 
           {/* Protected routes that require authentication */}
           <Route element={<AuthGuard />}>
             <Route path="templates/:id/edit" element={<TemplateEditPage />} />
-            <Route path="request-access" element={<RequestAccessPage />} />
-            <Route path="request-status" element={<RequestStatusPage />} />
           </Route>
         </Route>
         

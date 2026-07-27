@@ -13,6 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import { getApprovalStatus, getCurrentUser } from "../api/client";
+import { getAccessToken } from "../api/tokenStorage";
 import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
 
 const STATUS_CONFIG = {
@@ -56,9 +57,26 @@ export default function RequestStatusPage() {
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [visitorPreview, setVisitorPreview] = useState(false);
   const navigate = useNavigate();
 
   const fetchStatus = async () => {
+    const token = getAccessToken();
+    if (!token) {
+      setVisitorPreview(true);
+      setCurrentUser(null);
+      setRequest({
+        status: "pending",
+        requested_at: new Date().toISOString(),
+        reviewed_at: null,
+        admin_notes: "Demo preview only. Real request values appear here after login and admin review.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    setVisitorPreview(false);
+
     try {
       const user = await getCurrentUser();
       setCurrentUser(user);
@@ -143,6 +161,23 @@ export default function RequestStatusPage() {
             <Inbox size={22} />
           </div>
         </div>
+
+        {visitorPreview && (
+          <div className="visitor-banner" style={{ marginBottom: "24px" }}>
+            <AlertCircle size={20} className="banner-icon" />
+            <div className="banner-content">
+              <h3>Visitor Preview</h3>
+              <p>
+                These are sample request-status values so visitors can see the page. Real approvals
+                and status updates are managed only by the admin after you login or register.
+              </p>
+            </div>
+            <div className="login-prompt-actions">
+              <button className="login-prompt-login-btn" onClick={() => navigate("/login")}>Login</button>
+              <button className="login-prompt-register-btn" onClick={() => navigate("/signup")}>Register</button>
+            </div>
+          </div>
+        )}
 
         {/* Status hero */}
         {config ? (

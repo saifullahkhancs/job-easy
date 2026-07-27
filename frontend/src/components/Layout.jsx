@@ -1,24 +1,9 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import {
-  LayoutGrid,
-  LayoutTemplate,
-  Send,
-  LogOut,
-  Clock,
-  UploadCloud,
-  Edit,
-  CheckCircle2,
-  FolderKanban,
-  Menu,
-  X,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
+import { LayoutGrid, Menu, X } from "lucide-react";
 import { getCurrentUser, logout } from "../api/client";
 import { getAccessToken } from "../api/tokenStorage";
-import { RoleBadge, ApprovalStatusBadge } from "./RoleBadge";
-import { ROLES } from "./RoleGuard";
+import MainSidebar from "./MainSidebar";
 
 /** Below this width the sidebar behaves as an overlay drawer instead of a docked column. */
 const MOBILE_BREAKPOINT = 1024;
@@ -130,59 +115,6 @@ export default function Layout() {
     navigate("/app/templates", { replace: true });
   };
 
-  const getNavItems = () => {
-    if (!currentUser) {
-      // For guest, show all pages (disabled state)
-      return [
-        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
-        { to: "/app/new", label: "New Template", icon: UploadCloud },
-        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
-        { to: "/app/send", label: "Send Email", icon: Send },
-        { to: "/app/update", label: "Update Template", icon: Edit },
-      ];
-    }
-
-    const isVisitor = currentUser.role === ROLES.VISITOR;
-    const isCustomer = currentUser.role === ROLES.CUSTOMER;
-    const isAdmin = currentUser.role === ROLES.ADMIN;
-
-    if (isVisitor) {
-      return [
-        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
-        { to: "/app/new", label: "New Template", icon: UploadCloud },
-        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
-        { to: "/app/send", label: "Send Email", icon: Send },
-        { to: "/app/update", label: "Update Template", icon: Edit },
-        { to: "/app/request-access", label: "Request Access", icon: Clock },
-        { to: "/app/request-status", label: "Request Status", icon: CheckCircle2 },
-      ];
-    }
-
-    if (isCustomer) {
-      return [
-        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
-        { to: "/app/new", label: "New Template", icon: UploadCloud },
-        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
-        { to: "/app/send", label: "Send Email", icon: Send },
-        { to: "/app/update", label: "Update Template", icon: Edit },
-        { to: "/app/request-status", label: "Request Status", icon: CheckCircle2 },
-      ];
-    }
-
-    if (isAdmin) {
-      return [
-        { to: "/app/templates", label: "Templates", icon: FolderKanban, end: true },
-        { to: "/app/new", label: "New Template", icon: UploadCloud },
-        { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
-        { to: "/app/send", label: "Send Email", icon: Send },
-        { to: "/app/update", label: "Update Template", icon: Edit },
-      ];
-    }
-
-    return [];
-  };
-
-  const navItems = getNavItems();
   const isCollapsed = !isMobile && !sidebarOpen;
   const isDrawerOpen = isMobile && sidebarOpen;
 
@@ -227,115 +159,18 @@ export default function Layout() {
         aria-hidden="true"
       />
 
-      <aside
+      <MainSidebar
         id="app-sidebar"
-        className="app-sidebar"
-        aria-hidden={isMobile && !sidebarOpen ? "true" : "false"}
-      >
-        <div className="sidebar-brand">
-          {/* Brand links to landing page start URL, does NOT act as sidebar toggle */}
-          <button
-            type="button"
-            className="sidebar-brand-link"
-            onClick={() => navigate("/")}
-            aria-label="Go to home - landing page"
-            title="Go to home (Job Easy)"
-          >
-            <div className="brand-icon brand-icon-main">
-              <LayoutGrid size={24} />
-            </div>
-            <h2>Job Easy</h2>
-          </button>
-
-          {/* Collapsed: toggle takes place of main icon and remains on sidebar */}
-          <button
-            type="button"
-            className="brand-icon brand-icon-toggle"
-            onClick={toggleSidebar}
-            aria-label="Open sidebar"
-            aria-controls="app-sidebar"
-            title="Open sidebar"
-          >
-            <PanelLeftOpen size={20} />
-          </button>
-
-          {/* Desktop: collapses to icon rail. Mobile: closes drawer. Remains on sidebar in both cases. */}
-          <button
-            type="button"
-            className="sidebar-collapse-btn"
-            onClick={toggleSidebar}
-            aria-label={isMobile ? "Close sidebar" : "Collapse sidebar"}
-            aria-controls="app-sidebar"
-            title={isMobile ? "Close sidebar" : "Collapse sidebar"}
-          >
-            {isMobile ? <X size={20} /> : <PanelLeftClose size={18} />}
-          </button>
-        </div>
-
-        <div className="sidebar-section">
-          <p className="sidebar-heading">EMAIL AUTOMATION</p>
-          <nav className="sidebar-nav">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  title={item.label}
-                  className={({ isActive }) => (isActive ? "sidebar-link active" : "sidebar-link")}
-                >
-                  <Icon size={20} className="link-icon" />
-                  <span className="sidebar-link-label">{item.label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-        </div>
-
-        {currentUser && (
-          <div className="sidebar-user-info">
-            <div className="user-badges">
-              {currentUser.role === ROLES.VISITOR && currentUser.approval_status === 'pending' ? (
-                <ApprovalStatusBadge status={currentUser.approval_status} />
-              ) : (
-                <>
-                  <RoleBadge role={currentUser.role} />
-                  <ApprovalStatusBadge status={currentUser.approval_status} />
-                </>
-              )}
-            </div>
-            <div className="user-details">
-              <span className="user-name">{currentUser.first_name} {currentUser.last_name}</span>
-              <span className="user-email">{currentUser.email}</span>
-            </div>
-          </div>
-        )}
-
-        <div className="sidebar-footer">
-          {currentUser ? (
-            <button className="logout-btn" onClick={handleLogout} title="Logout">
-              <LogOut size={20} className="link-icon" />
-              <span className="sidebar-link-label">Logout</span>
-            </button>
-          ) : (
-            <div className="sidebar-auth-buttons">
-              <button className="sidebar-login-btn" onClick={() => navigate("/login")} title="Login">
-                <span className="sidebar-link-label">Login</span>
-                <span className="sidebar-collapsed-initial" aria-hidden="true">L</span>
-              </button>
-              <button className="sidebar-register-btn" onClick={() => navigate("/signup")} title="Register">
-                <span className="sidebar-link-label">Register</span>
-                <span className="sidebar-collapsed-initial" aria-hidden="true">R</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </aside>
+        currentUser={currentUser}
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        toggleSidebar={toggleSidebar}
+        onLogout={handleLogout}
+      />
 
       <main className="app-main-content">
         <div className="app-content-inner">
-          <Outlet key={currentUser?.email || 'guest'} />
+          <Outlet key={currentUser?.email || "guest"} />
         </div>
       </main>
     </div>

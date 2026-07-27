@@ -4726,3 +4726,123 @@ button:disabled {
     justify-content: center;
   }
 }
+
+/* ── Arena fixes: fixed shared sidebar + bottom-pinned account area ───────── */
+@media (min-width: 1024px) {
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+  }
+
+  .app-main-content {
+    width: calc(100% - var(--sidebar-slot));
+    margin-left: var(--sidebar-slot);
+    transition: margin-left 0.25s ease, width 0.25s ease;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+  }
+
+  .admin-main-content {
+    width: calc(100% - var(--sidebar-slot));
+    margin-left: var(--sidebar-slot);
+    transition: margin-left 0.25s ease, width 0.25s ease;
+  }
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+  background: inherit;
+  z-index: 1;
+}
+
+.sidebar-bottom .sidebar-user-info,
+.sidebar-bottom .sidebar-footer {
+  position: static;
+  bottom: auto;
+  margin-top: 0;
+  background: inherit;
+}
+
+.sidebar-bottom .sidebar-footer {
+  padding-top: 0;
+}
+
+.app-layout.sidebar-collapsed .sidebar-bottom {
+  width: 100%;
+}
+
+.app-layout.sidebar-collapsed .sidebar-bottom .sidebar-user-info {
+  display: none;
+}
+
+.app-layout.sidebar-collapsed .brand-icon-toggle,
+.app-layout.sidebar-collapsed .brand-icon-toggle:hover,
+.app-layout.sidebar-collapsed .brand-icon-toggle:focus-visible {
+  background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark)) !important;
+  color: #fff !important;
+}
+
+.app-layout.sidebar-collapsed .brand-icon-toggle svg,
+.app-layout.sidebar-collapsed .sidebar-link svg,
+.app-layout.sidebar-collapsed .logout-btn svg {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-login-btn:hover,
+.sidebar-login-btn:focus-visible {
+  background: linear-gradient(135deg, var(--brand-orange-dark), var(--brand-orange-deep)) !important;
+  color: #fff !important;
+  outline: none;
+  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+}
+
+.sidebar-register-btn:hover,
+.sidebar-register-btn:focus-visible {
+  background: var(--brand-orange-soft) !important;
+  border-color: var(--brand-orange) !important;
+  color: var(--brand-orange-dark) !important;
+  outline: none;
+  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+}
+
+.admin-login-btn {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.admin-login-btn:hover,
+.admin-login-btn:focus-visible {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+  outline: none;
+}
+
+@media (max-width: 1023px) {
+  .app-main-content,
+  .admin-main-content {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .app-sidebar {
+    overflow: hidden;
+  }
+
+  .sidebar-section {
+    overflow-y: auto;
+  }
+}

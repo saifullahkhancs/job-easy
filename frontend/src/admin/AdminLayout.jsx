@@ -7,11 +7,13 @@ import {
   FileText,
   Menu,
   X,
+  LogIn,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import { logout } from "../api/client";
+import { getCurrentUser, logout } from "../api/client";
+import { getAccessToken } from "../api/tokenStorage";
 
 /** Below this width the admin sidebar becomes an overlay drawer. */
 const MOBILE_BREAKPOINT = 1024;
@@ -28,6 +30,7 @@ function readStoredSidebarPref() {
 }
 
 export default function AdminLayout() {
+  const [currentUser, setCurrentUser] = useState(null);
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT
   );
@@ -38,6 +41,18 @@ export default function AdminLayout() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) {
+      setCurrentUser(null);
+      return;
+    }
+
+    getCurrentUser()
+      .then(setCurrentUser)
+      .catch(() => setCurrentUser(null));
+  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
@@ -90,8 +105,14 @@ export default function AdminLayout() {
     });
   }, [isMobile]);
 
-  const handleLogout = () => {
+  const handleAuthButton = () => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+
     logout();
+    setCurrentUser(null);
     navigate("/login");
   };
 
@@ -218,11 +239,11 @@ export default function AdminLayout() {
             <h1>Admin Dashboard</h1>
           </div>
           <button
-            className="admin-logout-btn"
-            onClick={handleLogout}
+            className={currentUser ? "admin-logout-btn" : "admin-logout-btn admin-login-btn"}
+            onClick={handleAuthButton}
           >
-            <LogOut size={18} />
-            <span className="admin-logout-label">Logout</span>
+            {currentUser ? <LogOut size={18} /> : <LogIn size={18} />}
+            <span className="admin-logout-label">{currentUser ? "Logout" : "Login"}</span>
           </button>
         </header>
         <div className="admin-content">
