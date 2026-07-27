@@ -372,20 +372,34 @@
 
 .landing-mock-card.mock-card-float {
   position: absolute;
-  bottom: -12px;
-  left: -16px;
+  bottom: -45px;
+  left: 65%;
+  transform: translateX(-50%);
+  width: fit-content;
+  height: auto;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
   border-radius: 12px;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   font-weight: 600;
   color: #0f172a;
   background: #fef9c3;
   border-color: #fde047;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
   animation-delay: -4s;
+  z-index: 10;
+}
+
+.landing-mock-card.mock-card-float svg {
+  width: 14px;
+  height: 14px;
+}
+
+.landing-mock-card.mock-card-float span {
+  font-size: 0.85rem;
 }
 
 @keyframes floatUp {

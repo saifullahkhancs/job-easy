@@ -316,13 +316,13 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="landing-mock-card mock-card-float">
-                <Clock size={16} />
-                <span>
-                  Fast delivery via Resend • typically seconds
-                </span>
-              </div>
+            <div className="landing-mock-card mock-card-float">
+              <Clock size={16} />
+              <span>
+                Fast delivery via Resend • typically seconds
+              </span>
             </div>
           </div>
         </section>
@@ -343,7 +343,6 @@ export default function LandingPage() {
                 <span>•</span>
                 <span>LaunchPad</span>
               </div>
-              <span className="landing-demo-disclaimer small">* Company names are demo placeholders, not actual clients.</span>
             </div>
             <div className="landing-proof-numbers">
               <div>
@@ -360,7 +359,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="landing-proof-disclaimer">* All metrics are demo projections based on internal beta, not live production analytics. Replace with real data after launch.</div>
         </section>
 
         {/* Features */}
