@@ -159,39 +159,14 @@ iframe {
   outline: none;
 }
 
-/* Floating "re-open" button, only visible while the desktop rail is collapsed. */
+/* Old floating expand button removed — toggle now lives inside sidebar and
+   takes place of main icon when collapsed. Hidden permanently. */
 .sidebar-expand-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  position: fixed;
-  top: 22px;
-  left: calc(var(--sidebar-collapsed-width) + 14px);
-  z-index: 50;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  padding: 0;
-  border: 1px solid #f0dfda;
-  border-radius: 10px;
-  background: #fff;
-  color: #7a4537;
-  cursor: pointer;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.sidebar-expand-btn:hover,
-.sidebar-expand-btn:focus-visible {
-  background: var(--brand-orange-soft);
-  border-color: var(--brand-orange);
-  color: var(--brand-orange-dark);
-  outline: none;
-  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+  display: none !important;
 }
 
 .app-layout.sidebar-collapsed .sidebar-expand-btn {
-  display: inline-flex;
+  display: none !important;
 }
 
 /* Dim layer behind the mobile drawer. */
@@ -229,6 +204,41 @@ iframe {
   height: 34px;
   border-radius: 10px;
   box-shadow: 0 3px 8px rgba(226, 118, 94, 0.28);
+}
+
+/* ── New: toggle that takes place of main icon when collapsed ────────────
+   .brand-icon-main   = orange brand icon, visible when expanded
+   .brand-icon-toggle = button that replaces it when sidebar is collapsed,
+                        remains on sidebar in both dashboard and app layouts
+   ─────────────────────────────────────────────────────────────────────────── */
+.brand-icon-main {
+  /* default visible */
+}
+
+.brand-icon-toggle {
+  display: none; /* hidden when expanded, shown when collapsed via rules below */
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fff;
+  color: #7a4537;
+  border: 1px solid #f0dfda;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.brand-icon-toggle:hover,
+.brand-icon-toggle:focus-visible {
+  background: var(--brand-orange-soft);
+  border-color: var(--brand-orange);
+  color: var(--brand-orange-dark);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+}
+
+.brand-icon-toggle:active {
+  transform: scale(0.96);
 }
 
 .sidebar-brand h2 {
@@ -432,6 +442,7 @@ iframe {
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Collapsed sidebar (desktop) — icon-only rail
+   The collapse button now takes place of main icon and remains on sidebar
    ═══════════════════════════════════════════════════════════════════════════ */
 .app-layout.sidebar-collapsed .app-sidebar {
   padding: 32px 12px;
@@ -449,6 +460,28 @@ iframe {
 .app-layout.sidebar-collapsed .sidebar-brand {
   justify-content: center;
   margin-bottom: 32px;
+}
+
+/* When collapsed: hide main brand icon, show toggle in its place — remains on sidebar */
+.app-layout .brand-icon-main {
+  display: flex;
+}
+.app-layout .brand-icon-toggle {
+  display: none;
+}
+.app-layout.sidebar-collapsed .brand-icon-main {
+  display: none !important;
+}
+.app-layout.sidebar-collapsed .brand-icon-toggle {
+  display: flex !important;
+  width: 44px;
+  height: 44px;
+  animation: sidebarIconPop 0.25s ease;
+}
+
+@keyframes sidebarIconPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .app-layout.sidebar-collapsed .sidebar-section,
@@ -1415,6 +1448,49 @@ button:disabled {
   flex-shrink: 0;
 }
 
+/* Toggle that takes place of main icon when collapsed — remains on sidebar in both dashboard and app */
+.admin-brand-mark-main {
+  display: flex;
+}
+
+.admin-brand-toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-brand-toggle:hover,
+.admin-brand-toggle:focus-visible {
+  background: rgba(231, 123, 96, 0.25);
+  border-color: rgba(231, 123, 96, 0.5);
+  color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(231, 123, 96, 0.15);
+}
+
+.admin-sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-sidebar-collapse-btn {
+  color: #94a3b8;
+}
+
+.admin-sidebar-collapse-btn:hover,
+.admin-sidebar-collapse-btn:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
 .admin-brand-text {
   min-width: 0;
 }
@@ -1424,7 +1500,7 @@ button:disabled {
 }
 
 /* Admin desktop already has a toggle in the header, so the in-drawer close
-   button is only needed in drawer mode. */
+   button is only needed in drawer mode. Collapse btn remains on sidebar always. */
 .admin-sidebar-close-btn {
   display: none;
   color: #94a3b8;
@@ -1435,15 +1511,25 @@ button:disabled {
   color: #fff;
 }
 
-/* Collapsed admin rail — icons only */
+/* Collapsed admin rail — icons only, toggle replaces main icon and remains on sidebar */
 .admin-layout.sidebar-collapsed .admin-sidebar {
   padding: 24px 12px;
   align-items: center;
 }
 
 .admin-layout.sidebar-collapsed .admin-brand-text,
-.admin-layout.sidebar-collapsed .nav-label {
+.admin-layout.sidebar-collapsed .nav-label,
+.admin-layout.sidebar-collapsed .admin-sidebar-collapse-btn {
   display: none;
+}
+
+.admin-layout.sidebar-collapsed .admin-brand-mark-main {
+  display: none !important;
+}
+
+.admin-layout.sidebar-collapsed .admin-brand-toggle {
+  display: flex !important;
+  animation: sidebarIconPop 0.25s ease;
 }
 
 .admin-layout.sidebar-collapsed .admin-sidebar-header {
@@ -1458,6 +1544,13 @@ button:disabled {
   justify-content: center;
   gap: 0;
   padding: 12px 0;
+}
+
+/* Hide admin header toggle on desktop — desktop toggle lives inside sidebar and remains there */
+@media (min-width: 1024px) {
+  .admin-sidebar-toggle-btn {
+    display: none !important;
+  }
 }
 
 .admin-brand h2 {
@@ -4181,6 +4274,19 @@ button:disabled {
     margin-bottom: 28px;
   }
 
+  /* On mobile drawer, always show main icon + close X, hide the collapsed toggle that lives at icon spot on desktop */
+  .app-sidebar .brand-icon-toggle {
+    display: none !important;
+  }
+
+  .app-sidebar .brand-icon-main {
+    display: flex !important;
+  }
+
+  .app-sidebar .sidebar-collapse-btn {
+    display: inline-flex !important;
+  }
+
   /* The floating expand button belongs to the desktop rail only. */
   .sidebar-expand-btn,
   .app-layout.sidebar-collapsed .sidebar-expand-btn {
@@ -4365,8 +4471,20 @@ button:disabled {
     display: block;
   }
 
-  .admin-sidebar .sidebar-close-btn {
+  .admin-sidebar .admin-sidebar-close-btn {
     display: inline-flex;
+  }
+
+  .admin-sidebar .admin-sidebar-collapse-btn {
+    display: none !important;
+  }
+
+  .admin-sidebar .admin-brand-toggle {
+    display: none !important;
+  }
+
+  .admin-sidebar .admin-brand-mark-main {
+    display: flex !important;
   }
 
   .admin-header {

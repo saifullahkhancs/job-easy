@@ -220,19 +220,6 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* Desktop-only: floating button that re-expands the collapsed rail. */}
-      <button
-        type="button"
-        className="sidebar-expand-btn"
-        onClick={toggleSidebar}
-        aria-label="Open sidebar"
-        aria-expanded={sidebarOpen}
-        aria-controls="app-sidebar"
-        title="Open sidebar"
-      >
-        <PanelLeftOpen size={18} />
-      </button>
-
       {/* Dimmed backdrop behind the mobile drawer. */}
       <div
         className="sidebar-backdrop"
@@ -246,12 +233,26 @@ export default function Layout() {
         aria-hidden={isMobile && !sidebarOpen ? "true" : "false"}
       >
         <div className="sidebar-brand">
-          <div className="brand-icon">
+          {/* Expanded: main brand icon */}
+          <div className="brand-icon brand-icon-main">
             <LayoutGrid size={24} />
           </div>
+
+          {/* Collapsed: toggle takes place of main icon and remains on sidebar */}
+          <button
+            type="button"
+            className="brand-icon brand-icon-toggle"
+            onClick={toggleSidebar}
+            aria-label="Open sidebar"
+            aria-controls="app-sidebar"
+            title="Open sidebar"
+          >
+            <PanelLeftOpen size={20} />
+          </button>
+
           <h2>Job Easy</h2>
-          {/* Desktop: collapses the sidebar to an icon rail.
-              Mobile: closes the drawer. */}
+
+          {/* Desktop: collapses to icon rail. Mobile: closes drawer. Remains on sidebar in both cases. */}
           <button
             type="button"
             className="sidebar-collapse-btn"

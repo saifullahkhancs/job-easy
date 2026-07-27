@@ -131,22 +131,48 @@ export default function AdminLayout() {
       >
         <div className="admin-sidebar-header">
           <div className="admin-brand">
-            <div className="admin-brand-mark">
+            {/* Expanded: main icon */}
+            <div className="admin-brand-mark admin-brand-mark-main">
               <Shield size={22} color="white" />
             </div>
+            {/* Collapsed: toggle takes place of main icon and remains on sidebar */}
+            <button
+              type="button"
+              className="admin-brand-mark admin-brand-toggle"
+              onClick={toggleSidebar}
+              aria-label="Open sidebar"
+              aria-controls="admin-sidebar"
+              title="Open sidebar"
+            >
+              <PanelLeftOpen size={20} />
+            </button>
             <div className="admin-brand-text">
               <h2>Job Easy</h2>
               <span className="admin-badge">Admin Panel</span>
             </div>
           </div>
-          <button
-            type="button"
-            className="sidebar-close-btn admin-sidebar-close-btn"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            <X size={20} />
-          </button>
+          <div className="admin-sidebar-header-actions">
+            {/* Desktop collapse — remains on sidebar */}
+            <button
+              type="button"
+              className="sidebar-close-btn admin-sidebar-collapse-btn"
+              onClick={toggleSidebar}
+              aria-label="Collapse sidebar"
+              aria-controls="admin-sidebar"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose size={18} />
+            </button>
+            {/* Mobile drawer close */}
+            <button
+              type="button"
+              className="sidebar-close-btn admin-sidebar-close-btn"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <nav className="admin-nav">
