@@ -175,27 +175,38 @@ iframe {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   margin-left: auto;
   padding: 0;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   background: transparent;
   color: #64748b;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: color 0.2s ease;
 }
 
+/* The sidebar toggle never paints an orange (or any) hover/active background —
+   only the icon colour reacts, so the surface stays transparent. */
 .sidebar-collapse-btn:hover,
 .sidebar-close-btn:hover,
 .sidebar-collapse-btn:focus-visible,
+.sidebar-close-btn:focus-visible,
+.sidebar-collapse-btn:active,
+.sidebar-close-btn:active {
+  background: transparent;
+  color: #334155;
+  box-shadow: none;
+}
+
+/* Keyboard focus still needs a visible ring — an outline, not a filled background. */
+.sidebar-collapse-btn:focus-visible,
 .sidebar-close-btn:focus-visible {
-  background: var(--brand-orange-soft);
-  color: var(--brand-orange-dark);
-  outline: none;
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
 }
 
 /* Old floating expand button removed — toggle now lives inside sidebar and
@@ -283,44 +294,6 @@ iframe {
   height: 34px;
   border-radius: 10px;
   box-shadow: 0 3px 8px rgba(226, 118, 94, 0.28);
-}
-
-/* ── New: toggle that takes place of main icon when collapsed ────────────
-   .brand-icon-main   = orange brand icon, visible when expanded
-   .brand-icon-toggle = button that replaces it when sidebar is collapsed,
-                        remains on sidebar in both dashboard and app layouts
-                        — styled IDENTICAL to main icon so it truly takes its place
-   ─────────────────────────────────────────────────────────────────────────── */
-.brand-icon-main {
-  /* default visible */
-}
-
-.brand-icon-toggle {
-  display: none; /* hidden when expanded, shown when collapsed via rules below */
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: #e2765e;
-  color: white;
-  border: none;
-  box-shadow: 0 4px 10px rgba(226, 118, 94, 0.3);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  align-items: center;
-  justify-content: center;
-}
-
-.brand-icon-toggle:hover,
-.brand-icon-toggle:focus-visible {
-  background: #d95e40;
-  color: white;
-  outline: none;
-  box-shadow: 0 6px 16px rgba(226, 118, 94, 0.4), 0 0 0 4px var(--brand-orange-ring);
-  transform: translateY(-1px);
-}
-
-.brand-icon-toggle:active {
-  transform: scale(0.96);
 }
 
 .sidebar-brand h2 {
@@ -593,9 +566,16 @@ iframe {
 .app-layout.sidebar-collapsed .sidebar-link-label,
 .app-layout.sidebar-collapsed .sidebar-heading,
 .app-layout.sidebar-collapsed .sidebar-brand h2,
-.app-layout.sidebar-collapsed .sidebar-collapse-btn,
 .app-layout.sidebar-collapsed .sidebar-user-info {
   display: none;
+}
+
+/* Collapsed rail: the toggle is the only header control, so centre it and keep
+   it visible — it is the affordance that expands the sidebar again. */
+.app-layout.sidebar-collapsed .sidebar-collapse-btn {
+  display: inline-flex;
+  margin-left: 0;
+  animation: sidebarIconPop 0.25s ease;
 }
 
 .app-layout.sidebar-collapsed .sidebar-brand {
@@ -603,21 +583,9 @@ iframe {
   margin-bottom: 32px;
 }
 
-/* When collapsed: hide main brand icon, show toggle in its place — remains on sidebar */
-.app-layout .brand-icon-main {
-  display: flex;
-}
-.app-layout .brand-icon-toggle {
-  display: none;
-}
+/* Collapsed rail: the brand icon steps aside so the toggle owns the header slot. */
 .app-layout.sidebar-collapsed .brand-icon-main {
   display: none !important;
-}
-.app-layout.sidebar-collapsed .brand-icon-toggle {
-  display: flex !important;
-  width: 48px;
-  height: 48px;
-  animation: sidebarIconPop 0.25s ease;
 }
 
 @keyframes sidebarIconPop {
@@ -1599,6 +1567,10 @@ button:disabled {
   min-width: 0;
 }
 
+.admin-brand-mark-main {
+  display: flex;
+}
+
 .admin-brand-mark {
   width: 40px;
   height: 40px;
@@ -1608,39 +1580,6 @@ button:disabled {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-}
-
-/* Toggle that takes place of main icon when collapsed — remains on sidebar in both dashboard and app */
-.admin-brand-mark-main {
-  display: flex;
-}
-
-.admin-brand-toggle {
-  display: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.admin-brand-toggle:hover,
-.admin-brand-toggle:focus-visible {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
-  transform: translateY(-1px);
-}
-
-.admin-brand-toggle:active {
-  transform: scale(0.96);
 }
 
 .admin-sidebar-header-actions {
@@ -1654,10 +1593,19 @@ button:disabled {
   color: #94a3b8;
 }
 
+/* Keep the toggle surface transparent on hover/active — only the icon brightens. */
 .admin-sidebar-collapse-btn:hover,
-.admin-sidebar-collapse-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.12);
+.admin-sidebar-collapse-btn:focus-visible,
+.admin-sidebar-collapse-btn:active {
+  background: transparent;
   color: #fff;
+  box-shadow: none;
+}
+
+.admin-sidebar-collapse-btn:focus-visible,
+.admin-sidebar-close-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
 }
 
 .admin-brand-text {
@@ -1675,9 +1623,12 @@ button:disabled {
   color: #94a3b8;
 }
 
-.admin-sidebar-close-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
+.admin-sidebar-close-btn:hover,
+.admin-sidebar-close-btn:focus-visible,
+.admin-sidebar-close-btn:active {
+  background: transparent;
   color: #fff;
+  box-shadow: none;
 }
 
 /* Collapsed admin rail — icons only, toggle replaces main icon and remains on sidebar */
@@ -1687,17 +1638,19 @@ button:disabled {
 }
 
 .admin-layout.sidebar-collapsed .admin-brand-text,
-.admin-layout.sidebar-collapsed .nav-label,
-.admin-layout.sidebar-collapsed .admin-sidebar-collapse-btn {
+.admin-layout.sidebar-collapsed .nav-label {
   display: none;
 }
 
+/* Collapsed rail: the brand steps aside so the toggle owns the header slot. */
+.admin-layout.sidebar-collapsed .admin-brand,
 .admin-layout.sidebar-collapsed .admin-brand-mark-main {
   display: none !important;
 }
 
-.admin-layout.sidebar-collapsed .admin-brand-toggle {
-  display: flex !important;
+.admin-layout.sidebar-collapsed .admin-sidebar-collapse-btn {
+  display: inline-flex;
+  margin-left: 0;
   animation: sidebarIconPop 0.25s ease;
 }
 
@@ -4481,11 +4434,7 @@ button:disabled {
     margin-bottom: 28px;
   }
 
-  /* On mobile drawer, always show main icon + close X, hide the collapsed toggle that lives at icon spot on desktop */
-  .app-sidebar .brand-icon-toggle {
-    display: none !important;
-  }
-
+  /* Mobile drawer always shows the full brand icon; the toggle renders as a close X. */
   .app-sidebar .brand-icon-main {
     display: flex !important;
   }
@@ -4686,10 +4635,6 @@ button:disabled {
     display: none !important;
   }
 
-  .admin-sidebar .admin-brand-toggle {
-    display: none !important;
-  }
-
   .admin-sidebar .admin-brand-mark-main {
     display: flex !important;
   }
@@ -4804,14 +4749,6 @@ button:disabled {
   display: none;
 }
 
-.app-layout.sidebar-collapsed .brand-icon-toggle,
-.app-layout.sidebar-collapsed .brand-icon-toggle:hover,
-.app-layout.sidebar-collapsed .brand-icon-toggle:focus-visible {
-  background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark)) !important;
-  color: #fff !important;
-}
-
-.app-layout.sidebar-collapsed .brand-icon-toggle svg,
 .app-layout.sidebar-collapsed .sidebar-link svg,
 .app-layout.sidebar-collapsed .logout-btn svg {
   opacity: 1;
@@ -4865,38 +4802,24 @@ button:disabled {
   }
 }
 
-/* ── Arena overrides: ensure collapsed sidebar shows expand icon, and mobile CV preview behaves nicely ── */
-
-/* 1. Ensure the sidebar collapse toggle icon (PanelLeftOpen SVG) is always visible and colored white inside its pink/orange box when collapsed */
-.app-layout.sidebar-collapsed .brand-icon-toggle,
-.admin-layout.sidebar-collapsed .admin-brand-toggle {
-  display: flex !important;
+/* ── Collapsed rail: the sidebar toggle is the visible expand affordance ──────
+   The toggle keeps a transparent background in every state (no orange fill);
+   only its icon is tinted, and it must never be hidden while collapsed.      */
+.app-layout.sidebar-collapsed .sidebar-collapse-btn,
+.admin-layout.sidebar-collapsed .admin-sidebar-collapse-btn {
+  display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark)) !important;
-  color: #ffffff !important;
-  cursor: pointer !important;
-  border-radius: 12px !important;
+  background: transparent !important;
   border: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  margin-left: 0 !important;
 }
 
-.app-layout.sidebar-collapsed .brand-icon-toggle {
-  width: 48px !important;
-  height: 48px !important;
-}
-
-.admin-layout.sidebar-collapsed .admin-brand-toggle {
-  width: 44px !important;
-  height: 44px !important;
-}
-
-.app-layout.sidebar-collapsed .brand-icon-toggle svg,
-.admin-layout.sidebar-collapsed .admin-brand-toggle svg {
+.app-layout.sidebar-collapsed .sidebar-collapse-btn svg,
+.admin-layout.sidebar-collapsed .admin-sidebar-collapse-btn svg {
   display: block !important;
-  width: 20px !important;
-  height: 20px !important;
-  color: #ffffff !important;
-  stroke: #ffffff !important;
   opacity: 1 !important;
   visibility: visible !important;
 }

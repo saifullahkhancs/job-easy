@@ -38,7 +38,15 @@ export default function MainSidebar({
     navigate("/");
   };
 
-  const toggleTitle = isMobile ? "Close sidebar" : "Collapse sidebar";
+  // The one toggle lives in the sidebar header and stays mounted in every state
+  // (expanded, collapsed rail, mobile drawer) so the sidebar can always be reopened.
+  const toggleTitle = isMobile
+    ? "Close sidebar"
+    : sidebarOpen
+      ? "Collapse sidebar"
+      : "Open sidebar";
+
+  const ToggleIcon = isMobile ? X : sidebarOpen ? PanelLeftClose : PanelLeftOpen;
 
   return (
     <aside
@@ -62,24 +70,14 @@ export default function MainSidebar({
 
         <button
           type="button"
-          className="brand-icon brand-icon-toggle"
-          onClick={toggleSidebar}
-          aria-label="Open sidebar"
-          aria-controls={id}
-          title="Open sidebar"
-        >
-          <PanelLeftOpen size={20} />
-        </button>
-
-        <button
-          type="button"
           className="sidebar-collapse-btn"
           onClick={toggleSidebar}
           aria-label={toggleTitle}
+          aria-expanded={sidebarOpen}
           aria-controls={id}
           title={toggleTitle}
         >
-          {isMobile ? <X size={20} /> : <PanelLeftClose size={18} />}
+          <ToggleIcon size={22} />
         </button>
       </div>
 
