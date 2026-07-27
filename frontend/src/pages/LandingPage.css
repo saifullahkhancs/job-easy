@@ -1291,14 +1291,15 @@
 }
 
 .landing-sidebar-toggle-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  border: 1px solid #f0dfda;
-  background: #fff;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.92);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  color: #475569;
   cursor: pointer;
 }
 
@@ -1683,17 +1684,23 @@
   border-color: #e77b60 !important;
 }
 
-/* The Resend note sits beautifully on the left and bottom without covering other cards. */
+/* Center the Resend delivery note under the hero mockup, matching the callout area from the design. */
 .landing-mock-card.mock-card-float {
   position: absolute;
-  left: 24px;
+  left: 50%;
   bottom: -40px;
   z-index: 5;
-  width: max-content;
-  max-width: min(360px, calc(100% - 32px));
-  justify-content: flex-start;
-  text-align: left;
-  animation-name: floatUp;
+  width: clamp(280px, 70%, 420px);
+  max-width: calc(100% - 32px);
+  justify-content: center;
+  text-align: center;
+  transform: translateX(-50%);
+  animation-name: floatUpCentered;
+}
+
+@keyframes floatUpCentered {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
 }
 
 @media (max-width: 1023px) {
@@ -1727,17 +1734,25 @@
     align-self: center;
     width: auto;
     max-width: 100%;
+    transform: none;
     animation-name: floatUp;
   }
 }
 
 .landing-sidebar-toggle-btn:hover,
 .landing-sidebar-toggle-btn:focus-visible {
-  background: #fff3ef !important;
-  border-color: #e77b60 !important;
-  color: #d95e40 !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
   outline: none;
-  box-shadow: 0 0 0 4px rgba(231, 123, 96, 0.18);
+  box-shadow: none;
+}
+
+.landing-sidebar-toggle-btn:active {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: none;
 }
 
 @media (max-width: 640px) {
