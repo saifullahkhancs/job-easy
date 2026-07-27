@@ -8,6 +8,22 @@
   --brand-orange-deep: #c94e30;
   --brand-orange-soft: #fff3ef;
   --brand-orange-ring: rgba(231, 123, 96, 0.28);
+
+  /* ── Layout sizing tokens ────────────────────────────────────────────────
+     Every shell measurement (sidebar, top bar, page gutters, content width)
+     is derived from these so the app keeps a consistent size across screens
+     and can be re-tuned from one place.                                     */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 76px;
+  --admin-sidebar-width: 280px;
+  --topbar-height: 60px;
+  --content-max-width: 1360px;
+  --page-padding-x: 32px;
+  --page-padding-y: 24px;
+  --card-padding: 32px;
+  --card-radius: 24px;
+  /* Width the sidebar currently occupies in the document flow. */
+  --sidebar-slot: var(--sidebar-width);
 }
 
 * {
@@ -19,11 +35,21 @@ html, body {
   padding: 0;
   min-height: 100vh;
   background: #fcf8f8;
+  /* Stop long words / wide children from forcing a horizontal scrollbar on phones. */
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100vh;
   background: #fcf8f8;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+  max-width: 100%;
 }
 
 .app-layout {
@@ -32,8 +58,13 @@ html, body {
   background: linear-gradient(135deg, #fdfbfb 0%, #f7ebeb 100%);
 }
 
+.app-layout.sidebar-collapsed {
+  --sidebar-slot: var(--sidebar-collapsed-width);
+}
+
 .app-sidebar {
-  width: 260px;
+  width: var(--sidebar-slot);
+  flex: 0 0 var(--sidebar-slot);
   background: linear-gradient(to bottom, #fdfbfb 0%, #fcf7f7 100%);
   border-right: 1px solid #f2e8e8;
   display: flex;
@@ -43,6 +74,134 @@ html, body {
   top: 0;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
+  transition: width 0.25s ease, flex-basis 0.25s ease, padding 0.25s ease, transform 0.25s ease;
+}
+
+/* ── Top bar (hosts the sidebar toggle) ──────────────────────────────────── */
+.app-topbar {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  height: var(--topbar-height);
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #f2e8e8;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+}
+
+.app-topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  color: #0f172a;
+  font-size: 1.05rem;
+}
+
+.sidebar-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border: 1px solid #f0dfda;
+  border-radius: 12px;
+  background: #fff;
+  color: #7a4537;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover,
+.sidebar-toggle-btn:focus-visible {
+  background: var(--brand-orange-soft);
+  border-color: var(--brand-orange);
+  color: var(--brand-orange-dark);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+}
+
+/* Collapse / close control inside the sidebar header. */
+.sidebar-collapse-btn,
+.sidebar-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-collapse-btn:hover,
+.sidebar-close-btn:hover,
+.sidebar-collapse-btn:focus-visible,
+.sidebar-close-btn:focus-visible {
+  background: var(--brand-orange-soft);
+  color: var(--brand-orange-dark);
+  outline: none;
+}
+
+/* Floating "re-open" button, only visible while the desktop rail is collapsed. */
+.sidebar-expand-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 22px;
+  left: calc(var(--sidebar-collapsed-width) + 14px);
+  z-index: 50;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border: 1px solid #f0dfda;
+  border-radius: 10px;
+  background: #fff;
+  color: #7a4537;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sidebar-expand-btn:hover,
+.sidebar-expand-btn:focus-visible {
+  background: var(--brand-orange-soft);
+  border-color: var(--brand-orange);
+  color: var(--brand-orange-dark);
+  outline: none;
+  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+}
+
+.app-layout.sidebar-collapsed .sidebar-expand-btn {
+  display: inline-flex;
+}
+
+/* Dim layer behind the mobile drawer. */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
 }
 
 .sidebar-brand {
@@ -62,6 +221,14 @@ html, body {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 10px rgba(226, 118, 94, 0.3);
+  flex-shrink: 0;
+}
+
+.brand-icon.brand-icon-sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(226, 118, 94, 0.28);
 }
 
 .sidebar-brand h2 {
@@ -129,9 +296,17 @@ html, body {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.6), 0 6px 14px rgba(226, 118, 94, 0.3);
 }
 
+.sidebar-link-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .sidebar-link .link-icon {
   color: #64748b;
   transition: color 0.2s ease;
+  flex-shrink: 0;
 }
 
 .sidebar-link:hover .link-icon {
@@ -175,24 +350,38 @@ html, body {
 
 .app-main-content {
   flex: 1;
-  padding: 24px 32px;
-  overflow-y: auto;
+  /* `min-width: 0` lets the flex child shrink instead of overflowing when a
+     wide table or preview sits inside it. */
+  min-width: 0;
+  padding: var(--page-padding-y) var(--page-padding-x);
   min-height: 100vh;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Caps how wide the content grows on large monitors and centres it, so the
+   site keeps a consistent, readable size instead of stretching edge to edge. */
+.app-content-inner {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
-  align-content: stretch;
+  flex: 1;
+  min-width: 0;
 }
 
 .card {
   background: #fff;
   border: 1px solid #f2e8e8;
-  border-radius: 24px;
-  padding: 32px;
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
   box-shadow: 0 8px 32px rgba(226, 118, 94, 0.05);
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 100%;
+  min-width: 0;
 }
 
 .page-header {
@@ -229,7 +418,7 @@ html, body {
 
 .split-layout {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 32px;
   flex: 1;
   min-height: 0;
@@ -241,15 +430,55 @@ html, body {
   }
 }
 
-@media (max-width: 640px) {
-  .app-main-content {
-    padding: 24px 20px;
-  }
-
-  .card {
-    padding: 24px;
-  }
+/* ═══════════════════════════════════════════════════════════════════════════
+   Collapsed sidebar (desktop) — icon-only rail
+   ═══════════════════════════════════════════════════════════════════════════ */
+.app-layout.sidebar-collapsed .app-sidebar {
+  padding: 32px 12px;
+  align-items: center;
 }
+
+.app-layout.sidebar-collapsed .sidebar-link-label,
+.app-layout.sidebar-collapsed .sidebar-heading,
+.app-layout.sidebar-collapsed .sidebar-brand h2,
+.app-layout.sidebar-collapsed .sidebar-collapse-btn,
+.app-layout.sidebar-collapsed .sidebar-user-info {
+  display: none;
+}
+
+.app-layout.sidebar-collapsed .sidebar-brand {
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.app-layout.sidebar-collapsed .sidebar-section,
+.app-layout.sidebar-collapsed .sidebar-nav,
+.app-layout.sidebar-collapsed .sidebar-footer {
+  width: 100%;
+}
+
+.app-layout.sidebar-collapsed .sidebar-link,
+.app-layout.sidebar-collapsed .logout-btn {
+  justify-content: center;
+  gap: 0;
+  padding: 12px 0;
+}
+
+.app-layout.sidebar-collapsed .sidebar-login-btn,
+.app-layout.sidebar-collapsed .sidebar-register-btn {
+  padding: 10px 0;
+}
+
+.sidebar-collapsed-initial {
+  display: none;
+  font-weight: 700;
+}
+
+.app-layout.sidebar-collapsed .sidebar-collapsed-initial {
+  display: inline;
+}
+
+
 
 .dark-preview-card {
   background: #0f172a;
@@ -310,13 +539,14 @@ html, body {
 /* On larger screens, create a two-column layout for forms with a side panel */
 @media (min-width: 960px) {
   .form-page-layout {
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: minmax(0, 1fr) 380px;
     gap: 32px;
   }
 }
 .form-main-panel {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .form-main-panel .form {
@@ -329,6 +559,7 @@ html, body {
   align-self: start;
   position: sticky;
   top: 40px;
+  min-width: 0;
 }
 
 .form-actions {
@@ -432,12 +663,23 @@ input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%;
   padding: 12px 16px;
   border: 1px solid #cbd5e1;
   border-radius: 12px;
   background: #fff;
   font-size: 0.95rem;
   transition: all 0.2s ease;
+}
+
+/* iOS zooms the page when a focused field is under 16px, so bump the
+   font-size on touch-sized screens. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 input:focus,
@@ -592,6 +834,31 @@ button:disabled {
   box-shadow: 0 8px 32px rgba(226, 118, 94, 0.1);
   width: 100%;
   max-width: 500px;
+}
+
+@media (max-width: 640px) {
+  .auth-container {
+    padding: 16px;
+    align-items: flex-start;
+  }
+
+  .auth-card {
+    padding: 24px 20px;
+    border-radius: 18px;
+  }
+
+  .auth-header {
+    margin-bottom: 24px;
+  }
+
+  .auth-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .verification-input {
+    font-size: 1.15rem;
+    letter-spacing: 0.3em;
+  }
 }
 
 .auth-header {
@@ -871,8 +1138,8 @@ button:disabled {
 .page-container > form.form {
   background: #fff;
   border: 1px solid #f2e8e8;
-  border-radius: 24px;
-  padding: 32px;
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
   box-shadow: 0 8px 32px rgba(226, 118, 94, 0.05);
   max-width: 720px;
 }
@@ -1080,6 +1347,7 @@ button:disabled {
 .user-email {
   font-size: 0.85rem;
   color: #64748b;
+  overflow-wrap: anywhere;
 }
 
 /* Loading States */
@@ -1102,26 +1370,30 @@ button:disabled {
   display: flex;
   min-height: 100vh;
   background: #f8fafc;
+  --sidebar-slot: var(--admin-sidebar-width);
+}
+
+.admin-layout.sidebar-collapsed {
+  --sidebar-slot: var(--sidebar-collapsed-width);
 }
 
 .admin-sidebar {
-  width: 280px;
+  width: var(--sidebar-slot);
+  flex: 0 0 var(--sidebar-slot);
   background: linear-gradient(to bottom, #1e293b 0%, #0f172a 100%);
   color: white;
   display: flex;
   flex-direction: column;
   padding: 24px;
-  transition: width 0.3s ease;
-}
-
-.admin-sidebar.closed {
-  width: 80px;
+  overflow-x: hidden;
+  transition: width 0.25s ease, flex-basis 0.25s ease, padding 0.25s ease, transform 0.25s ease;
 }
 
 .admin-sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 32px;
 }
 
@@ -1129,10 +1401,63 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+
+.admin-brand-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.admin-brand-text {
+  min-width: 0;
 }
 
 .admin-brand .brand-icon {
   color: #e77b60;
+}
+
+/* Admin desktop already has a toggle in the header, so the in-drawer close
+   button is only needed in drawer mode. */
+.admin-sidebar-close-btn {
+  display: none;
+  color: #94a3b8;
+}
+
+.admin-sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* Collapsed admin rail — icons only */
+.admin-layout.sidebar-collapsed .admin-sidebar {
+  padding: 24px 12px;
+  align-items: center;
+}
+
+.admin-layout.sidebar-collapsed .admin-brand-text,
+.admin-layout.sidebar-collapsed .nav-label {
+  display: none;
+}
+
+.admin-layout.sidebar-collapsed .admin-sidebar-header {
+  justify-content: center;
+}
+
+.admin-layout.sidebar-collapsed .admin-nav {
+  width: 100%;
+}
+
+.admin-layout.sidebar-collapsed .admin-nav-link {
+  justify-content: center;
+  gap: 0;
+  padding: 12px 0;
 }
 
 .admin-brand h2 {
@@ -1185,18 +1510,26 @@ button:disabled {
 
 .admin-main-content {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .admin-header {
   background: white;
   border-bottom: 1px solid #e2e8f0;
-  padding: 20px 32px;
+  padding: 16px 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-header-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
 }
 
 .admin-header h1 {
@@ -1228,15 +1561,19 @@ button:disabled {
 
 .admin-content {
   flex: 1;
-  padding: 32px;
-  overflow-y: auto;
+  min-width: 0;
+  padding: var(--page-padding-y) var(--page-padding-x);
 }
 
 /* Admin Page Styles */
 .admin-page {
-  max-width: 1200px;
+  max-width: var(--content-max-width);
   margin: 0 auto;
 }
+
+
+
+
 
 .admin-page-header {
   margin-bottom: 32px;
@@ -1563,7 +1900,10 @@ button:disabled {
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  overflow: hidden;
+  /* Wide tables scroll horizontally inside their card instead of stretching
+     the whole page on small screens. */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-empty-state {
@@ -1592,6 +1932,7 @@ button:disabled {
 
 .admin-table {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
 }
 
@@ -2104,6 +2445,7 @@ button:disabled {
 /* Dashboard Page Styles */
 .page-container {
   width: 100%;
+  min-width: 0;
   margin: 0;
   padding: 0;
 }
@@ -2556,7 +2898,7 @@ button:disabled {
 /* Horizontal layout for template details and email body */
 .detail-horizontal {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
   margin-bottom: 24px;
 }
@@ -3789,4 +4131,291 @@ button:disabled {
   margin: 0;
   color: #64748b;
   line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tablet & mobile — sidebar becomes an off-canvas drawer
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 1023px) {
+  :root {
+    --page-padding-x: 20px;
+    --page-padding-y: 20px;
+    --card-padding: 22px;
+    --card-radius: 20px;
+  }
+
+  .app-topbar {
+    display: flex;
+  }
+
+  .app-layout {
+    display: block;
+    padding-top: var(--topbar-height);
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 80;
+    width: min(84vw, 300px);
+    flex: none;
+    height: 100dvh;
+    padding: 20px 18px;
+    transform: translateX(-100%);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+    visibility: hidden;
+  }
+
+  .app-layout.sidebar-drawer-open .app-sidebar {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .app-layout.sidebar-drawer-open .sidebar-backdrop {
+    display: block;
+  }
+
+  .app-sidebar .sidebar-brand {
+    margin-bottom: 28px;
+  }
+
+  /* The floating expand button belongs to the desktop rail only. */
+  .sidebar-expand-btn,
+  .app-layout.sidebar-collapsed .sidebar-expand-btn {
+    display: none;
+  }
+
+  .app-main-content {
+    min-height: calc(100vh - var(--topbar-height));
+    padding: var(--page-padding-y) var(--page-padding-x);
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --page-padding-x: 14px;
+    --page-padding-y: 16px;
+    --card-padding: 18px;
+    --card-radius: 16px;
+  }
+
+  .app-content-inner {
+    gap: 16px;
+  }
+
+  /* Headings scale down so they don't wrap awkwardly on narrow screens. */
+  .page-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .page-header h2,
+  .page-accent-header h2 {
+    font-size: 1.25rem;
+  }
+
+  /* Stack any header that pairs a title with an action button. */
+  .page-header,
+  .section-header,
+  .admin-toolbar,
+  .status-hero-title-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .page-header {
+    margin-bottom: 18px;
+  }
+
+  .header-badges {
+    justify-content: flex-start;
+  }
+
+  .page-accent-header {
+    padding: 16px 18px;
+    margin: calc(var(--card-padding) * -1) calc(var(--card-padding) * -1) 20px;
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+    gap: 12px;
+  }
+
+  /* Full-width, comfortably tappable buttons. */
+  button,
+  .link-button,
+  .primary-btn,
+  .secondary-btn,
+  .auth-submit-btn {
+    min-height: 44px;
+  }
+
+  .visitor-banner,
+  .info-banner,
+  .congrats-banner,
+  .login-prompt-banner,
+  .admin-alert-banner,
+  .status-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .visitor-banner .primary-btn,
+  .login-prompt-actions,
+  .admin-alert-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .login-prompt-actions button {
+    flex: 1;
+  }
+
+  .action-buttons,
+  .admin-card-actions,
+  .template-footer,
+  .admin-row-actions {
+    width: 100%;
+  }
+
+  .action-buttons > button,
+  .action-buttons > .link-button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  /* Grids collapse to a single column instead of forcing overflow. */
+  .templates-grid,
+  .quick-cards-grid,
+  .admin-cards-grid,
+  .admin-stats-grid,
+  .admin-actions-grid,
+  .patch-options-group,
+  .result-steps,
+  .detail-stats-grid,
+  .checkbox-group {
+    grid-template-columns: 1fr;
+  }
+
+  .checkbox-group {
+    display: grid;
+  }
+
+  .checkbox-label {
+    min-width: 0;
+  }
+
+  .quick-login-buttons {
+    flex-direction: column;
+  }
+
+  .form-side-panel {
+    position: static;
+  }
+
+  /* PDF previews are unusable at 800px tall on a phone. */
+  .cv-preview {
+    min-height: 320px;
+    height: 55vh;
+  }
+
+  .review-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .review-value {
+    text-align: left;
+  }
+
+  .stepper {
+    margin-bottom: 22px;
+  }
+}
+
+/* ── Admin shell: tablet & mobile ───────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .admin-layout {
+    display: block;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 80;
+    width: min(84vw, 300px);
+    flex: none;
+    height: 100dvh;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+    visibility: hidden;
+  }
+
+  .admin-layout.sidebar-drawer-open .admin-sidebar {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .admin-layout.sidebar-drawer-open .sidebar-backdrop {
+    display: block;
+  }
+
+  .admin-sidebar .sidebar-close-btn {
+    display: inline-flex;
+  }
+
+  .admin-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 12px 16px;
+  }
+
+  .admin-header h1 {
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-logout-label {
+    display: none;
+  }
+
+  .admin-logout-btn {
+    padding: 10px 12px;
+  }
+
+  .admin-page-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .admin-modal {
+    width: 100%;
+    padding: 20px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+
+  .admin-modal-overlay {
+    padding: 16px;
+  }
+
+  .admin-filter-group {
+    flex-wrap: wrap;
+  }
+
+  .admin-template-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-row-actions .admin-btn {
+    flex: 1;
+    justify-content: center;
+  }
 }
