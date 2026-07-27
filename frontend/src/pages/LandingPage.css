@@ -1307,6 +1307,8 @@
 .landing-sidebar-toggle-btn {
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  padding: 0; /* reset the global button padding so the icon isn't squeezed invisible */
   border-radius: 14px;
   border: 1px solid #e2e8f0;
   background: rgba(255, 255, 255, 0.92);
@@ -1315,6 +1317,7 @@
   justify-content: center;
   color: #475569;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .landing-sidebar-backdrop {
@@ -1707,18 +1710,33 @@
   border-color: #e77b60 !important;
 }
 
-/* Center the Resend delivery note under the hero mockup, matching the callout area from the design. */
+/* Resend delivery note: floats just above the hero bottom edge, tucked into the
+   gap between the 2-Templates/Default-promoted stats card (right) and the 4.9
+   rating row (left) — slightly higher and further right than the page centre. */
 .landing-mock-card.mock-card-float {
   position: absolute;
-  left: 50%;
-  bottom: -40px;
-  z-index: 5;
-  width: clamp(280px, 70%, 420px);
+  left: 55.5%;
+  bottom: 23px;
+  z-index: 10;
+  width: fit-content;
   max-width: calc(100% - 32px);
   justify-content: center;
   text-align: center;
   transform: translateX(-50%);
   animation-name: floatUpCentered;
+}
+
+/* Narrower desktops: the gap between the hero columns shrinks, so anchor the
+   note to the stats card's left edge instead and lift it below the grid,
+   keeping the rating text uncovered. */
+@media (min-width: 1025px) and (max-width: 1429px) {
+  .landing-mock-card.mock-card-float {
+    left: auto;
+    right: 317px;
+    bottom: -20px;
+    transform: none;
+    animation-name: floatUp;
+  }
 }
 
 @keyframes floatUpCentered {
