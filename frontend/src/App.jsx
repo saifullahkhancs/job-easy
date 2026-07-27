@@ -32,6 +32,7 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ForgotPasswordPage />} />
         
         {/* Admin routes - no auth guard (internal/dev-only) */}
         <Route path="/admin" element={<AdminLayout />}>

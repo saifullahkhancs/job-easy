@@ -32,7 +32,22 @@ def _send_email_sync(
 
     attachments = []
     if attachment_bytes and attachment_filename:
-        attachments.append(Attachment(filename=attachment_filename, content=attachment_bytes))
+        # Resend Python SDK expects attachment content as list of ints (bytes -> list)
+        # Passing raw bytes causes: TypeError: Object of type bytes is not JSON serializable
+        # Official example: {"content": list(f), "filename": "invoice.pdf"}
+        # See https://resend.com/docs/dashboard/emails/attachments
+        try:
+            # Prefer list of ints for compatibility with resend SDK
+            content_list = list(attachment_bytes)
+        except Exception:
+            # Fallback: base64 or raw if conversion fails
+            content_list = attachment_bytes
+
+        # Use dict form which is documented and avoids Attachment class quirks
+        attachments.append({
+            "filename": attachment_filename,
+            "content": content_list,
+        })
 
     try:
         params = {

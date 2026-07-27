@@ -17,7 +17,9 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: int = 30
-    PASSWORD_RESET_URL: str = os.environ.get("PASSWORD_RESET_URL", "")
+    PASSWORD_RESET_URL: str = os.environ.get(
+        "PASSWORD_RESET_URL", "https://www.jobeasy.online/forgot-password"
+    )
     BACKEND_CORS_ORIGINS: str | None = None
 
     # SMTP configuration for system emails (Resend)
