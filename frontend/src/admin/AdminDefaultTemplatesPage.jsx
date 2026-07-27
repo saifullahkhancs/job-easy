@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Star, Trash2, RefreshCw, FileText, User, Undo2, ShieldAlert } from "lucide-react";
+import { Star, Trash2, RefreshCw, FileText, User, Undo2, ShieldAlert, Link2 } from "lucide-react";
 import {
   listAdminDefaultTemplates,
   listAllCustomerTemplates,
   promoteTemplateToDefault,
   revertDefaultTemplate,
+  assignDefaultTemplateToCustomer,
   deleteAdminTemplate,
 } from "../api/adminClient";
 
@@ -88,6 +89,37 @@ export default function AdminDefaultTemplatesPage() {
     }
   };
 
+  const handleAssignOwner = async (template) => {
+    const customerEmail = window.prompt(
+      `Link "${template.title}" to a customer email.\n\n` +
+        "Only existing customer accounts are accepted.",
+      template.user_email || ""
+    );
+
+    if (customerEmail === null) {
+      return;
+    }
+
+    const trimmedEmail = customerEmail.trim();
+    if (!trimmedEmail) {
+      setError("Enter a customer email to link this default template.");
+      return;
+    }
+
+    setError("");
+    setMessage("");
+    setBusyId(template.id);
+    try {
+      const result = await assignDefaultTemplateToCustomer(template.id, trimmedEmail);
+      setMessage(result.message || "Template linked to customer.");
+      await fetchData();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   /** Destructive action, kept secondary and clearly labelled. */
   const handleDelete = async (template) => {
     if (
@@ -156,8 +188,8 @@ export default function AdminDefaultTemplatesPage() {
         <ShieldAlert size={18} />
         <p>
           Removing a template from the defaults does <strong>not</strong> delete the customer's
-          work. Use <strong>Change to Customer</strong> to hand it back — deleting is only available
-          from the list below.
+          work. Use <strong>Change to Customer</strong> to hand it back. If an older default has no
+          owner, use <strong>Link to Customer</strong> first — deleting remains a separate destructive action.
         </p>
       </div>
 
@@ -204,34 +236,43 @@ export default function AdminDefaultTemplatesPage() {
                         <span style={{ color: "#94a3b8" }}>{t.owner.email}</span>
                       </span>
                     ) : (
-                      <span style={{ color: "#94a3b8" }}>Created by admin — no customer owner</span>
+                      <span style={{ color: "#94a3b8" }}>
+                        No customer linked{t.user_email ? ` (${t.user_email})` : ""}
+                      </span>
                     )}
                   </div>
 
                   <div className="admin-card-actions">
-                    <button
-                      className="admin-btn admin-btn-primary"
-                      onClick={() => handleRevert(t)}
-                      disabled={!hasOwner || isBusy}
-                      title={
-                        hasOwner
-                          ? "Return this template to the customer who created it"
-                          : "This template has no customer owner, so it can only be deleted"
-                      }
-                      style={{ opacity: hasOwner && !isBusy ? 1 : 0.5 }}
-                    >
-                      <Undo2 size={16} />
-                      {isBusy ? "Working..." : "Change to Customer"}
-                    </button>
-                    {!hasOwner && (
+                    {hasOwner ? (
                       <button
-                        className="admin-btn admin-btn-delete"
-                        onClick={() => handleDelete(t)}
+                        className="admin-btn admin-btn-primary"
+                        onClick={() => handleRevert(t)}
                         disabled={isBusy}
+                        title="Return this template to the customer who created it"
                       >
-                        <Trash2 size={16} />
-                        Delete
+                        <Undo2 size={16} />
+                        {isBusy ? "Working..." : "Change to Customer"}
                       </button>
+                    ) : (
+                      <>
+                        <button
+                          className="admin-btn admin-btn-primary"
+                          onClick={() => handleAssignOwner(t)}
+                          disabled={isBusy}
+                          title="Link this default template to an existing customer"
+                        >
+                          <Link2 size={16} />
+                          {isBusy ? "Working..." : "Link to Customer"}
+                        </button>
+                        <button
+                          className="admin-btn admin-btn-delete"
+                          onClick={() => handleDelete(t)}
+                          disabled={isBusy}
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>

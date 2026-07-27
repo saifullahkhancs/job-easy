@@ -1,20 +1,30 @@
 // Use relative URLs in dev (Vite proxies /api to the backend).
 // Set VITE_API_URL for production builds, e.g. http://127.0.0.1:8000
+import {
+  clearStoredSession,
+  maybeNotifySessionExpired,
+  resetSessionExpiredState,
+} from "./session";
+
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 async function handleResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const { detail } = data;
-    let message = "Request failed";
-    if (typeof detail === "string") {
+    const sessionExpired = maybeNotifySessionExpired(response, data);
+    let message = sessionExpired ? "Your session has expired. Please log in again." : "Request failed";
+    if (!sessionExpired && typeof detail === "string") {
       message = detail;
-    } else if (Array.isArray(detail)) {
+    } else if (!sessionExpired && Array.isArray(detail)) {
       message = detail.map((item) => item.msg).join(", ");
-    } else if (data.message) {
+    } else if (!sessionExpired && data.message) {
       message = data.message;
     }
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
   return data;
 }
@@ -108,7 +118,9 @@ export async function login(email, password) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  return handleResponse(response);
+  const data = await handleResponse(response);
+  resetSessionExpiredState();
+  return data;
 }
 
 export async function forgotPassword(email) {
@@ -325,8 +337,7 @@ export async function deleteTemplateV2(templateId) {
 
 // Logout helper
 export function logout() {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
+  clearStoredSession();
   _userCache.data = null;
   _userCache.timestamp = 0;
 }
