@@ -210,6 +210,7 @@ iframe {
    .brand-icon-main   = orange brand icon, visible when expanded
    .brand-icon-toggle = button that replaces it when sidebar is collapsed,
                         remains on sidebar in both dashboard and app layouts
+                        — styled IDENTICAL to main icon so it truly takes its place
    ─────────────────────────────────────────────────────────────────────────── */
 .brand-icon-main {
   /* default visible */
@@ -220,21 +221,23 @@ iframe {
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: #fff;
-  color: #7a4537;
-  border: 1px solid #f0dfda;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  background: #e2765e;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 10px rgba(226, 118, 94, 0.3);
   cursor: pointer;
   transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
 }
 
 .brand-icon-toggle:hover,
 .brand-icon-toggle:focus-visible {
-  background: var(--brand-orange-soft);
-  border-color: var(--brand-orange);
-  color: var(--brand-orange-dark);
+  background: #d95e40;
+  color: white;
   outline: none;
-  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+  box-shadow: 0 6px 16px rgba(226, 118, 94, 0.4), 0 0 0 4px var(--brand-orange-ring);
+  transform: translateY(-1px);
 }
 
 .brand-icon-toggle:active {
@@ -1458,20 +1461,27 @@ button:disabled {
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
   color: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .admin-brand-toggle:hover,
 .admin-brand-toggle:focus-visible {
-  background: rgba(231, 123, 96, 0.25);
-  border-color: rgba(231, 123, 96, 0.5);
+  background: rgba(255, 255, 255, 0.18);
   color: #fff;
   outline: none;
-  box-shadow: 0 0 0 4px rgba(231, 123, 96, 0.15);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.admin-brand-toggle:active {
+  transform: scale(0.96);
 }
 
 .admin-sidebar-header-actions {
