@@ -184,14 +184,7 @@ export default function AdminDefaultTemplatesPage() {
       {error && <div className="admin-error-message">{error}</div>}
       {message && <div className="admin-success-message">{message}</div>}
 
-      <div className="admin-info-note">
-        <ShieldAlert size={18} />
-        <p>
-          Removing a template from the defaults does <strong>not</strong> delete the customer's
-          work. Use <strong>Change to Customer</strong> to hand it back. If an older default has no
-          owner, use <strong>Link to Customer</strong> first — deleting remains a separate destructive action.
-        </p>
-      </div>
+
 
       {/* Current Default Templates */}
       <section style={{ marginBottom: "2rem" }}>

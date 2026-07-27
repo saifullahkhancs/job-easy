@@ -44,7 +44,7 @@ export default function App() {
         {/* Main application routes with shared layout */}
         <Route path="/app" element={<Layout />}>
           {/* Publicly accessible routes (components handle guest/visitor state) */}
-          <Route index element={<Navigate to="new" replace />} />
+          <Route index element={<Navigate to="templates" replace />} />
           <Route path="templates" element={<DashboardPage />} />
           <Route path="templates/:id" element={<TemplateViewPage />} />
           <Route path="new" element={<TemplateCreatePage />} />

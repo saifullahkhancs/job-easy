@@ -29,7 +29,7 @@ export default function LoginPage() {
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (token) {
-      navigate("/app/new");
+      navigate("/app/templates");
     }
   }, [navigate]);
 
@@ -51,10 +51,10 @@ export default function LoginPage() {
         if (adminDestination === "admin") {
           navigate("/admin");
         } else {
-          navigate("/app/new");
+          navigate("/app/templates");
         }
       } else {
-        navigate("/app/new");
+        navigate("/app/templates");
       }
     } catch (err) {
       // Handle the specific case where the user is not verified

@@ -32,7 +32,7 @@ export default function Layout() {
   const handleLogout = () => {
     logout();
     setCurrentUser(null);
-    navigate("/app/new", { replace: true });
+    navigate("/app/templates", { replace: true });
   };
 
   const getNavItems = () => {

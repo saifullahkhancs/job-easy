@@ -53,7 +53,7 @@ export default function SignupPage() {
       localStorage.setItem("refresh_token", loginData.refresh_token);
 
       setMessage("Verification successful! Redirecting...");
-      setTimeout(() => navigate("/app/new"), 1500);
+      setTimeout(() => navigate("/app/templates"), 1500);
     } catch (err) {
       setError(err.message);
     } finally {
