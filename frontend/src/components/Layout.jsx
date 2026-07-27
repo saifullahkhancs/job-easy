@@ -233,10 +233,19 @@ export default function Layout() {
         aria-hidden={isMobile && !sidebarOpen ? "true" : "false"}
       >
         <div className="sidebar-brand">
-          {/* Expanded: main brand icon */}
-          <div className="brand-icon brand-icon-main">
-            <LayoutGrid size={24} />
-          </div>
+          {/* Brand links to landing page start URL, does NOT act as sidebar toggle */}
+          <button
+            type="button"
+            className="sidebar-brand-link"
+            onClick={() => navigate("/")}
+            aria-label="Go to home - landing page"
+            title="Go to home (Job Easy)"
+          >
+            <div className="brand-icon brand-icon-main">
+              <LayoutGrid size={24} />
+            </div>
+            <h2>Job Easy</h2>
+          </button>
 
           {/* Collapsed: toggle takes place of main icon and remains on sidebar */}
           <button
@@ -249,8 +258,6 @@ export default function Layout() {
           >
             <PanelLeftOpen size={20} />
           </button>
-
-          <h2>Job Easy</h2>
 
           {/* Desktop: collapses to icon rail. Mobile: closes drawer. Remains on sidebar in both cases. */}
           <button

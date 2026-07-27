@@ -56,6 +56,37 @@ iframe {
   display: flex;
   min-height: 100vh;
   background: linear-gradient(135deg, #fdfbfb 0%, #f7ebeb 100%);
+  position: relative;
+  isolation: isolate;
+}
+
+/* Website-like soft blobs behind app – matches landing hero */
+.app-layout::before,
+.app-layout::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(64px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.14;
+}
+
+.app-layout::before {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #e77b60 0%, transparent 70%);
+  top: -140px;
+  right: -120px;
+}
+
+.app-layout::after {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, #f59e0b 0%, transparent 70%);
+  bottom: 10%;
+  left: -100px;
+  opacity: 0.08;
 }
 
 .app-layout.sidebar-collapsed {
@@ -65,7 +96,8 @@ iframe {
 .app-sidebar {
   width: var(--sidebar-slot);
   flex: 0 0 var(--sidebar-slot);
-  background: linear-gradient(to bottom, #fdfbfb 0%, #fcf7f7 100%);
+  background: rgba(253, 251, 251, 0.88);
+  backdrop-filter: blur(16px) saturate(1.1);
   border-right: 1px solid #f2e8e8;
   display: flex;
   flex-direction: column;
@@ -75,6 +107,7 @@ iframe {
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
+  z-index: 2;
   transition: width 0.25s ease, flex-basis 0.25s ease, padding 0.25s ease, transform 0.25s ease;
 }
 
@@ -184,6 +217,47 @@ iframe {
   align-items: center;
   gap: 12px;
   margin-bottom: 48px;
+}
+
+/* Brand link to landing page start URL – does NOT act as sidebar toggle, only navigation */
+.sidebar-brand-link,
+.admin-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  border-radius: 10px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.sidebar-brand-link:hover,
+.admin-brand-link:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.sidebar-brand-link:focus-visible,
+.admin-brand-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--brand-orange-ring);
+}
+
+.sidebar-brand-link h2,
+.admin-brand-link h2 {
+  margin: 0;
+}
+
+/* When sidebar is collapsed, hide the brand link (its place taken by toggle) */
+.app-layout.sidebar-collapsed .sidebar-brand-link,
+.admin-layout.sidebar-collapsed .admin-brand-link {
+  display: none !important;
 }
 
 .brand-icon {
@@ -363,13 +437,13 @@ iframe {
 
 .app-main-content {
   flex: 1;
-  /* `min-width: 0` lets the flex child shrink instead of overflowing when a
-     wide table or preview sits inside it. */
   min-width: 0;
   padding: var(--page-padding-y) var(--page-padding-x);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 /* Caps how wide the content grows on large monitors and centres it, so the
@@ -386,15 +460,43 @@ iframe {
 }
 
 .card {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
   border: 1px solid #f2e8e8;
   border-radius: var(--card-radius);
   padding: var(--card-padding);
-  box-shadow: 0 8px 32px rgba(226, 118, 94, 0.05);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(255,255,255,0.9) inset;
   display: flex;
   flex-direction: column;
   width: 100%;
   min-width: 0;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+  border-color: #e9dede;
+}
+
+/* Page accent header already gradient – make it more website-like with blob */
+.page-accent-header {
+  position: relative;
+  overflow: hidden;
+}
+
+.page-accent-header::after {
+  content: "";
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
+  top: -120px;
+  right: -80px;
+  pointer-events: none;
 }
 
 .page-header {
@@ -1405,8 +1507,25 @@ button:disabled {
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #f8fafc;
+  background: linear-gradient(135deg, #f8fafc 0%, #fdf5f2 100%);
   --sidebar-slot: var(--admin-sidebar-width);
+  position: relative;
+  isolation: isolate;
+}
+
+.admin-layout::before {
+  content: "";
+  position: fixed;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(231,123,96,0.12), transparent 70%);
+  top: -80px;
+  right: -60px;
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.8;
 }
 
 .admin-layout.sidebar-collapsed {
@@ -1710,14 +1829,17 @@ button:disabled {
 }
 
 .admin-stat-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid #f2e8e8;
+  border-radius: 18px;
   padding: 24px;
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
   cursor: pointer;
 }
 
@@ -2683,14 +2805,33 @@ button:disabled {
 }
 
 .template-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid #f2e8e8;
+  border-radius: 18px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.template-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brand-orange), var(--brand-orange-dark));
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.template-card:hover::before {
+  opacity: 1;
 }
 
 .template-card:hover,

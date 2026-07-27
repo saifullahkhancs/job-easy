@@ -131,10 +131,22 @@ export default function AdminLayout() {
       >
         <div className="admin-sidebar-header">
           <div className="admin-brand">
-            {/* Expanded: main icon */}
-            <div className="admin-brand-mark admin-brand-mark-main">
-              <Shield size={22} color="white" />
-            </div>
+            {/* Brand links to landing page start URL, does NOT toggle sidebar */}
+            <button
+              type="button"
+              className="admin-brand-link"
+              onClick={() => navigate("/")}
+              aria-label="Go to home - landing page"
+              title="Go to home (Job Easy)"
+            >
+              <div className="admin-brand-mark admin-brand-mark-main">
+                <Shield size={22} color="white" />
+              </div>
+              <div className="admin-brand-text">
+                <h2>Job Easy</h2>
+                <span className="admin-badge">Admin Panel</span>
+              </div>
+            </button>
             {/* Collapsed: toggle takes place of main icon and remains on sidebar */}
             <button
               type="button"
@@ -146,10 +158,6 @@ export default function AdminLayout() {
             >
               <PanelLeftOpen size={20} />
             </button>
-            <div className="admin-brand-text">
-              <h2>Job Easy</h2>
-              <span className="admin-badge">Admin Panel</span>
-            </div>
           </div>
           <div className="admin-sidebar-header-actions">
             {/* Desktop collapse — remains on sidebar */}
