@@ -140,26 +140,33 @@ iframe {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
   padding: 0;
-  border: 1px solid #f0dfda;
-  border-radius: 12px;
-  background: #fff;
-  color: #7a4537;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #475569;
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sidebar-toggle-btn:hover,
 .sidebar-toggle-btn:focus-visible {
-  background: var(--brand-orange-soft);
-  border-color: var(--brand-orange);
-  color: var(--brand-orange-dark);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: #cbd5e1;
+  color: #334155;
   outline: none;
-  box-shadow: 0 0 0 4px var(--brand-orange-ring);
+  box-shadow: none;
+}
+
+.sidebar-toggle-btn:active {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: #cbd5e1;
+  color: #334155;
+  box-shadow: none;
 }
 
 /* Collapse / close control inside the sidebar header. */
@@ -290,9 +297,9 @@ iframe {
 
 .brand-icon-toggle {
   display: none; /* hidden when expanded, shown when collapsed via rules below */
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   background: #e2765e;
   color: white;
   border: none;
@@ -608,8 +615,8 @@ iframe {
 }
 .app-layout.sidebar-collapsed .brand-icon-toggle {
   display: flex !important;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   animation: sidebarIconPop 0.25s ease;
 }
 
@@ -1610,9 +1617,9 @@ button:disabled {
 
 .admin-brand-toggle {
   display: none;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.1);
   border: none;
   color: #fff;
@@ -1708,11 +1715,22 @@ button:disabled {
   padding: 12px 0;
 }
 
-/* Hide admin header toggle on desktop — desktop toggle lives inside sidebar and remains there */
-@media (min-width: 1024px) {
-  .admin-sidebar-toggle-btn {
-    display: none !important;
-  }
+/* Keep the admin header toggle visible at every width so the sidebar can always be reopened. */
+.admin-sidebar-toggle-btn {
+  display: inline-flex !important;
+  background: transparent;
+  border-color: transparent;
+  color: #64748b;
+  box-shadow: none;
+}
+
+.admin-sidebar-toggle-btn:hover,
+.admin-sidebar-toggle-btn:focus-visible,
+.admin-sidebar-toggle-btn:active {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #475569;
+  box-shadow: none !important;
 }
 
 .admin-brand h2 {
@@ -4859,9 +4877,17 @@ button:disabled {
   color: #ffffff !important;
   cursor: pointer !important;
   border-radius: 12px !important;
+  border: none !important;
+}
+
+.app-layout.sidebar-collapsed .brand-icon-toggle {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.admin-layout.sidebar-collapsed .admin-brand-toggle {
   width: 44px !important;
   height: 44px !important;
-  border: none !important;
 }
 
 .app-layout.sidebar-collapsed .brand-icon-toggle svg,
