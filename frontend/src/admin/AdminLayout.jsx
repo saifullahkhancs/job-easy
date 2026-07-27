@@ -168,29 +168,20 @@ export default function AdminLayout() {
                 <span className="admin-badge">Admin Panel</span>
               </div>
             </button>
-            {/* Collapsed: toggle takes place of main icon and remains on sidebar */}
-            <button
-              type="button"
-              className="admin-brand-mark admin-brand-toggle"
-              onClick={toggleSidebar}
-              aria-label="Open sidebar"
-              aria-controls="admin-sidebar"
-              title="Open sidebar"
-            >
-              <PanelLeftOpen size={20} />
-            </button>
           </div>
           <div className="admin-sidebar-header-actions">
-            {/* Desktop collapse — remains on sidebar */}
+            {/* Desktop collapse/expand — stays mounted in both states so the
+                sidebar can always be reopened from its own header. */}
             <button
               type="button"
               className="sidebar-close-btn admin-sidebar-collapse-btn"
               onClick={toggleSidebar}
-              aria-label="Collapse sidebar"
+              aria-label={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
+              aria-expanded={sidebarOpen}
               aria-controls="admin-sidebar"
-              title="Collapse sidebar"
+              title={sidebarOpen ? "Collapse sidebar" : "Open sidebar"}
             >
-              <PanelLeftClose size={18} />
+              {sidebarOpen ? <PanelLeftClose size={22} /> : <PanelLeftOpen size={22} />}
             </button>
             {/* Mobile drawer close */}
             <button
