@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { LayoutTemplate } from "lucide-react";
 import { fetchCvBlobUrlV2, fetchTemplateV2, fetchTemplatesV2, getCvUrlV2 } from "../api/client";
+import { getAccessToken } from "../api/tokenStorage";
 
 function formatBytes(bytes) {
   if (!bytes) return "—";
@@ -13,7 +14,7 @@ function formatBytes(bytes) {
 export default function TemplateViewPage() {
   const { id } = useParams();
 
-  const isLoggedIn = !!localStorage.getItem("access_token");
+  const isLoggedIn = !!getAccessToken();
 
   const [templates, setTemplates] = useState([]);
   const [selectedId, setSelectedId] = useState(id || "");

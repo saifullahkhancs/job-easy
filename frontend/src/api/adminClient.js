@@ -1,6 +1,7 @@
 // Use relative URLs in dev (Vite proxies /api to the backend).
 // Set VITE_API_URL for production builds, e.g. http://127.0.0.1:8000
 import { maybeNotifySessionExpired } from "./session";
+import { getAccessToken } from "./tokenStorage";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
@@ -26,7 +27,7 @@ async function handleResponse(response) {
 }
 
 const getHeaders = (extraHeaders = {}) => {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const headers = {};
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;

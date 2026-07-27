@@ -13,6 +13,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { login, getCurrentUser, verifyEmail, resendVerification } from "../api/client";
+import { getAccessToken, setTokens } from "../api/tokenStorage";
 
 export default function LoginPage() {
   const [view, setView] = useState("login"); // 'login' or 'verify'
@@ -27,7 +28,10 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    // Use per-tab sessionStorage – allows admin in one tab, customer in another.
+    // Previously this used localStorage which is shared across tabs, so logging
+    // in as a second user overwrote the first tab's token and made it appear logged out.
+    const token = getAccessToken();
     if (token) {
       navigate("/app/templates");
     }
@@ -41,8 +45,8 @@ export default function LoginPage() {
 
     try {
       const data = await login(email, password);
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      // Store in sessionStorage for tab isolation (see tokenStorage.js)
+      setTokens({ access_token: data.access_token, refresh_token: data.refresh_token });
       
       // Fetch user to check role and redirect accordingly
       const user = await getCurrentUser();
@@ -134,6 +138,9 @@ export default function LoginPage() {
         <div className="auth-header">
           <h1>Welcome Back</h1>
           <p>Sign in to your account</p>
+          <p className="muted" style={{ fontSize: "0.85rem", marginTop: "4px" }}>
+            Each browser tab now keeps its own login (sessionStorage). You can be admin in one tab and customer in another.
+          </p>
         </div>
 
         <div className="quick-login-buttons">

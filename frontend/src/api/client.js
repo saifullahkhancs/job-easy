@@ -5,6 +5,10 @@ import {
   maybeNotifySessionExpired,
   resetSessionExpiredState,
 } from "./session";
+import {
+  getAccessToken,
+  getRefreshToken,
+} from "./tokenStorage";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
@@ -141,36 +145,42 @@ export async function resetPassword(token, password) {
   return handleResponse(response);
 }
 
-export async function refreshToken(refreshToken) {
+export async function refreshToken(refreshTokenValue) {
   const response = await fetch(`${API_BASE}/api/v1/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh_token: refreshToken }),
+    body: JSON.stringify({ refresh_token: refreshTokenValue }),
   });
   return handleResponse(response);
 }
 
 // Get current user profile
-const _userCache = { data: null, timestamp: 0 };
+const _userCache = { data: null, timestamp: 0, token: null };
 const USER_CACHE_TTL = 30_000; // 30 seconds
 
 export async function getCurrentUser() {
-  if (_userCache.data && Date.now() - _userCache.timestamp < USER_CACHE_TTL) {
+  const token = getAccessToken();
+  // Invalidate cache if token changed (important for multi-tab with different accounts)
+  if (
+    _userCache.data &&
+    Date.now() - _userCache.timestamp < USER_CACHE_TTL &&
+    _userCache.token === token
+  ) {
     return _userCache.data;
   }
-  const token = localStorage.getItem("access_token");
   const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await handleResponse(response);
   _userCache.data = data;
   _userCache.timestamp = Date.now();
+  _userCache.token = token;
   return data;
 }
 
 // Email Info API
 export async function createEmailInfo(senderEmail, senderName, apiKey, emailProvider = "resend") {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/user-email-info`, {
     method: "POST",
     headers: { 
@@ -183,7 +193,7 @@ export async function createEmailInfo(senderEmail, senderName, apiKey, emailProv
 }
 
 export async function getEmailInfo() {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/user-email-info`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -191,7 +201,7 @@ export async function getEmailInfo() {
 }
 
 export async function updateEmailInfo(senderEmail, senderName, apiKey, emailProvider) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const body = {};
   if (senderEmail !== undefined) body.sender_email = senderEmail;
   if (senderName !== undefined) body.sender_name = senderName;
@@ -210,7 +220,7 @@ export async function updateEmailInfo(senderEmail, senderName, apiKey, emailProv
 }
 
 export async function deleteEmailInfo() {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/user-email-info`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
@@ -220,7 +230,7 @@ export async function deleteEmailInfo() {
 
 // Approval Workflow API
 export async function submitApprovalRequest(userEmailInfoId) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/approval/request`, {
     method: "POST",
     headers: { 
@@ -233,7 +243,7 @@ export async function submitApprovalRequest(userEmailInfoId) {
 }
 
 export async function getApprovalStatus() {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/approval/status`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -241,7 +251,7 @@ export async function getApprovalStatus() {
 }
 
 export async function listMyRequests() {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/approval/requests`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -250,7 +260,7 @@ export async function listMyRequests() {
 
 // Updated Template API (v2)
 export async function fetchTemplatesV2() {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const headers = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`${API_BASE}/api/v1/templates`, {
@@ -260,7 +270,7 @@ export async function fetchTemplatesV2() {
 }
 
 export async function fetchTemplateV2(templateId) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const headers = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
@@ -270,7 +280,7 @@ export async function fetchTemplateV2(templateId) {
 }
 
 export async function getCvUrlV2(templateId) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   if (token) {
     return `${API_BASE}/api/v1/templates/${templateId}/cv?token=${token}`;
   }
@@ -278,7 +288,7 @@ export async function getCvUrlV2(templateId) {
 }
 
 export async function fetchCvBlobUrlV2(templateId) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const headers = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}/cv`, {
@@ -292,7 +302,7 @@ export async function fetchCvBlobUrlV2(templateId) {
 }
 
 export async function createTemplateV2(formData) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/templates`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
@@ -302,7 +312,7 @@ export async function createTemplateV2(formData) {
 }
 
 export async function updateTemplateV2(templateId, formData) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
     method: "PUT",
     headers: {
@@ -315,7 +325,7 @@ export async function updateTemplateV2(templateId, formData) {
 }
 
 export async function updateTemplateCvV2(templateId, cvPdf) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const formData = new FormData();
   formData.append("cv_pdf", cvPdf);
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}/cv`, {
@@ -327,7 +337,7 @@ export async function updateTemplateCvV2(templateId, cvPdf) {
 }
 
 export async function deleteTemplateV2(templateId) {
-  const token = localStorage.getItem("access_token");
+  const token = getAccessToken();
   const response = await fetch(`${API_BASE}/api/v1/templates/${templateId}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
@@ -335,9 +345,13 @@ export async function deleteTemplateV2(templateId) {
   return handleResponse(response);
 }
 
-// Logout helper
+// Logout helper – clears user cache and tokens
 export function logout() {
   clearStoredSession();
   _userCache.data = null;
   _userCache.timestamp = 0;
+  _userCache.token = null;
 }
+
+// Also export token helpers for convenience
+export { getAccessToken, getRefreshToken } from "./tokenStorage";

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchTemplatesV2, sendEmail, getCurrentUser } from "../api/client";
 import { Send, CheckCircle2, Copy, Link, Mail, Lock } from "lucide-react";
+import { getAccessToken } from "../api/tokenStorage";
 
 export default function SendPage() {
   const [searchParams] = useSearchParams();
@@ -18,7 +19,8 @@ export default function SendPage() {
   useEffect(() => {
     const init = async () => {
       let fetchedUser = null;
-      const token = localStorage.getItem("access_token");
+
+      const token = getAccessToken();
       if (token) {
         try {
           const user = await getCurrentUser();

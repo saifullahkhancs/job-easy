@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createTemplateV2, getCurrentUser } from "../api/client";
 import { UploadCloud, Wand2, ArrowLeft, Lock } from "lucide-react";
+import { getAccessToken } from "../api/tokenStorage";
 
 export default function TemplateCreatePage() {
   const [templateRole, setTemplateRole] = useState("");
@@ -19,7 +20,7 @@ export default function TemplateCreatePage() {
   }, []);
 
   const fetchData = async () => {
-    const token = localStorage.getItem("access_token");
+    const token = getAccessToken();
     if (!token) {
       setCurrentUser(null);
       return;

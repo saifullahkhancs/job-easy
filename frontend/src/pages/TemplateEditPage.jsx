@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchTemplateV2, updateTemplateV2, updateTemplateCvV2, getCurrentUser } from "../api/client";
 import { Save, UploadCloud, ArrowLeft, ShieldCheck, Lock } from "lucide-react";
+import { getAccessToken } from "../api/tokenStorage";
 
 export default function TemplateEditPage() {
   const { id } = useParams();
@@ -26,7 +27,7 @@ export default function TemplateEditPage() {
 
   const fetchData = async () => {
     // Check auth status
-    const token = localStorage.getItem("access_token");
+    const token = getAccessToken();
     if (token) {
       try {
         const user = await getCurrentUser();

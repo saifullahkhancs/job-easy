@@ -18,6 +18,7 @@ import {
 import { getCurrentUser, fetchTemplatesV2 } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
 import { ROLES } from "../components/RoleGuard";
+import { getAccessToken } from "../api/tokenStorage";
 
 const TEMPLATE_LIMIT_FALLBACK = 2;
 
@@ -160,7 +161,7 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = getAccessToken();
 
       // Fetch templates (works for guests too)
       const templatesData = await fetchTemplatesV2();

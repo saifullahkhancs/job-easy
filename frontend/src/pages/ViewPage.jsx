@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchCvBlobUrlV2, fetchTemplateV2, fetchTemplatesV2, getCvUrlV2, getCurrentUser } from "../api/client";
 import { Lock } from "lucide-react";
+import { getAccessToken } from "../api/tokenStorage";
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -26,7 +27,7 @@ export default function ViewPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("access_token");
+        const token = getAccessToken();
         let user = null;
         if (token) {
           user = await getCurrentUser();

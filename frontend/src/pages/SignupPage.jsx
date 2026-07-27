@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, User, ArrowRight, RefreshCw } from "lucide-react";
 import { register, verifyEmail, resendVerification, login } from "../api/client";
+import { getAccessToken, setTokens } from "../api/tokenStorage";
 
 export default function SignupPage() {
   const [step, setStep] = useState("register"); // "register" or "verify"
@@ -47,10 +48,9 @@ export default function SignupPage() {
     try {
       await verifyEmail(formData.email, verificationCode);
 
-      // Auto-login after successful verification
+      // Auto-login after successful verification – store per-tab via sessionStorage
       const loginData = await login(formData.email, formData.password);
-      localStorage.setItem("access_token", loginData.access_token);
-      localStorage.setItem("refresh_token", loginData.refresh_token);
+      setTokens({ access_token: loginData.access_token, refresh_token: loginData.refresh_token });
 
       setMessage("Verification successful! Redirecting...");
       setTimeout(() => navigate("/app/templates"), 1500);

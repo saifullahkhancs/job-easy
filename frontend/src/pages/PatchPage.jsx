@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { fetchTemplateV2, fetchTemplatesV2, updateTemplateV2, updateTemplateCvV2, getCurrentUser } from "../api/client";
 import { ShieldCheck, Check, Save, Lock } from "lucide-react";
+import { getAccessToken } from "../api/tokenStorage";
 
 function canEditTemplate(template, user) {
   if (!user) {
@@ -34,7 +35,7 @@ export default function PatchPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("access_token");
+        const token = getAccessToken();
         let user = null;
         if (token) {
           user = await getCurrentUser();

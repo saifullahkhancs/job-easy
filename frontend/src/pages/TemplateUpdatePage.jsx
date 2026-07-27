@@ -8,6 +8,13 @@ import {
   getCurrentUser,
 } from "../api/client";
 import { Save, UploadCloud, ShieldCheck, Lock, Edit } from "lucide-react";
+import { getAccessToken } from "../api/tokenStorage";
+
+function canEditTemplate(template, user) {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  return user.role === "customer" && Boolean(template.is_mine || (user.email && template.user_email === user.email));
+}
 
 function canEditTemplate(template, user) {
   if (!user) return false;
@@ -42,7 +49,11 @@ export default function TemplateUpdatePage() {
     const load = async () => {
       setListLoading(true);
       try {
-        const token = localStorage.getItem("access_token");
+
+        const token = getAccessToken();
+
+        const token = getAccessToken();
+
         let user = null;
         if (token) {
           try {
@@ -77,7 +88,7 @@ export default function TemplateUpdatePage() {
   useEffect(() => {
     if (!selectedId) { setTemplate(null); return; }
 
-    const token = localStorage.getItem("access_token");
+    const token = getAccessToken();
     setDetailLoading(true);
     setMessage("");
     setError("");
