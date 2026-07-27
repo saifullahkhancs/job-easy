@@ -1707,21 +1707,23 @@
   border-color: #e77b60 !important;
 }
 
-/* Resend delivery note: pulled out of the right-hand hero visual column so it reads as
-   centred against the hero section as a whole (the visual column only spans the right
-   half of the hero, so `left: 50%` inside it looked right-biased). */
+/* Center the Resend delivery note under the hero mockup, matching the callout area from the design. */
 .landing-mock-card.mock-card-float {
   position: absolute;
-  /* Negative offset lets the card overhang the visual column toward the page centre. */
-  left: -10%;
-  bottom: 0;
+  left: 50%;
+  bottom: -40px;
   z-index: 5;
   width: clamp(280px, 70%, 420px);
-  max-width: none;
+  max-width: calc(100% - 32px);
   justify-content: center;
   text-align: center;
-  transform: translateY(0);
-  animation-name: floatUp;
+  transform: translateX(-50%);
+  animation-name: floatUpCentered;
+}
+
+@keyframes floatUpCentered {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-6px); }
 }
 
 @media (max-width: 1023px) {
