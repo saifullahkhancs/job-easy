@@ -17,10 +17,12 @@ export default function SendPage() {
 
   useEffect(() => {
     const init = async () => {
+      let fetchedUser = null;
       const token = localStorage.getItem("access_token");
       if (token) {
         try {
           const user = await getCurrentUser();
+          fetchedUser = user;
           setCurrentUser(user);
         } catch {
           setCurrentUser(null);
@@ -30,9 +32,12 @@ export default function SendPage() {
       try {
         const items = await fetchTemplatesV2();
         // Show the templates this user authored: their personal ones plus any
-        // of their CVs an admin promoted to a platform default (`is_mine`).
+        // of their CVs an admin promoted to a platform default.
+        // We accept both `is_mine` flag and direct `user_email` match so that
+        // after admin promotion the customer can still use his own templates.
+        const ownerEmail = fetchedUser?.email || currentUser?.email;
         const sendableTemplates = items.filter(
-          (t) => t.template_scope === "customer" || t.is_mine
+          (t) => t.template_scope === "customer" || t.is_mine || (ownerEmail && t.user_email === ownerEmail)
         );
         setTemplates(sendableTemplates);
         if (sendableTemplates.length > 0) {
@@ -100,6 +105,9 @@ export default function SendPage() {
       {!isDisabled && templates.length === 0 ? (
         <div className="empty-state">
           <p className="muted">No personal templates available. Create a template first to send emails.</p>
+          <p className="muted" style={{ marginTop: "8px", fontSize: "0.85rem" }}>
+            If your templates were promoted to default by an admin, they still count as yours and should appear here. Try refreshing or check the Templates page.
+          </p>
         </div>
       ) : (
         <div className="form-page-layout">
@@ -111,7 +119,7 @@ export default function SendPage() {
                 {isDisabled && <option value="">— Login required —</option>}
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.title}
+                    {template.title} {template.template_scope === "default" ? "(Default - Yours)" : ""}
                   </option>
                 ))}
               </select>

@@ -9,6 +9,12 @@ import {
 } from "../api/client";
 import { Save, UploadCloud, ShieldCheck, Lock, Edit } from "lucide-react";
 
+function canEditTemplate(template, user) {
+  if (!user) return false;
+  if (user.role === "admin") return true;
+  return user.role === "customer" && Boolean(template.is_mine || (user.email && template.user_email === user.email));
+}
+
 export default function TemplateUpdatePage() {
   const { id } = useParams(); // optional — pre-select from dashboard edit button
   const navigate = useNavigate();
@@ -33,28 +39,38 @@ export default function TemplateUpdatePage() {
 
   // Load user + all templates on mount
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      getCurrentUser()
-        .then((u) => setCurrentUser(u))
-        .catch(() => setCurrentUser(null));
-    }
-
-    fetchTemplatesV2()
-      .then((items) => {
+    const load = async () => {
+      setListLoading(true);
+      try {
         const token = localStorage.getItem("access_token");
-        // For guests/unauthenticated: show default templates for preview
-        // For logged-in users: show only personal (customer-owned) templates
+        let user = null;
+        if (token) {
+          try {
+            user = await getCurrentUser();
+            setCurrentUser(user);
+          } catch {
+            setCurrentUser(null);
+          }
+        }
+
+        const items = await fetchTemplatesV2();
+        // For logged-in customers, include personal + their own promoted defaults
+        // so that after admin promotion they can still edit their own templates.
         const editable = token
-          ? items.filter((t) => t.template_scope === "customer")
-          : items; // guests see default templates
+          ? items.filter((t) => (user ? canEditTemplate(t, user) : t.template_scope === "customer"))
+          : items;
+
         setTemplates(editable);
         if (!id && editable.length > 0) {
           setSelectedId(String(editable[0].id));
         }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setListLoading(false));
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setListLoading(false);
+      }
+    };
+    load();
   }, []);
 
   // Load detail whenever selected template changes
@@ -162,7 +178,7 @@ export default function TemplateUpdatePage() {
         <div className="page-header">
           <div>
             <h2>Update Template</h2>
-            <p className="muted">Select a template and update only the fields you need.</p>
+            <p className="muted">Select a template and update only the fields you need. Promoted defaults that you own are also editable.</p>
           </div>
           <button
             type="button"
@@ -183,7 +199,7 @@ export default function TemplateUpdatePage() {
           <div style={{ padding: "1.5rem", background: "#f8fafc", borderRadius: "10px", textAlign: "center", color: "#64748b" }}>
             {isGuest || isVisitor
               ? "No templates available to preview."
-              : "No personal templates found. Create one first to update it."}
+              : "No editable templates found. Create one first or check if your templates were promoted to default — they are still editable here."}
           </div>
         ) : (
           <label>
@@ -194,7 +210,7 @@ export default function TemplateUpdatePage() {
             >
               {templates.map((t) => (
                 <option key={t.id} value={String(t.id)}>
-                  {t.template_role || t.title}
+                  {t.title} {t.template_scope === "default" ? "(Default - Yours)" : ""} — {t.template_role || t.title}
                 </option>
               ))}
             </select>

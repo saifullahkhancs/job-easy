@@ -347,17 +347,26 @@ export default function DashboardPage() {
 
     // Default templates that this customer originally authored. These still
     // count as their templates — they were simply picked by an admin as a showcase.
-    const myPromotedTemplates = defaultTemplates.filter((t) => t.is_mine);
-    const otherDefaultTemplates = defaultTemplates.filter((t) => !t.is_mine);
+    // Use both `is_mine` flag and direct email match as fallback so promoted
+    // templates are never mistaken for foreign defaults.
+    const myPromotedTemplates = defaultTemplates.filter(
+      (t) => t.is_mine || (currentUser?.email && t.user_email === currentUser.email)
+    );
+    const otherDefaultTemplates = defaultTemplates.filter(
+      (t) => !myPromotedTemplates.some((m) => m.id === t.id)
+    );
 
     const templateLimit = currentUser.template_limit || TEMPLATE_LIMIT_FALLBACK;
     const authoredTemplateCount = personalTemplates.length + myPromotedTemplates.length;
     const usedSlots = currentUser.current_template_count ?? authoredTemplateCount;
     const remainingSlots = Math.max(templateLimit - usedSlots, 0);
     const hasPromoted = myPromotedTemplates.length > 0;
-    const allTemplatesPromoted = hasPromoted && personalTemplates.length === 0;
-    const canCreateMore = !allTemplatesPromoted && remainingSlots > 0;
     const allAuthoredTemplatesPromoted = hasPromoted && personalTemplates.length === 0;
+    // The single source of truth for \"can create more\" is the remaining allowance.
+    // When all authored templates are promoted, remainingSlots is usually 0/2,
+    // which correctly blocks creation as required by the spec.
+    const canCreateMore = remainingSlots > 0;
+
     const promotedNoun = myPromotedTemplates.length === 1 ? "CV" : "CVs";
     const promotedVerb = myPromotedTemplates.length === 1 ? "was" : "were";
     const promotedTemplatePhrase = myPromotedTemplates.length === 1 ? "a default template" : "default templates";
@@ -450,9 +459,16 @@ export default function DashboardPage() {
                 <h3>
                   Congrats! Your email selected as default. It is now on the website and visitor can see them.
                 </h3>
-                <p>
-                  Both of your templates have been assigned to default status by the admin, so you cannot create any more templates.
-                </p>
+                {myPromotedTemplates.length >= templateLimit || remainingSlots === 0 ? (
+                  <p>
+                    Both of your templates have been assigned to default status by the admin, so you cannot create any more templates.
+                  </p>
+                ) : (
+                  <p>
+                    Your {promotedNoun.toLowerCase()} {promotedVerb} promoted to the public gallery and visitor can see them.
+                    You {remainingSlots === 1 ? "can still create 1 more template" : `can still create ${remainingSlots} more templates`}.
+                  </p>
+                )}
               </>
             ) : (
               <>
@@ -484,14 +500,14 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* This customer's promoted templates */}
+        {/* This customer's promoted templates - ALWAYS usable */}
         {hasPromoted && (
           <>
             <div className="section-header">
               <div>
                 <h2>Selected as Default ({myPromotedTemplates.length})</h2>
                 <p className="section-description">
-                  Your templates that the admin promoted to the public gallery.
+                  Your templates that the admin promoted to the public gallery. You can still view, edit and send with them.
                 </p>
               </div>
             </div>
@@ -558,7 +574,7 @@ export default function DashboardPage() {
             <div>
               <h3>Your templates are live publicly</h3>
               <p>
-                Every template you authored is currently showcased as a default template for visitors.
+                Every template you authored is currently showcased as a default template for visitors. You can still use them to send emails.
               </p>
             </div>
           </div>
