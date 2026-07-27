@@ -1668,9 +1668,11 @@ button:disabled {
   padding: 12px 0;
 }
 
-/* Keep the admin header toggle visible at every width so the sidebar can always be reopened. */
+/* Desktop: the admin sidebar already hosts its own toggle in the sidebar header,
+   so the duplicate toggle in the page header is hidden there. It returns on
+   mobile (media query below) where it is the only control that opens the drawer. */
 .admin-sidebar-toggle-btn {
-  display: inline-flex !important;
+  display: none !important;
   background: transparent;
   border-color: transparent;
   color: #64748b;
@@ -4625,6 +4627,11 @@ button:disabled {
 
   .admin-layout.sidebar-drawer-open .sidebar-backdrop {
     display: block;
+  }
+
+  /* Mobile-only: the page-header toggle is the drawer's open control here. */
+  .admin-sidebar-toggle-btn {
+    display: inline-flex !important;
   }
 
   .admin-sidebar .admin-sidebar-close-btn {
