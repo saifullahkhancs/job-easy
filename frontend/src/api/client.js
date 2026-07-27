@@ -79,13 +79,29 @@ export async function patchTemplate(type, formData) {
   return handleResponse(response);
 }
 
-export async function sendEmail(recipientEmail, type) {
-  const response = await fetch(`${API_BASE}/api/send`, {
+export async function sendEmail(recipientEmail, templateId) {
+  const token = getAccessToken();
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await fetch(`${API_BASE}/api/v1/email/send`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipient_email: recipientEmail, type }),
+    headers,
+    body: JSON.stringify({
+      recipient_email: recipientEmail,
+      template_id: Number(templateId),
+    }),
   });
   return handleResponse(response);
+}
+
+// Legacy wrapper kept for any old callers — maps old /api/send to new endpoint
+export async function sendEmailLegacy(recipientEmail, type) {
+  // type was old job-type string; now we expect templateId, so this is deprecated
+  return sendEmail(recipientEmail, type);
 }
 
 // Auth API functions

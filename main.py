@@ -13,7 +13,7 @@ from core.config import settings
 from database import init_db
 from api.v1 import auth, users
 from api.v1 import user_email_info, approval, admin
-from api.v1 import templates_v2
+from api.v1 import templates_v2, email
 
 
 # Rate limiting
@@ -45,6 +45,7 @@ app.include_router(user_email_info.router)
 app.include_router(approval.router)
 app.include_router(admin.router)
 app.include_router(templates_v2.router)
+app.include_router(email.router)
 
 @app.get("/api/health")
 async def health_check():

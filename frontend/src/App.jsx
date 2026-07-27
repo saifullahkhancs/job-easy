@@ -21,6 +21,7 @@ import AdminRequestsPage from "./admin/AdminRequestsPage";
 import AdminUsersPage from "./admin/AdminUsersPage";
 import AdminDefaultTemplatesPage from "./admin/AdminDefaultTemplatesPage";
 import SessionExpiredDialog from "./components/SessionExpiredDialog";
+import LandingPage from "./pages/LandingPage";
 
 export default function App() {
   return (
@@ -60,13 +61,16 @@ export default function App() {
           </Route>
         </Route>
         
+        {/* Landing page */}
+        <Route path="/" element={<LandingPage />} />
+        
         {/* Legacy route redirects */}
-        <Route path="/" element={<Navigate to="/app" replace />} />
+        <Route path="/home" element={<LandingPage />} />
         <Route path="/view" element={<Navigate to="/app/view" replace />} />
         <Route path="/update" element={<Navigate to="/app/update" replace />} />
         
         {/* Catch all */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
