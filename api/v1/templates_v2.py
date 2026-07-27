@@ -179,12 +179,13 @@ async def create_template(
             detail="File must be a PDF",
         )
     
-    # For customers, enforce max 2 templates limit
+    # For customers, enforce max 2 authored templates. Promoted defaults keep
+    # their original user_email and still count against this allowance.
     if current_user.role == UserRole.CUSTOMER:
         result = await db.execute(
             select(UserTemplate).where(
                 UserTemplate.user_email == current_user.email,
-                UserTemplate.template_scope == TemplateScope.CUSTOMER
+                UserTemplate.is_active == True
             )
         )
         existing_count = len(result.scalars().all())
@@ -226,7 +227,7 @@ async def create_template(
     await db.commit()
     await db.refresh(template)
     
-    return template
+    return _to_response(template, current_user)
 
 
 @router.put("/{template_id}", response_model=UserTemplateResponse)
@@ -262,7 +263,7 @@ async def update_template(
     await db.commit()
     await db.refresh(template)
     
-    return template
+    return _to_response(template, current_user)
 
 
 @router.patch("/{template_id}/cv", response_model=UserTemplateResponse)
@@ -302,7 +303,7 @@ async def update_template_cv(
     await db.commit()
     await db.refresh(template)
     
-    return template
+    return _to_response(template, current_user)
 
 
 @router.delete("/{template_id}", status_code=status.HTTP_204_NO_CONTENT)

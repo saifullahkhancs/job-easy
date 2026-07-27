@@ -20,10 +20,12 @@ import AdminDashboardPage from "./admin/AdminDashboardPage";
 import AdminRequestsPage from "./admin/AdminRequestsPage";
 import AdminUsersPage from "./admin/AdminUsersPage";
 import AdminDefaultTemplatesPage from "./admin/AdminDefaultTemplatesPage";
+import SessionExpiredDialog from "./components/SessionExpiredDialog";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <SessionExpiredDialog />
       <Routes>
         {/* Public auth routes */}
         <Route path="/login" element={<LoginPage />} />

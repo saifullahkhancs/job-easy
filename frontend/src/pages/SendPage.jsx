@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchTemplatesV2, sendEmail, getCurrentUser } from "../api/client";
 import { Send, CheckCircle2, Copy, Link, Mail, Lock } from "lucide-react";
 
 export default function SendPage() {
+  const [searchParams] = useSearchParams();
+  const requestedTemplateId = searchParams.get("template");
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
@@ -33,13 +35,20 @@ export default function SendPage() {
           (t) => t.template_scope === "customer" || t.is_mine
         );
         setTemplates(sendableTemplates);
-        if (sendableTemplates.length > 0) setSelectedTemplateId(sendableTemplates[0].id);
+        if (sendableTemplates.length > 0) {
+          const requestedTemplate = sendableTemplates.find(
+            (template) => String(template.id) === requestedTemplateId
+          );
+          setSelectedTemplateId(String(requestedTemplate?.id || sendableTemplates[0].id));
+        } else {
+          setSelectedTemplateId("");
+        }
       } catch (err) {
         setError(err.message);
       }
     };
     init();
-  }, []);
+  }, [requestedTemplateId]);
 
   const isGuest = !currentUser;
   const isVisitor = currentUser?.role === "visitor";
@@ -120,7 +129,7 @@ export default function SendPage() {
               />
             </label>
 
-            <button type="submit" disabled={loading || isDisabled} style={{ marginTop: '16px' }}>
+            <button type="submit" disabled={loading || isDisabled || !selectedTemplateId} style={{ marginTop: '16px' }}>
               <Send size={18} />
               {loading ? "Sending..." : "Send Email"}
             </button>

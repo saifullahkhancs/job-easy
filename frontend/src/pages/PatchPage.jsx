@@ -1,8 +1,21 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchTemplateV2, fetchTemplatesV2, updateTemplateV2, updateTemplateCvV2, getCurrentUser } from "../api/client";
 import { ShieldCheck, Check, Save, Lock } from "lucide-react";
 
+function canEditTemplate(template, user) {
+  if (!user) {
+    return false;
+  }
+  if (user.role === "admin") {
+    return true;
+  }
+  return user.role === "customer" && Boolean(template.is_mine || template.user_email === user.email);
+}
+
 export default function PatchPage() {
+  const [searchParams] = useSearchParams();
+  const requestedTemplateId = searchParams.get("template");
   const [templates, setTemplates] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
@@ -22,14 +35,25 @@ export default function PatchPage() {
       setLoading(true);
       try {
         const token = localStorage.getItem("access_token");
+        let user = null;
         if (token) {
-          const user = await getCurrentUser();
+          user = await getCurrentUser();
           setCurrentUser(user);
         }
+
         const items = await fetchTemplatesV2();
-        setTemplates(items);
-        if (items.length > 0) {
-          setSelectedTemplateId(items[0].id);
+        const visibleTemplates = user
+          ? items.filter((template) => canEditTemplate(template, user))
+          : items;
+        setTemplates(visibleTemplates);
+
+        if (visibleTemplates.length > 0) {
+          const requestedTemplate = visibleTemplates.find(
+            (template) => String(template.id) === requestedTemplateId
+          );
+          setSelectedTemplateId(String(requestedTemplate?.id || visibleTemplates[0].id));
+        } else {
+          setSelectedTemplateId("");
         }
       } catch (err) {
         setError(err.message);
@@ -38,7 +62,7 @@ export default function PatchPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [requestedTemplateId]);
 
   const isGuest = !currentUser;
   const isVisitor = currentUser?.role === "visitor";
@@ -67,6 +91,11 @@ export default function PatchPage() {
     event.preventDefault();
     setMessage("");
     setError("");
+
+    if (!selectedTemplateId) {
+      setError("Choose a template to update.");
+      return;
+    }
 
     if (!updateTitle && !updateContext && !updateCv) {
       setError("Select at least one field to update.");
@@ -135,14 +164,14 @@ export default function PatchPage() {
       </div>
 
       {templates.length === 0 ? (
-        <p className="muted">No templates yet. Upload one first.</p>
+        <p className="muted">No editable templates available.</p>
       ) : (
         <div className="form-page-layout">
           <div className="form-main-panel">
             <form className="form" onSubmit={handleSubmit}>
             <label>
               Template
-              <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)}>
+              <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} disabled={isDisabled}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.title} ({template.template_role})
@@ -208,7 +237,7 @@ export default function PatchPage() {
               />
             </label>
 
-            <button type="submit" disabled={submitting || isDisabled} style={{ marginTop: '16px' }}>
+            <button type="submit" disabled={submitting || isDisabled || !selectedTemplateId} style={{ marginTop: '16px' }}>
               <Save size={18} />
               {submitting ? "Saving..." : "Save Changes"}
             </button>
@@ -234,7 +263,7 @@ export default function PatchPage() {
 
             <div style={{ background: '#1e293b', padding: '12px 16px', borderRadius: '8px' }}>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#3b82f6', letterSpacing: '0.05em', marginBottom: '4px' }}>CURRENT TEMPLATE</div>
-              <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{templates.find(t => t.id === selectedTemplateId)?.title || "No template selected"}</div>
+              <div style={{ fontSize: '0.85rem', color: '#cbd5e1' }}>{templates.find(t => String(t.id) === String(selectedTemplateId))?.title || "No template selected"}</div>
             </div>
             </div>
           </div>

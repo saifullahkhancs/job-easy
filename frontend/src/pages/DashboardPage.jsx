@@ -13,6 +13,7 @@ import {
   Star,
   ArrowRight,
   Trophy,
+  Pencil,
 } from "lucide-react";
 import { getCurrentUser, fetchTemplatesV2 } from "../api/client";
 import { RoleBadge, ApprovalStatusBadge } from "../components/RoleBadge";
@@ -57,6 +58,9 @@ const QUICK_CARDS = [
   },
 ];
 
+const templateRoute = (page, templateId) =>
+  `/app/${page}?template=${encodeURIComponent(templateId)}`;
+
 /**
  * @param {object} props
  * @param {boolean} [props.disabled]      Disable every card (guest / visitor).
@@ -100,26 +104,46 @@ function QuickActionCards({ disabled = false, disabledKeys = [], disabledReason,
   );
 }
 
-function ReadOnlyTemplateCard({ template, disabledReason }) {
+function TemplateActionButton({ icon: Icon, label, onClick }) {
   return (
-    <div className="template-card visitor-card">
+    <button
+      type="button"
+      className="template-action-btn"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+    >
+      <Icon size={16} />
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function TemplateCard({ template, badge, className = "", canEdit = false, canSend = false, onView, onEdit, onSend }) {
+  return (
+    <div className={`template-card ${className}`.trim()}>
       <div className="template-header">
         <h3>{template.title}</h3>
-        <span className="template-badge default">Default</span>
+        {badge}
       </div>
       <p className="template-context">{template.context}</p>
       <div className="template-footer">
-        <button className="icon-btn disabled" disabled title={disabledReason}>
-          <Eye size={20} />
-        </button>
-        <button className="icon-btn disabled" disabled title={disabledReason}>
-          <Send size={20} />
-        </button>
-        <button className="icon-btn disabled" disabled title={disabledReason}>
-          <Plus size={20} />
-        </button>
+        <TemplateActionButton icon={Eye} label="View" onClick={() => onView(template.id)} />
+        {canEdit && <TemplateActionButton icon={Pencil} label="Edit" onClick={() => onEdit(template.id)} />}
+        {canSend && <TemplateActionButton icon={Send} label="Send" onClick={() => onSend(template.id)} />}
       </div>
     </div>
+  );
+}
+
+function ReadOnlyTemplateCard({ template, onView }) {
+  return (
+    <TemplateCard
+      template={template}
+      className="visitor-card"
+      badge={<span className="template-badge default">Default</span>}
+      onView={onView}
+    />
   );
 }
 
@@ -164,9 +188,16 @@ export default function DashboardPage() {
   const isCustomer = currentUser?.role === ROLES.CUSTOMER;
   const isAdmin = currentUser?.role === ROLES.ADMIN;
 
-  const handleViewTemplate = (templateId) => navigate(`/app/templates/${templateId}`);
+  const handleViewTemplate = (templateId) => navigate(templateRoute("view", templateId));
   const handleCreateTemplate = () => navigate("/app/new");
-  const handleSendEmail = () => navigate("/app/send");
+  const handleEditTemplate = (templateId) => navigate(templateRoute("update", templateId));
+  const handleSendEmail = (templateId) => {
+    if (templateId) {
+      navigate(templateRoute("send", templateId));
+      return;
+    }
+    navigate("/app/send");
+  };
 
   if (loading) {
     return (
@@ -239,7 +270,7 @@ export default function DashboardPage() {
               <ReadOnlyTemplateCard
                 key={template.id}
                 template={template}
-                disabledReason={disabledReason}
+                onView={handleViewTemplate}
               />
             ))}
           </div>
@@ -292,24 +323,16 @@ export default function DashboardPage() {
         ) : (
           <div className="templates-grid">
             {templates.map((template) => (
-              <div key={template.id} className="template-card">
-                <div className="template-header">
-                  <h3>{template.title}</h3>
+              <TemplateCard
+                key={template.id}
+                template={template}
+                badge={(
                   <span className={`template-badge ${template.template_scope === "default" ? "default" : "personal"}`}>
                     {template.template_scope === "default" ? "Default" : "Customer"}
                   </span>
-                </div>
-                <p className="template-context">{template.context}</p>
-                <div className="template-footer">
-                  <button
-                    className="icon-btn"
-                    onClick={() => handleViewTemplate(template.id)}
-                    title="View details"
-                  >
-                    <Eye size={20} />
-                  </button>
-                </div>
-              </div>
+                )}
+                onView={handleViewTemplate}
+              />
             ))}
           </div>
         )}
@@ -323,17 +346,21 @@ export default function DashboardPage() {
     const defaultTemplates = templates.filter((t) => t.template_scope === "default");
 
     // Default templates that this customer originally authored. These still
-    // "belong" to them — they were simply picked by an admin as a showcase.
+    // count as their templates — they were simply picked by an admin as a showcase.
     const myPromotedTemplates = defaultTemplates.filter((t) => t.is_mine);
     const otherDefaultTemplates = defaultTemplates.filter((t) => !t.is_mine);
 
     const templateLimit = currentUser.template_limit || TEMPLATE_LIMIT_FALLBACK;
-    // Promoted templates no longer count against the personal quota, so the
-    // customer is free to fill their slots again.
-    const usedSlots = personalTemplates.length;
+    const authoredTemplateCount = personalTemplates.length + myPromotedTemplates.length;
+    const usedSlots = currentUser.current_template_count ?? authoredTemplateCount;
     const remainingSlots = Math.max(templateLimit - usedSlots, 0);
     const canCreateMore = remainingSlots > 0;
     const hasPromoted = myPromotedTemplates.length > 0;
+    const allAuthoredTemplatesPromoted = hasPromoted && personalTemplates.length === 0;
+    const promotedNoun = myPromotedTemplates.length === 1 ? "CV" : "CVs";
+    const promotedVerb = myPromotedTemplates.length === 1 ? "was" : "were";
+    const promotedTemplatePhrase = myPromotedTemplates.length === 1 ? "a default template" : "default templates";
+    const promotedPronoun = myPromotedTemplates.length === 1 ? "It is" : "They are";
 
     return (
       <div className="page-container page-container-full-width">
@@ -367,17 +394,16 @@ export default function DashboardPage() {
             </div>
             <div className="congrats-content">
               <h3>
-                Congratulations! {myPromotedTemplates.length === 1 ? "Your CV was" : "Your CVs were"}{" "}
-                selected as a default template
+                Congratulations! Your {promotedNoun} {promotedVerb} selected as {promotedTemplatePhrase}
               </h3>
               <p>
-                {myPromotedTemplates.length === 1 ? "It is" : "They are"} now showcased to every
-                visitor on Job Easy. {myPromotedTemplates.length === 1 ? "It doesn't" : "They don't"}{" "}
-                count towards your personal quota, so you can add{" "}
-                <strong>
-                  {remainingSlots} more template{remainingSlots === 1 ? "" : "s"}
-                </strong>
-                .
+                {promotedPronoun} now live for every visitor on Job Easy. Promoted defaults still
+                count toward your {templateLimit}-template allowance.
+              </p>
+              <p className="congrats-allowance-note">
+                {remainingSlots === 0
+                  ? "Your template allowance is used up. Update an existing template or ask an admin before creating another."
+                  : `You can still add ${remainingSlots} more template${remainingSlots === 1 ? "" : "s"}.`}
               </p>
               <div className="congrats-chips">
                 {myPromotedTemplates.map((t) => (
@@ -404,7 +430,7 @@ export default function DashboardPage() {
               Personal Templates ({usedSlots}/{templateLimit})
             </h2>
             <p className="section-description">
-              Templates only you can see, edit and send from.
+              Templates you authored. Promoted defaults continue to use your allowance.
             </p>
           </div>
           {canCreateMore && (
@@ -421,12 +447,12 @@ export default function DashboardPage() {
             {hasPromoted ? (
               <>
                 <h3>
-                  Nice work — {myPromotedTemplates.length === 1 ? "your CV is" : "your CVs are"} live
-                  as {myPromotedTemplates.length === 1 ? "a default template" : "default templates"}!
+                  Congratulations! Your {promotedNoun} {promotedVerb} selected as {promotedTemplatePhrase}.
                 </h3>
                 <p>
-                  You have {remainingSlots} free slot{remainingSlots === 1 ? "" : "s"} left, so go
-                  ahead and build another template for a different role.
+                  {promotedPronoun} now live for every visitor on Job Easy. {remainingSlots === 0
+                    ? "Your template allowance is used up, so there are no open personal slots right now."
+                    : `You still have ${remainingSlots} open slot${remainingSlots === 1 ? "" : "s"}.`}
                 </p>
               </>
             ) : (
@@ -445,32 +471,16 @@ export default function DashboardPage() {
         ) : (
           <div className="templates-grid">
             {personalTemplates.map((template) => (
-              <div key={template.id} className="template-card">
-                <div className="template-header">
-                  <h3>{template.title}</h3>
-                  <span className="template-badge personal">Personal</span>
-                </div>
-                <p className="template-context">{template.context}</p>
-                <div className="template-footer">
-                  <button
-                    className="icon-btn"
-                    onClick={() => handleViewTemplate(template.id)}
-                    title="View details"
-                  >
-                    <Eye size={20} />
-                  </button>
-                  <button
-                    className="icon-btn"
-                    onClick={() => navigate(`/app/templates/${template.id}/edit`)}
-                    title="Edit template"
-                  >
-                    <Plus size={20} />
-                  </button>
-                  <button className="icon-btn" onClick={handleSendEmail} title="Send email">
-                    <Send size={20} />
-                  </button>
-                </div>
-              </div>
+              <TemplateCard
+                key={template.id}
+                template={template}
+                badge={<span className="template-badge personal">Personal</span>}
+                canEdit
+                canSend
+                onView={handleViewTemplate}
+                onEdit={handleEditTemplate}
+                onSend={handleSendEmail}
+              />
             ))}
           </div>
         )}
@@ -488,27 +498,21 @@ export default function DashboardPage() {
             </div>
             <div className="templates-grid">
               {myPromotedTemplates.map((template) => (
-                <div key={template.id} className="template-card promoted-card">
-                  <div className="template-header">
-                    <h3>{template.title}</h3>
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  className="promoted-card"
+                  badge={(
                     <span className="template-badge promoted">
                       <Star size={12} fill="currentColor" /> Default · Yours
                     </span>
-                  </div>
-                  <p className="template-context">{template.context}</p>
-                  <div className="template-footer">
-                    <button
-                      className="icon-btn"
-                      onClick={() => handleViewTemplate(template.id)}
-                      title="View details"
-                    >
-                      <Eye size={20} />
-                    </button>
-                    <button className="icon-btn" onClick={handleSendEmail} title="Send email">
-                      <Send size={20} />
-                    </button>
-                  </div>
-                </div>
+                  )}
+                  canEdit
+                  canSend
+                  onView={handleViewTemplate}
+                  onEdit={handleEditTemplate}
+                  onSend={handleSendEmail}
+                />
               ))}
             </div>
           </>
@@ -527,22 +531,13 @@ export default function DashboardPage() {
             </div>
             <div className="templates-grid">
               {otherDefaultTemplates.map((template) => (
-                <div key={template.id} className="template-card default-card">
-                  <div className="template-header">
-                    <h3>{template.title}</h3>
-                    <span className="template-badge default">Default</span>
-                  </div>
-                  <p className="template-context">{template.context}</p>
-                  <div className="template-footer">
-                    <button
-                      className="icon-btn"
-                      onClick={() => handleViewTemplate(template.id)}
-                      title="View details"
-                    >
-                      <Eye size={20} />
-                    </button>
-                  </div>
-                </div>
+                <TemplateCard
+                  key={template.id}
+                  template={template}
+                  className="default-card"
+                  badge={<span className="template-badge default">Default</span>}
+                  onView={handleViewTemplate}
+                />
               ))}
             </div>
           </>
@@ -552,9 +547,21 @@ export default function DashboardPage() {
           <div className="limit-warning">
             <AlertCircle size={20} className="warning-icon" />
             <p>
-              You've reached your maximum of {templateLimit} personal templates. Delete an existing
-              template to create a new one.
+              You've reached your maximum of {templateLimit} authored templates. Promoted default
+              templates count toward this allowance.
             </p>
+          </div>
+        )}
+
+        {allAuthoredTemplatesPromoted && (
+          <div className="info-banner">
+            <Trophy size={20} className="banner-icon" />
+            <div>
+              <h3>Your templates are live publicly</h3>
+              <p>
+                Every template you authored is currently showcased as a default template for visitors.
+              </p>
+            </div>
           </div>
         )}
       </div>

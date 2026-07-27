@@ -201,10 +201,10 @@ export default function RequestAccessPage() {
                   How sending works today
                 </div>
                 <ul className="fact-list">
-                  <li>Emails go out from our verified Resend address.</li>
+                  <li>Applications currently send from our own verified email on Resend's free tier.</li>
                   <li>Your display name is shown as the sender.</li>
-                  <li>Daily sending limits apply on the free tier.</li>
-                  <li>Custom SMTP / your own domain is coming later.</li>
+                  <li>The free tier has a daily sending quota, so availability can be limited.</li>
+                  <li>Sending from your own email — Gmail SMTP or your own Resend — is coming once the app is fully supported.</li>
                 </ul>
               </div>
             </div>
@@ -246,7 +246,7 @@ export default function RequestAccessPage() {
                   <strong style={{ color: "#92400e" }}>Before submitting</strong>
                   <ul className="tight-list">
                     <li>Double-check that your display name is spelled correctly.</li>
-                    <li>Emails will be sent from the platform address above.</li>
+                    <li>Emails will be sent from the platform address above on Resend's free-tier quota.</li>
                     <li>An admin reviews every request manually.</li>
                   </ul>
                 </div>

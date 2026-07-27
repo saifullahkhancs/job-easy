@@ -1,20 +1,26 @@
 // Use relative URLs in dev (Vite proxies /api to the backend).
 // Set VITE_API_URL for production builds, e.g. http://127.0.0.1:8000
+import { maybeNotifySessionExpired } from "./session";
+
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
 async function handleResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const { detail } = data;
-    let message = "Request failed";
-    if (typeof detail === "string") {
+    const sessionExpired = maybeNotifySessionExpired(response, data);
+    let message = sessionExpired ? "Your session has expired. Please log in again." : "Request failed";
+    if (!sessionExpired && typeof detail === "string") {
       message = detail;
-    } else if (Array.isArray(detail)) {
+    } else if (!sessionExpired && Array.isArray(detail)) {
       message = detail.map((item) => item.msg).join(", ");
-    } else if (data.message) {
+    } else if (!sessionExpired && data.message) {
       message = data.message;
     }
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
   return data;
 }
@@ -123,6 +129,17 @@ export async function revertDefaultTemplate(templateId) {
   const response = await fetch(`${API_BASE}/api/v1/admin/default-templates/revert/${templateId}`, {
     method: "POST",
     headers: getHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function assignDefaultTemplateToCustomer(templateId, userEmail) {
+  const response = await fetch(`${API_BASE}/api/v1/admin/default-templates/assign/${templateId}`, {
+    method: "POST",
+    headers: getHeaders({
+      "Content-Type": "application/json",
+    }),
+    body: JSON.stringify({ user_email: userEmail }),
   });
   return handleResponse(response);
 }

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
+from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -20,6 +21,10 @@ router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 CUSTOMER_TEMPLATE_LIMIT = 2
 # Maximum number of templates that can be showcased as platform defaults.
 MAX_DEFAULT_TEMPLATES = 2
+
+
+class AssignDefaultTemplateOwnerRequest(BaseModel):
+    user_email: EmailStr
 
 
 def _build_admin_request_response(req: EmailAutomationRequest) -> EmailAutomationRequestAdminResponse:
@@ -374,11 +379,19 @@ async def revert_default_to_customer(
             detail="The original owner of this template no longer exists. Delete it instead.",
         )
 
-    # Respect the customer template limit of 2.
+    if owner.role != UserRole.CUSTOMER:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The original owner is not a customer, so this template cannot be returned.",
+        )
+
+    # Respect the customer authored-template limit of 2. Exclude the default row
+    # currently being moved so a 1 personal + 1 promoted customer can recover it.
     result = await db.execute(
         select(UserTemplate).where(
             UserTemplate.user_email == template.user_email,
-            UserTemplate.template_scope == TemplateScope.CUSTOMER,
+            UserTemplate.id != template.id,
+            UserTemplate.is_active == True,
         )
     )
     if len(result.scalars().all()) >= CUSTOMER_TEMPLATE_LIMIT:
@@ -386,7 +399,7 @@ async def revert_default_to_customer(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
                 f"{owner.first_name} {owner.last_name} already has "
-                f"{CUSTOMER_TEMPLATE_LIMIT} personal templates, so this one cannot be returned."
+                f"{CUSTOMER_TEMPLATE_LIMIT} authored templates, so this one cannot be returned."
             ),
         )
 
@@ -396,6 +409,63 @@ async def revert_default_to_customer(
     return {
         "message": f"Template returned to {owner.first_name} {owner.last_name}.",
         "template_id": template.id,
+    }
+
+
+@router.post("/default-templates/assign/{template_id}")
+async def assign_default_template_owner(
+    template_id: int,
+    payload: AssignDefaultTemplateOwnerRequest,
+    current_user: User = Depends(require_roles([UserRole.ADMIN])),
+    db: AsyncSession = Depends(get_db),
+):
+    """Link an ownerless default template to a customer for later recovery."""
+    result = await db.execute(select(UserTemplate).where(UserTemplate.id == template_id))
+    template = result.scalars().first()
+    if not template:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+
+    if template.template_scope != TemplateScope.DEFAULT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only default templates can be linked to a customer",
+        )
+
+    target_email = str(payload.user_email).strip()
+    result = await db.execute(select(User).where(User.email == target_email))
+    customer = result.scalars().first()
+    if not customer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+
+    if customer.role != UserRole.CUSTOMER:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Default templates can only be linked to customer accounts",
+        )
+
+    result = await db.execute(
+        select(UserTemplate).where(
+            UserTemplate.user_email == target_email,
+            UserTemplate.template_role == template.template_role,
+            UserTemplate.id != template.id,
+        )
+    )
+    if result.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"{customer.first_name} {customer.last_name} already has a template "
+                f"with the role '{template.template_role}'."
+            ),
+        )
+
+    template.user_email = target_email
+    await db.commit()
+    await db.refresh(template)
+
+    return {
+        "message": f"Template linked to {customer.first_name} {customer.last_name}.",
+        "template": _template_to_dict(template, customer),
     }
 
 

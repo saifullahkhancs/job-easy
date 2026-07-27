@@ -409,11 +409,12 @@ async def get_me(
     )
     has_email_info = result.scalars().first() is not None
     
-    # Count user's templates
+    # Count every active template this user authored. Promoted defaults still
+    # belong to their original author and count toward the customer's allowance.
     result = await db.execute(
         select(UserTemplate).where(
             UserTemplate.user_email == current_user.email,
-            UserTemplate.template_scope == "customer"
+            UserTemplate.is_active == True
         )
     )
     current_template_count = len(result.scalars().all())

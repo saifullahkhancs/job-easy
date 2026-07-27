@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { fetchCvBlobUrlV2, fetchTemplateV2, fetchTemplatesV2, getCvUrlV2, getCurrentUser } from "../api/client";
 import { Lock } from "lucide-react";
 
@@ -9,9 +10,11 @@ function formatBytes(bytes) {
 }
 
 export default function ViewPage() {
+  const [searchParams] = useSearchParams();
+  const requestedTemplateId = searchParams.get("template");
   const [templates, setTemplates] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [detail, setDetail] = useState(null);
   const [cvPreviewUrl, setCvPreviewUrl] = useState("");
   const [loading, setLoading] = useState(true);
@@ -34,7 +37,8 @@ export default function ViewPage() {
         setTemplates(items);
         
         if (items.length > 0) {
-          setSelectedTemplateId(items[0].id);
+          const requestedTemplate = items.find((template) => String(template.id) === requestedTemplateId);
+          setSelectedTemplateId(String(requestedTemplate?.id || items[0].id));
         }
       } catch (err) {
         setError(err.message);
@@ -43,7 +47,7 @@ export default function ViewPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [requestedTemplateId]);
 
   const isGuest = !currentUser;
 
