@@ -136,7 +136,7 @@ export default function TemplateEditPage() {
           <h2>Edit Template</h2>
           <p className="muted">Update only the fields you need — subject, email body, or CV.</p>
         </div>
-        <button type="button" className="header-action" disabled={isDisabled} style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a', opacity: isDisabled ? 0.5 : 1 }}>
+        <button type="button" className="header-action" disabled={isDisabled} title={isDisabled ? "Login to use it" : ""} style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a', opacity: isDisabled ? 0.5 : 1 }}>
           <ShieldCheck size={16} />
           Safe patch mode
         </button>
@@ -162,32 +162,29 @@ export default function TemplateEditPage() {
         </label>
 
         <div className="patch-options-group">
-          <label className={`patch-option-card ${updateTitle ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
+          <label className={`patch-option-card ${updateTitle ? 'active' : ''}`}>
             <input
               type="checkbox"
               checked={updateTitle}
               onChange={(e) => setUpdateTitle(e.target.checked)}
-              disabled={isDisabled}
             />
             Subject
           </label>
           
-          <label className={`patch-option-card ${updateContext ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
+          <label className={`patch-option-card ${updateContext ? 'active' : ''}`}>
             <input
               type="checkbox"
               checked={updateContext}
               onChange={(e) => setUpdateContext(e.target.checked)}
-              disabled={isDisabled}
             />
             Email Body
           </label>
 
-          <label className={`patch-option-card ${updateCv ? 'active' : ''} ${isDisabled ? 'disabled' : ''}`}>
+          <label className={`patch-option-card ${updateCv ? 'active' : ''}`}>
             <input 
               type="checkbox" 
               checked={updateCv} 
               onChange={(e) => setUpdateCv(e.target.checked)}
-              disabled={isDisabled}
             />
             CV File
           </label>
@@ -199,7 +196,7 @@ export default function TemplateEditPage() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            disabled={isDisabled || !updateTitle}
+            disabled={!isDisabled && !updateTitle}
           />
         </label>
 
@@ -209,25 +206,25 @@ export default function TemplateEditPage() {
             value={context}
             onChange={(e) => setContext(e.target.value)}
             rows={8}
-            disabled={isDisabled || !updateContext}
+            disabled={!isDisabled && !updateContext}
           />
         </label>
 
         <label>
           New CV File
-          <div className="file-upload-area" style={isDisabled ? { opacity: 0.5 } : {}}>
+          <div className="file-upload-area">
             <input
               type="file"
               accept="application/pdf"
-              disabled={isDisabled || !updateCv}
+              disabled={!isDisabled && !updateCv}
               onChange={(e) => setCvFile(e.target.files?.[0] || null)}
               id="cv-upload-edit"
               style={{ display: 'none' }}
             />
-            <label htmlFor={isDisabled ? "" : "cv-upload-edit"} className="file-upload-label" style={{ opacity: (!isDisabled && updateCv) ? 1 : 0.5, cursor: isDisabled ? 'not-allowed' : 'pointer' }}>
-              <UploadCloud size={24} color={(!isDisabled && updateCv) ? "#3b82f6" : "#94a3b8"} />
+            <label htmlFor="cv-upload-edit" className="file-upload-label" style={{ opacity: updateCv ? 1 : 0.5, cursor: updateCv ? 'pointer' : 'not-allowed' }}>
+              <UploadCloud size={24} color={updateCv ? "#3b82f6" : "#94a3b8"} />
               <span className="file-upload-text">
-                {isDisabled ? "Login required to update files" : updateCv ? "Choose new CV file" : "Enable CV update to select file"}
+                {updateCv ? "Choose new CV file" : "Enable CV update to select file"}
               </span>
               <span className="file-upload-hint">PDF only, up to 5 MB</span>
               {cvFile && <span className="file-upload-name">{cvFile.name}</span>}
@@ -238,7 +235,7 @@ export default function TemplateEditPage() {
           )}
         </label>
 
-        <button type="submit" className="primary-btn" disabled={submitting || isDisabled}>
+        <button type="submit" className="primary-btn" disabled={submitting || isDisabled} title={isDisabled ? "Login to use it" : ""}>
           <Save size={18} />
           {submitting ? "Saving..." : "Save Changes"}
         </button>

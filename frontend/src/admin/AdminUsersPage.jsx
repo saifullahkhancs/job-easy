@@ -1,6 +1,37 @@
 import { useState, useEffect } from "react";
 import { Search, Filter, RefreshCw, Shield, Clock, CheckCircle, Edit, Eye } from "lucide-react";
 import { listAdminUsers, updateAdminUser } from "../api/adminClient";
+import { getAccessToken } from "../api/tokenStorage";
+
+const DUMMY_USERS = [
+  {
+    email: "alice@example.com",
+    first_name: "Alice",
+    last_name: "Example",
+    role: "admin",
+    is_verified: true,
+    linkedin_url: "https://linkedin.com/in/alice",
+    created_at: new Date().toISOString(),
+  },
+  {
+    email: "bob@example.com",
+    first_name: "Bob",
+    last_name: "Visitor",
+    role: "visitor",
+    is_verified: false,
+    linkedin_url: "",
+    created_at: new Date().toISOString(),
+  },
+  {
+    email: "charlie@example.com",
+    first_name: "Charlie",
+    last_name: "Customer",
+    role: "customer",
+    is_verified: true,
+    linkedin_url: "https://linkedin.com/in/charlie",
+    created_at: new Date().toISOString(),
+  },
+];
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState([]);
@@ -20,6 +51,18 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     setLoading(true);
+    if (!getAccessToken()) {
+      let filtered = DUMMY_USERS.filter(
+        (u) =>
+          (roleFilter === "all" || u.role === roleFilter) &&
+          (verifiedFilter === "all" ||
+            (verifiedFilter === "verified" ? u.is_verified : !u.is_verified))
+      );
+      setUsers(DUMMY_USERS);
+      setFilteredUsers(filtered);
+      setLoading(false);
+      return;
+    }
     try {
       const data = await listAdminUsers(
         roleFilter === "all" ? undefined : roleFilter,

@@ -8,8 +8,42 @@ import {
   assignDefaultTemplateToCustomer,
   deleteAdminTemplate,
 } from "../api/adminClient";
+import { getAccessToken } from "../api/tokenStorage";
 
 const MAX_DEFAULTS = 2;
+
+const DUMMY_DEFAULTS = [
+  {
+    id: 201,
+    title: "Software Engineer Application",
+    template_role: "software_engineer",
+    context: "Dear Hiring Manager, I am excited to apply for the Software Engineer position...",
+    filename: "cv.pdf",
+    template_scope: "default",
+    owner: { first_name: "Alice", last_name: "Example", email: "alice@example.com" },
+  },
+  {
+    id: 202,
+    title: "Product Manager Application",
+    template_role: "product_manager",
+    context: "Dear Team, I am writing to express my interest in the Product Manager role...",
+    filename: "pm_cv.pdf",
+    template_scope: "default",
+    owner: null,
+  },
+];
+
+const DUMMY_CUSTOMER_TEMPLATES = [
+  {
+    id: 301,
+    title: "Data Scientist Template",
+    template_role: "data_scientist",
+    context: "Dear Hiring Manager, I have expertise in machine learning...",
+    filename: "ds_cv.pdf",
+    template_scope: "customer",
+    owner: { first_name: "Charlie", last_name: "Customer", email: "charlie@example.com" },
+  },
+];
 
 export default function AdminDefaultTemplatesPage() {
   const [defaultTemplates, setDefaultTemplates] = useState([]);
@@ -26,6 +60,12 @@ export default function AdminDefaultTemplatesPage() {
   const fetchData = async () => {
     setLoading(true);
     setError("");
+    if (!getAccessToken()) {
+      setDefaultTemplates(DUMMY_DEFAULTS);
+      setCustomerTemplates(DUMMY_CUSTOMER_TEMPLATES);
+      setLoading(false);
+      return;
+    }
     try {
       const [defaults, customers] = await Promise.all([
         listAdminDefaultTemplates(),

@@ -72,13 +72,6 @@ export default function PatchPage() {
   useEffect(() => {
     if (!selectedTemplateId) return;
 
-    // Guests can see the form but not load data into it
-    if (isDisabled) {
-      setTitle("Example subject line for preview");
-      setContext("You can edit this email body content to see how it works...");
-      return;
-    }
-
     fetchTemplateV2(selectedTemplateId)
       .then((detail) => {
         setTitle(detail.title);
@@ -86,7 +79,7 @@ export default function PatchPage() {
         setCvFile(null);
       })
       .catch((err) => setError(err.message));
-  }, [selectedTemplateId, isDisabled]);
+  }, [selectedTemplateId]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -158,7 +151,7 @@ export default function PatchPage() {
           <h2>Update Template</h2>
           <p className="muted">Patch only the fields you need — subject, email body, or CV.</p>
         </div>
-        <button type="button" className="header-action" disabled={isDisabled} style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a', opacity: isDisabled ? 0.5 : 1 }}>
+        <button type="button" className="header-action" disabled={isDisabled} title={isDisabled ? "Login to use it" : ""} style={{ background: '#fef9c3', color: '#854d0e', border: '1px solid #fef08a', opacity: isDisabled ? 0.5 : 1 }}>
           <ShieldCheck size={16} />
           Safe patch mode
         </button>
@@ -172,7 +165,7 @@ export default function PatchPage() {
             <form className="form" onSubmit={handleSubmit}>
             <label>
               Template
-              <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} disabled={isDisabled}>
+              <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} disabled={false}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.title} ({template.template_role})
@@ -186,8 +179,7 @@ export default function PatchPage() {
                 <input
                   type="checkbox"
                   checked={updateTitle}
-                  onChange={(e) => !isDisabled && setUpdateTitle(e.target.checked)}
-                  disabled={isDisabled}
+                  onChange={(e) => setUpdateTitle(e.target.checked)}
                 />
                 Subject
               </label>
@@ -196,14 +188,13 @@ export default function PatchPage() {
                 <input
                   type="checkbox"
                   checked={updateContext}
-                  onChange={(e) => !isDisabled && setUpdateContext(e.target.checked)}
-                  disabled={isDisabled}
+                  onChange={(e) => setUpdateContext(e.target.checked)}
                 />
                 Email Body
               </label>
 
               <label className={`patch-option-card ${updateCv ? 'active' : ''}`}>
-                <input type="checkbox" checked={updateCv} onChange={(e) => !isDisabled && setUpdateCv(e.target.checked)} disabled={isDisabled} />
+                <input type="checkbox" checked={updateCv} onChange={(e) => setUpdateCv(e.target.checked)} />
                 CV File
               </label>
             </div>
@@ -233,12 +224,12 @@ export default function PatchPage() {
               <input
                 type="file"
                 accept="application/pdf"
-                disabled={isDisabled || !updateCv}
+                disabled={!isDisabled && !updateCv}
                 onChange={(e) => setCvFile(e.target.files?.[0] || null)}
               />
             </label>
 
-            <button type="submit" disabled={submitting || isDisabled || !selectedTemplateId} style={{ marginTop: '16px' }}>
+            <button type="submit" disabled={submitting || isDisabled || !selectedTemplateId} title={isDisabled ? "Login to use it" : ""} style={{ marginTop: '16px' }}>
               <Save size={18} />
               {submitting ? "Saving..." : "Save Changes"}
             </button>
