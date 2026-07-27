@@ -4846,3 +4846,63 @@ button:disabled {
     overflow-y: auto;
   }
 }
+
+/* ── Arena overrides: ensure collapsed sidebar shows expand icon, and mobile CV preview behaves nicely ── */
+
+/* 1. Ensure the sidebar collapse toggle icon (PanelLeftOpen SVG) is always visible and colored white inside its pink/orange box when collapsed */
+.app-layout.sidebar-collapsed .brand-icon-toggle,
+.admin-layout.sidebar-collapsed .admin-brand-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark)) !important;
+  color: #ffffff !important;
+  cursor: pointer !important;
+  border-radius: 12px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border: none !important;
+}
+
+.app-layout.sidebar-collapsed .brand-icon-toggle svg,
+.admin-layout.sidebar-collapsed .admin-brand-toggle svg {
+  display: block !important;
+  width: 20px !important;
+  height: 20px !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* 2. CV Preview adjustments on mobile (screen width <= 768px) */
+@media (max-width: 768px) {
+  .cv-preview {
+    display: none !important; /* Hide the blank/unusable iframe on mobile */
+  }
+
+  .cv-preview-section .link-button,
+  .full-width .link-button,
+  .cv-preview-section .open-cv-btn {
+    display: inline-flex !important;
+    width: 100% !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 14px 20px !important;
+    background: linear-gradient(135deg, #e77b60, #d95e40) !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    border-radius: 12px !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 14px rgba(231, 123, 96, 0.3) !important;
+    margin-top: 10px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .cv-preview-section .link-button:hover,
+  .full-width .link-button:hover {
+    background: linear-gradient(135deg, #d95e40, #c94e30) !important;
+  }
+}
