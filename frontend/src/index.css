@@ -96,7 +96,7 @@ iframe {
 .app-sidebar {
   width: var(--sidebar-slot);
   flex: 0 0 var(--sidebar-slot);
-  background: rgba(253, 251, 251, 0.88);
+  background: rgba(253, 251, 251, 0.92);
   backdrop-filter: blur(16px) saturate(1.1);
   border-right: 1px solid #f2e8e8;
   display: flex;
@@ -105,8 +105,7 @@ iframe {
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   z-index: 2;
   transition: width 0.25s ease, flex-basis 0.25s ease, padding 0.25s ease, transform 0.25s ease;
 }
@@ -225,8 +224,8 @@ iframe {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: transparent;
-  border: none;
+  background: transparent !important;
+  border: none !important;
   padding: 0;
   margin: 0;
   cursor: pointer;
@@ -238,15 +237,14 @@ iframe {
 }
 
 .sidebar-brand-link:hover,
-.admin-brand-link:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
+.admin-brand-link:hover,
 .sidebar-brand-link:focus-visible,
 .admin-brand-link:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--brand-orange-ring);
+  background: transparent !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .sidebar-brand-link h2,
@@ -327,6 +325,42 @@ iframe {
 
 .sidebar-section {
   flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}
+
+.sidebar-section::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-section::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: inherit;
+  z-index: 1;
+}
+
+.sidebar-user-info {
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  margin-top: 16px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
 }
 
 .sidebar-heading {
@@ -402,11 +436,6 @@ iframe {
 
 .sidebar-link.active .link-icon {
   color: white;
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: 24px;
 }
 
 .logout-btn {
@@ -1540,7 +1569,11 @@ button:disabled {
   display: flex;
   flex-direction: column;
   padding: 24px;
-  overflow-x: hidden;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 2;
   transition: width 0.25s ease, flex-basis 0.25s ease, padding 0.25s ease, transform 0.25s ease;
 }
 
@@ -1702,6 +1735,11 @@ button:disabled {
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
 }
 
 .admin-nav-link {

@@ -107,19 +107,19 @@ export default function LandingPage() {
       <aside className="landing-sidebar">
         <div className="landing-sidebar-brand">
           {/* Job Easy text + icon links to start URL / , does NOT act as sidebar toggle */}
+          {/* Job Easy text+icon links to start URL / only, does NOT toggle sidebar */}
           <button
             type="button"
             className="landing-sidebar-brand-link"
             onClick={() => navigate("/")}
             aria-label="Go to home landing page"
-            title="Go to home"
+            title="Go to home (start URL)"
           >
             <div className="landing-logo-mark">
               <LayoutGrid size={22} />
             </div>
             <div className="landing-sidebar-brand-text">
               <span className="landing-sidebar-title">Job Easy</span>
-              <span className="landing-sidebar-subtitle">Landing</span>
             </div>
           </button>
 
@@ -158,6 +158,15 @@ export default function LandingPage() {
             <FileText size={18} />
             <span>Templates</span>
           </a>
+          {/* For visitors also show request access and request status */}
+          <button onClick={() => navigate("/app/request-access")} className="landing-sidebar-link">
+            <Clock size={18} />
+            <span>Request Access</span>
+          </button>
+          <button onClick={() => navigate("/app/request-status")} className="landing-sidebar-link">
+            <CheckCircle2 size={18} />
+            <span>Request Status</span>
+          </button>
           <button onClick={() => navigate("/app/templates")} className="landing-sidebar-link active">
             <Briefcase size={18} />
             <span>Open App</span>
@@ -176,47 +185,8 @@ export default function LandingPage() {
         </div>
       </aside>
 
-      {/* Main landing content */}
+      {/* Main landing content – top nav removed per request, sidebar is main nav */}
       <div className="landing-main">
-        {/* Header */}
-        <header className="landing-header">
-          <div className="landing-header-inner">
-            <div className="landing-logo" onClick={() => navigate("/")}>
-              <div className="landing-logo-mark">
-                <LayoutGrid size={22} />
-              </div>
-              <span>Job Easy</span>
-            </div>
-
-            <nav className="landing-nav">
-              <a href="#features">Features</a>
-              <a href="#how">How it works</a>
-              <a href="#templates">Templates</a>
-            </nav>
-
-            <div className="landing-header-actions">
-              {isLoggedIn ? (
-                <>
-                  <button className="landing-ghost-btn" onClick={() => navigate("/app/templates")}>
-                    Dashboard
-                  </button>
-                  <button className="landing-primary-btn" onClick={() => navigate("/app/templates")}>
-                    Open App <ArrowRight size={16} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="landing-ghost-btn" onClick={() => navigate("/login")}>
-                    Login
-                  </button>
-                  <button className="landing-primary-btn" onClick={() => navigate("/signup")}>
-                    Get Started <ArrowRight size={16} />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </header>
 
         {/* Hero */}
         <section className="landing-hero">
