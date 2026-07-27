@@ -2,6 +2,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users, Shield, Clock, XCircle, CheckCircle, ArrowRight } from "lucide-react";
 import { listAdminUsers, listAdminRequests } from "../api/adminClient";
+import { getAccessToken } from "../api/tokenStorage";
+
+const DEMO_ADMIN_STATS = {
+  totalUsers: 128,
+  visitors: 42,
+  customers: 81,
+  pendingRequests: 9,
+  rejectedRequests: 5,
+};
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -12,6 +21,7 @@ export default function AdminDashboardPage() {
     rejectedRequests: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,6 +29,13 @@ export default function AdminDashboardPage() {
   }, []);
 
   const fetchStats = async () => {
+    if (!getAccessToken()) {
+      setStats(DEMO_ADMIN_STATS);
+      setDemoMode(true);
+      setLoading(false);
+      return;
+    }
+
     try {
       const [users, requests] = await Promise.all([
         listAdminUsers(),
@@ -37,8 +54,11 @@ export default function AdminDashboardPage() {
         pendingRequests: pending,
         rejectedRequests: rejected,
       });
+      setDemoMode(false);
     } catch (error) {
       console.error("Failed to fetch stats:", error);
+      setStats(DEMO_ADMIN_STATS);
+      setDemoMode(true);
     } finally {
       setLoading(false);
     }
@@ -121,6 +141,20 @@ export default function AdminDashboardPage() {
         <p className="admin-page-subtitle">Overview of system activity and quick actions</p>
       </div>
 
+      {demoMode && (
+        <div className="admin-alert-banner admin-alert-warning">
+          <Shield size={20} className="alert-icon" />
+          <div className="alert-content">
+            <h3>Visitor Demo Dashboard</h3>
+            <p>
+              You are viewing sample values only. Real users, approval requests and templates are
+              managed by the admin after login.
+            </p>
+          </div>
+          <button className="admin-alert-btn" onClick={() => navigate("/login")}>Login as Admin</button>
+        </div>
+      )}
+
       <div className="admin-stats-grid">
         {statCards.map((stat) => {
           const Icon = stat.icon;
@@ -128,7 +162,7 @@ export default function AdminDashboardPage() {
             <div 
               key={stat.title} 
               className={`admin-stat-card admin-stat-${stat.color}`}
-              onClick={() => navigate(stat.link)}
+              onClick={() => navigate(demoMode ? "/login" : stat.link)}
               style={{ cursor: "pointer" }}
             >
               <div className="admin-stat-icon">
@@ -153,7 +187,7 @@ export default function AdminDashboardPage() {
               <div 
                 key={action.title} 
                 className="admin-action-card"
-                onClick={() => navigate(action.link)}
+                onClick={() => navigate(demoMode ? "/login" : action.link)}
               >
                 <div className={`admin-action-icon admin-action-${action.color}`}>
                   <Icon size={24} />
@@ -169,7 +203,7 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {stats.pendingRequests > 0 && (
+      {!demoMode && stats.pendingRequests > 0 && (
         <div className="admin-alert-banner admin-alert-warning">
           <Shield size={20} className="alert-icon" />
           <div className="alert-content">

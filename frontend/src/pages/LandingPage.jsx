@@ -18,12 +18,12 @@ import {
   FileCheck,
   Layers,
   Briefcase,
-  PanelLeftClose,
-  PanelLeftOpen,
   Menu,
   X,
 } from "lucide-react";
+import { getCurrentUser, logout } from "../api/client";
 import { getAccessToken } from "../api/tokenStorage";
+import MainSidebar from "../components/MainSidebar";
 import "./LandingPage.css";
 
 const MOBILE_BREAKPOINT = 1024;
@@ -41,12 +41,28 @@ function readSidebarPref() {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
   const isLoggedIn = !!getAccessToken();
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT);
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.innerWidth < MOBILE_BREAKPOINT ? false : readSidebarPref();
   });
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (!token) {
+      setCurrentUser(null);
+      return;
+    }
+
+    getCurrentUser()
+      .then(setCurrentUser)
+      .catch(() => {
+        logout();
+        setCurrentUser(null);
+      });
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
@@ -60,6 +76,24 @@ export default function LandingPage() {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  useEffect(() => {
+    if (!isMobile || !sidebarOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setSidebarOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobile, sidebarOpen]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    const lock = isMobile && sidebarOpen;
+    document.body.style.overflow = lock ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobile, sidebarOpen]);
+
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((p) => {
       const n = !p;
@@ -70,13 +104,20 @@ export default function LandingPage() {
     });
   }, [isMobile]);
 
+  const handleLogout = () => {
+    logout();
+    setCurrentUser(null);
+    navigate("/app/templates", { replace: true });
+  };
+
   const isCollapsed = !isMobile && !sidebarOpen;
   const isDrawerOpen = isMobile && sidebarOpen;
 
   const landingRootClass = [
     "landing-root",
-    isCollapsed ? "landing-sidebar-collapsed" : "",
-    isDrawerOpen ? "landing-sidebar-drawer-open" : "",
+    "app-layout",
+    isCollapsed ? "sidebar-collapsed" : "",
+    isDrawerOpen ? "sidebar-drawer-open" : "",
   ].filter(Boolean).join(" ");
 
   return (
@@ -89,6 +130,7 @@ export default function LandingPage() {
           onClick={toggleSidebar}
           aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
           aria-expanded={sidebarOpen}
+          aria-controls="landing-main-sidebar"
         >
           {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -101,92 +143,38 @@ export default function LandingPage() {
       </header>
 
       {/* Backdrop for mobile */}
-      <div className="landing-sidebar-backdrop" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
+      <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
 
-      {/* Sidebar visible from beginning on landing page */}
-      <aside className="landing-sidebar">
-        <div className="landing-sidebar-brand">
-          {/* Job Easy text + icon links to start URL / , does NOT act as sidebar toggle */}
-          {/* Job Easy text+icon links to start URL / only, does NOT toggle sidebar */}
-          <button
-            type="button"
-            className="landing-sidebar-brand-link"
-            onClick={() => navigate("/")}
-            aria-label="Go to home landing page"
-            title="Go to home (start URL)"
-          >
-            <div className="landing-logo-mark">
-              <LayoutGrid size={22} />
-            </div>
-            <div className="landing-sidebar-brand-text">
-              <span className="landing-sidebar-title">Job Easy</span>
-            </div>
-          </button>
+      <MainSidebar
+        id="landing-main-sidebar"
+        currentUser={currentUser}
+        isMobile={isMobile}
+        sidebarOpen={sidebarOpen}
+        toggleSidebar={toggleSidebar}
+        onLogout={handleLogout}
+      />
 
-          {/* Collapsed toggle takes place of main icon when collapsed, remains on sidebar */}
-          <button
-            type="button"
-            className="landing-logo-mark landing-sidebar-toggle-collapsed"
-            onClick={toggleSidebar}
-            aria-label="Open sidebar"
-            title="Open sidebar"
-          >
-            <PanelLeftOpen size={20} />
-          </button>
-
-          <button
-            type="button"
-            className="landing-sidebar-collapse-btn"
-            onClick={toggleSidebar}
-            aria-label={isMobile ? "Close sidebar" : "Collapse sidebar"}
-            title={isMobile ? "Close sidebar" : "Collapse sidebar"}
-          >
-            {isMobile ? <X size={20} /> : <PanelLeftClose size={18} />}
-          </button>
-        </div>
-
-        <nav className="landing-sidebar-nav">
-          <a href="#features" className="landing-sidebar-link">
-            <Zap size={18} />
-            <span>Features</span>
-          </a>
-          <a href="#how" className="landing-sidebar-link">
-            <Layers size={18} />
-            <span>How it works</span>
-          </a>
-          <a href="#templates" className="landing-sidebar-link">
-            <FileText size={18} />
-            <span>Templates</span>
-          </a>
-          {/* For visitors also show request access and request status */}
-          <button onClick={() => navigate("/app/request-access")} className="landing-sidebar-link">
-            <Clock size={18} />
-            <span>Request Access</span>
-          </button>
-          <button onClick={() => navigate("/app/request-status")} className="landing-sidebar-link">
-            <CheckCircle2 size={18} />
-            <span>Request Status</span>
-          </button>
-          <button onClick={() => navigate("/app/templates")} className="landing-sidebar-link active">
-            <Briefcase size={18} />
-            <span>Open App</span>
-          </button>
-        </nav>
-
-        <div className="landing-sidebar-footer">
-          <div className="landing-sidebar-note">
-            <span>Start URL</span>
-            <strong>jobeasy.online /</strong>
-          </div>
-          <button className="landing-sidebar-cta" onClick={() => navigate("/app/templates")}>
-            <span>Go to Dashboard</span>
-            <ArrowRight size={14} />
-          </button>
-        </div>
-      </aside>
-
-      {/* Main landing content – top nav removed per request, sidebar is main nav */}
+      {/* Main landing content */}
       <div className="landing-main">
+        <header className="landing-header landing-main-navbar">
+          <div className="landing-header-inner landing-header-inner-left">
+            <nav className="landing-nav landing-nav-left" aria-label="Landing page sections">
+              <a href="#features">Features</a>
+              <a href="#how">How it works</a>
+              <a href="#templates">Templates</a>
+            </nav>
+            <div className="landing-header-actions landing-header-actions-left">
+              <button className="landing-ghost-btn" onClick={() => navigate("/app/templates")}>
+                <LayoutGrid size={16} />
+                App
+              </button>
+              <button className="landing-primary-btn" onClick={() => navigate("/admin/dashboard")}>
+                <Shield size={16} />
+                Dashboard
+              </button>
+            </div>
+          </div>
+        </header>
 
         {/* Hero */}
         <section className="landing-hero">

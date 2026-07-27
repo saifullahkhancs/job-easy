@@ -1629,3 +1629,111 @@
     display: none;
   }
 }
+
+/* ── Arena fixes: landing uses the same main sidebar as the app ──────────── */
+.landing-root.app-layout {
+  --sidebar-slot: var(--sidebar-width);
+  display: block;
+}
+
+.landing-root.app-layout.sidebar-collapsed {
+  --sidebar-slot: var(--sidebar-collapsed-width);
+}
+
+.landing-root.app-layout .landing-main {
+  width: calc(100% - var(--sidebar-slot));
+  margin-left: var(--sidebar-slot);
+  min-width: 0;
+  transition: margin-left 0.25s ease, width 0.25s ease;
+}
+
+.landing-main-navbar {
+  top: 0;
+}
+
+.landing-header-inner-left {
+  max-width: none;
+  justify-content: flex-start;
+  gap: 24px;
+}
+
+.landing-nav-left {
+  gap: 24px;
+}
+
+.landing-header-actions-left {
+  margin-left: 0;
+}
+
+/* The Resend note sits centered above the mock cards instead of hiding under them. */
+.landing-mock-card.mock-card-float {
+  left: 50%;
+  bottom: 18px;
+  z-index: 5;
+  width: max-content;
+  max-width: min(360px, calc(100% - 32px));
+  justify-content: center;
+  text-align: center;
+  animation-name: floatUpCentered;
+}
+
+@keyframes floatUpCentered {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -6px); }
+}
+
+@media (max-width: 1023px) {
+  .landing-root.app-layout .landing-main {
+    width: 100%;
+    margin-left: 0 !important;
+    padding-top: 0;
+  }
+
+  .landing-main-navbar {
+    top: var(--topbar-height);
+  }
+
+  .landing-header-inner-left {
+    padding: 12px 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .landing-header-actions-left {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1024px) {
+  .landing-mock-card.mock-card-float {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    align-self: center;
+    width: auto;
+    max-width: 100%;
+    animation-name: floatUp;
+  }
+}
+
+.landing-sidebar-toggle-btn:hover,
+.landing-sidebar-toggle-btn:focus-visible {
+  background: #fff3ef !important;
+  border-color: #e77b60 !important;
+  color: #d95e40 !important;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(231, 123, 96, 0.18);
+}
+
+@media (max-width: 640px) {
+  .landing-header-actions-left .landing-ghost-btn {
+    display: inline-flex;
+  }
+}
+
+@media (width: 1024px) {
+  .landing-root.app-layout .landing-main {
+    padding-top: 0;
+  }
+}

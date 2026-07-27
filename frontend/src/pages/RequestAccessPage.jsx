@@ -15,6 +15,7 @@ import {
   PartyPopper,
 } from "lucide-react";
 import { createEmailInfo, submitApprovalRequest, getEmailInfo } from "../api/client";
+import { getAccessToken } from "../api/tokenStorage";
 
 const PLATFORM_EMAIL = "info@jobeasy.online";
 
@@ -55,9 +56,15 @@ export default function RequestAccessPage() {
   const [emailInfoId, setEmailInfoId] = useState(null);
   const [existingEmailInfo, setExistingEmailInfo] = useState(null);
   const navigate = useNavigate();
+  const isGuest = !getAccessToken();
 
   useEffect(() => {
     const checkExistingEmailInfo = async () => {
+      if (!getAccessToken()) {
+        setFormData({ senderName: "Visitor Demo", senderEmail: PLATFORM_EMAIL });
+        return;
+      }
+
       try {
         const info = await getEmailInfo();
         setExistingEmailInfo(info);
@@ -77,6 +84,11 @@ export default function RequestAccessPage() {
 
   const handleSetup = async (e) => {
     e.preventDefault();
+
+    if (isGuest) {
+      setError("This is a visitor preview. Please login or register before submitting a real access request; approvals are managed by the admin.");
+      return;
+    }
 
     if (existingEmailInfo) {
       setStep("confirm");
@@ -98,6 +110,11 @@ export default function RequestAccessPage() {
   };
 
   const handleSubmitRequest = async () => {
+    if (isGuest) {
+      setError("Login or register to submit a real request. Visitor previews are sample-only and managed by the admin.");
+      return;
+    }
+
     setError("");
     setLoading(true);
 
@@ -126,6 +143,23 @@ export default function RequestAccessPage() {
             <ShieldCheck size={22} />
           </div>
         </div>
+
+        {isGuest && (
+          <div className="visitor-banner" style={{ marginBottom: "24px" }}>
+            <Info size={20} className="banner-icon" />
+            <div className="banner-content">
+              <h3>Visitor Preview</h3>
+              <p>
+                You can view this request flow as a visitor. To submit a real request, login or
+                create an account. Approval is managed only by the admin.
+              </p>
+            </div>
+            <div className="login-prompt-actions">
+              <button className="login-prompt-login-btn" onClick={() => navigate("/login")}>Login</button>
+              <button className="login-prompt-register-btn" onClick={() => navigate("/signup")}>Register</button>
+            </div>
+          </div>
+        )}
 
         <StepIndicator current={step} />
 
@@ -159,13 +193,14 @@ export default function RequestAccessPage() {
                       onChange={(e) => setFormData({ ...formData, senderName: e.target.value })}
                       placeholder="John Doe"
                       required
+                      disabled={isGuest}
                     />
                   </div>
                   <p className="input-hint">This name appears as the sender in every email.</p>
                 </label>
 
-                <button type="submit" className="primary-btn" disabled={loading}>
-                  {loading ? "Saving..." : "Continue to Review"}
+                <button type="submit" className="primary-btn" disabled={loading || isGuest}>
+                  {loading ? "Saving..." : isGuest ? "Login to Submit Request" : "Continue to Review"}
                   {!loading && <ArrowRight size={18} className="btn-icon" />}
                 </button>
               </form>

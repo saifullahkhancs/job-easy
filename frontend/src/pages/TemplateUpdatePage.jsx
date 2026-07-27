@@ -16,12 +16,6 @@ function canEditTemplate(template, user) {
   return user.role === "customer" && Boolean(template.is_mine || (user.email && template.user_email === user.email));
 }
 
-function canEditTemplate(template, user) {
-  if (!user) return false;
-  if (user.role === "admin") return true;
-  return user.role === "customer" && Boolean(template.is_mine || (user.email && template.user_email === user.email));
-}
-
 export default function TemplateUpdatePage() {
   const { id } = useParams(); // optional — pre-select from dashboard edit button
   const navigate = useNavigate();
@@ -49,8 +43,6 @@ export default function TemplateUpdatePage() {
     const load = async () => {
       setListLoading(true);
       try {
-
-        const token = getAccessToken();
 
         const token = getAccessToken();
 
