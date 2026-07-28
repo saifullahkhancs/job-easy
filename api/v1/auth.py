@@ -362,46 +362,31 @@ async def get_me(
     from models.user_templates import UserTemplate
     from models.user_email_info import UserEmailInfo
     
-    # Determine approval status based on role and automation request
-    if current_user.role == UserRole.ADMIN:
-        approval_status = ApprovalStatus.APPROVED
-    elif current_user.role == UserRole.CUSTOMER:
+    # Email automation access is request-based for admins and visitors.
+    # Customers retain their existing automatic approval.
+    if current_user.role == UserRole.CUSTOMER:
         approval_status = ApprovalStatus.APPROVED
     else:
-        # Check if there's an approved request
-        result = await db.execute(
-            select(EmailAutomationRequest).where(
-                EmailAutomationRequest.user_email == current_user.email,
-                EmailAutomationRequest.status == "approved"
-            )
-        )
-        approved_request = result.scalars().first()
-        if approved_request:
+        result = await db.execute(select(EmailAutomationRequest).where(
+            EmailAutomationRequest.user_email == current_user.email,
+            EmailAutomationRequest.status == "approved"
+        ))
+        if result.scalars().first():
             approval_status = ApprovalStatus.APPROVED
         else:
-            # Check for rejected request
-            result = await db.execute(
-                select(EmailAutomationRequest).where(
-                    EmailAutomationRequest.user_email == current_user.email,
-                    EmailAutomationRequest.status == "rejected"
-                )
-            )
-            rejected_request = result.scalars().first()
-            if rejected_request:
+            result = await db.execute(select(EmailAutomationRequest).where(
+                EmailAutomationRequest.user_email == current_user.email,
+                EmailAutomationRequest.status == "rejected"
+            ))
+            if result.scalars().first():
                 approval_status = ApprovalStatus.REJECTED
             else:
-                # Check for pending request
-                result = await db.execute(
-                    select(EmailAutomationRequest).where(
-                        EmailAutomationRequest.user_email == current_user.email,
-                        EmailAutomationRequest.status == "pending"
-                    )
-                )
-                pending_request = result.scalars().first()
-                if pending_request:
-                    approval_status = ApprovalStatus.PENDING
-                else:
-                    approval_status = ApprovalStatus.NONE
+                result = await db.execute(select(EmailAutomationRequest).where(
+                    EmailAutomationRequest.user_email == current_user.email,
+                    EmailAutomationRequest.status == "pending"
+                ))
+                approval_status = (ApprovalStatus.PENDING if result.scalars().first()
+                                   else ApprovalStatus.NONE)
     
     # Check if user has email info
     result = await db.execute(
@@ -421,7 +406,7 @@ async def get_me(
     
     # Determine permissions
     can_manage_templates = current_user.role in [UserRole.ADMIN, UserRole.CUSTOMER]
-    can_send_email = current_user.role == UserRole.CUSTOMER
+    can_send_email = (current_user.role == UserRole.CUSTOMER or approval_status == ApprovalStatus.APPROVED)
     if current_user.role == UserRole.ADMIN:
         template_limit = 100
     elif current_user.role == UserRole.CUSTOMER:

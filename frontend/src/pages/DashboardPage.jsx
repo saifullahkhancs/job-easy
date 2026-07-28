@@ -291,6 +291,7 @@ export default function DashboardPage() {
           </div>
           <div className="header-badges">
             <RoleBadge role={currentUser.role} />
+            <ApprovalStatusBadge status={currentUser.approval_status} />
           </div>
         </div>
 
@@ -298,11 +299,23 @@ export default function DashboardPage() {
           <AlertCircle size={20} className="banner-icon" />
           <div>
             <h3>Admin Access</h3>
-            <p>Use the Admin Panel to manage default templates, users and approval requests.</p>
+            <p>
+              Use the Admin Panel to manage templates, users and approval requests. Email sending also
+              requires your own approved access request.
+            </p>
+            {currentUser.approval_status !== "approved" && (
+              <button className="secondary-btn" onClick={() => navigate("/app/request-access")}>
+                {currentUser.approval_status === "pending" ? "View Access Status" : "Request Email Access"}
+              </button>
+            )}
           </div>
         </div>
 
-        <QuickActionCards onNavigate={navigate} />
+        <QuickActionCards
+          disabledKeys={currentUser.approval_status === "approved" ? [] : ["send"]}
+          disabledReason="Request email access first"
+          onNavigate={navigate}
+        />
 
         <div className="section-header">
           <div>

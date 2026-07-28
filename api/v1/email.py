@@ -9,6 +9,7 @@ from database import async_session
 from models.user import User
 from models.user_email_info import UserEmailInfo
 from models.user_templates import UserTemplate
+from models.email_automation_requests import EmailAutomationRequest
 from schemas.email import SendEmailRequest
 
 router = APIRouter(prefix="/api/v1/email", tags=["email"])
@@ -44,6 +45,23 @@ async def send_email_v2(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You can only send emails using your own templates. Promoted defaults that you own are still usable.",
             )
+
+    # Admins must request email automation access before they can send. The
+    # profile exposes the same status, but enforce it here as the security
+    # boundary as well.
+    if current_user.role in (UserRole.ADMIN, UserRole.VISITOR):
+        async with async_session() as session:
+            access_result = await session.execute(
+                select(EmailAutomationRequest).where(
+                    EmailAutomationRequest.user_email == current_user.email,
+                    EmailAutomationRequest.status == "approved",
+                )
+            )
+            if not access_result.scalars().first():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Email access is not approved. Request access before sending emails.",
+                )
 
     # Fetch user's email sending configuration
     async with async_session() as session:

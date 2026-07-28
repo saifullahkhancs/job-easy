@@ -67,6 +67,19 @@ async def list_templates(
         )
         templates = result.scalars().all()
     
+    # Keep the selector useful by grouping templates in the same order users
+    # expect to see them: the requester's own templates first, then platform
+    # defaults, then templates owned by other users.  Admins get the same
+    # grouping, with their own templates (if any) ahead of defaults and users.
+    def display_priority(template: UserTemplate) -> tuple[int, str]:
+        is_mine = current_user is not None and template.user_email == current_user.email
+        if is_mine:
+            return (0, template.title.lower())
+        if template.template_scope == TemplateScope.DEFAULT:
+            return (1, template.title.lower())
+        return (2, template.title.lower())
+
+    templates = sorted(templates, key=display_priority)
     return [_to_response(t, current_user) for t in templates]
 
 
