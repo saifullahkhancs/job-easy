@@ -4,6 +4,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from api.dependencies import get_current_user, get_current_user_optional, get_db, require_roles
+from core.template_display import (
+    is_owned_by,
+    sort_templates_for_display,
+    template_group_rank,
+    template_ownership_label,
+)
 from models.roles import UserRole
 from models.user import User
 from models.user_templates import UserTemplate, TemplateScope
@@ -17,15 +23,23 @@ from schemas.user_templates import (
 router = APIRouter(prefix="/api/v1/templates", tags=["templates"])
 
 
+def _decorate_ownership(response, template: UserTemplate, current_user: User | None):
+    """Attach ownership flag, dropdown label and display group to a response."""
+    current_email = current_user.email if current_user is not None else None
+    response.is_mine = is_owned_by(template.user_email, current_email)
+    response.ownership_label = template_ownership_label(
+        template.template_scope, template.user_email, current_email
+    )
+    response.display_group = template_group_rank(
+        template.template_scope, template.user_email, current_email
+    )
+    return response
+
+
 def _to_response(template: UserTemplate, current_user: User | None) -> UserTemplateResponse:
     """Build a template response, flagging templates authored by the requester."""
     response = UserTemplateResponse.model_validate(template)
-    response.is_mine = bool(
-        current_user is not None
-        and template.user_email is not None
-        and template.user_email == current_user.email
-    )
-    return response
+    return _decorate_ownership(response, template, current_user)
 
 
 @router.get("", response_model=list[UserTemplateResponse])
@@ -71,15 +85,9 @@ async def list_templates(
     # expect to see them: the requester's own templates first, then platform
     # defaults, then templates owned by other users.  Admins get the same
     # grouping, with their own templates (if any) ahead of defaults and users.
-    def display_priority(template: UserTemplate) -> tuple[int, str]:
-        is_mine = current_user is not None and template.user_email == current_user.email
-        if is_mine:
-            return (0, template.title.lower())
-        if template.template_scope == TemplateScope.DEFAULT:
-            return (1, template.title.lower())
-        return (2, template.title.lower())
-
-    templates = sorted(templates, key=display_priority)
+    templates = sort_templates_for_display(
+        templates, current_user.email if current_user is not None else None
+    )
     return [_to_response(t, current_user) for t in templates]
 
 
@@ -122,12 +130,7 @@ async def get_template(
             )
     
     response = UserTemplateDetailResponse.model_validate(template)
-    response.is_mine = bool(
-        current_user is not None
-        and template.user_email is not None
-        and template.user_email == current_user.email
-    )
-    return response
+    return _decorate_ownership(response, template, current_user)
 
 
 @router.get("/{template_id}/cv")

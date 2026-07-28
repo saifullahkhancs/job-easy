@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { LayoutTemplate } from "lucide-react";
-import { fetchCvBlobUrlV2, fetchTemplateV2, fetchTemplatesV2, getCvUrlV2 } from "../api/client";
+import {
+  fetchCvBlobUrlV2,
+  fetchTemplateV2,
+  fetchTemplatesV2,
+  getCurrentUser,
+  getCvUrlV2,
+} from "../api/client";
 import { getAccessToken } from "../api/tokenStorage";
+import {
+  getTemplateOptionLabel,
+  getTemplateOwnershipLabel,
+  sortTemplatesForDisplay,
+} from "../utils/templateDisplay";
 
 function formatBytes(bytes) {
   if (!bytes) return "—";
@@ -17,6 +28,7 @@ export default function TemplateViewPage() {
   const isLoggedIn = !!getAccessToken();
 
   const [templates, setTemplates] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const [selectedId, setSelectedId] = useState(id || "");
   const [detail, setDetail] = useState(null);
   const [cvPreviewUrl, setCvPreviewUrl] = useState("");
@@ -27,17 +39,35 @@ export default function TemplateViewPage() {
   const [cvLoading, setCvLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Load all templates for the dropdown (works for guests — returns default templates)
+  // Load the viewer + all templates for the dropdown.
+  // Works for guests too — the API then returns only default templates.
   useEffect(() => {
-    fetchTemplatesV2()
-      .then((items) => {
-        setTemplates(items);
-        if (!id && items.length > 0) {
-          setSelectedId(String(items[0].id));
+    const load = async () => {
+      let user = null;
+      if (isLoggedIn) {
+        try {
+          user = await getCurrentUser();
+          setCurrentUser(user);
+        } catch {
+          setCurrentUser(null);
         }
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setListLoading(false));
+      }
+
+      try {
+        const items = await fetchTemplatesV2();
+        // Same order as every other picker: mine → defaults → other users'.
+        const ordered = sortTemplatesForDisplay(items, user);
+        setTemplates(ordered);
+        if (!id && ordered.length > 0) {
+          setSelectedId(String(ordered[0].id));
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setListLoading(false);
+      }
+    };
+    load();
   }, []);
 
   // Load detail whenever selected id changes
@@ -120,17 +150,18 @@ export default function TemplateViewPage() {
         ) : (
           <>
             <label>
-              Select Job Type
+              Select Template
               <select
                 value={selectedId}
                 onChange={(e) => setSelectedId(e.target.value)}
               >
                 {templates.map((t) => (
                   <option key={t.id} value={String(t.id)}>
-                    {t.template_role || t.title}
+                    {getTemplateOptionLabel(t, currentUser)}
                   </option>
                 ))}
               </select>
+              <p className="input-hint">Role type · ownership. Your templates are listed first.</p>
             </label>
 
             {detailLoading && <p className="muted">Loading details...</p>}
@@ -143,6 +174,10 @@ export default function TemplateViewPage() {
                     <div>
                       <dt>Type</dt>
                       <dd>{detail.template_role}</dd>
+                    </div>
+                    <div>
+                      <dt>Ownership</dt>
+                      <dd>{getTemplateOwnershipLabel(detail, currentUser)}</dd>
                     </div>
                     <div>
                       <dt>Subject</dt>

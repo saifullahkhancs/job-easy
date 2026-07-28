@@ -131,8 +131,8 @@ export default function AdminDefaultTemplatesPage() {
 
   const handleAssignOwner = async (template) => {
     const customerEmail = window.prompt(
-      `Link "${template.title}" to a customer email.\n\n` +
-        "Only existing customer accounts are accepted.",
+      `Link "${template.title}" to a user email.\n\n` +
+        "Only existing customer or admin accounts are accepted.",
       template.user_email || ""
     );
 
@@ -142,7 +142,7 @@ export default function AdminDefaultTemplatesPage() {
 
     const trimmedEmail = customerEmail.trim();
     if (!trimmedEmail) {
-      setError("Enter a customer email to link this default template.");
+      setError("Enter a user email to link this default template.");
       return;
     }
 
@@ -242,6 +242,7 @@ export default function AdminDefaultTemplatesPage() {
           <div className="admin-cards-grid">
             {defaultTemplates.map((t) => {
               const hasOwner = Boolean(t.owner);
+              const ownerIsAdmin = t.owner?.role === "admin";
               const isBusy = busyId === t.id;
               return (
                 <div key={t.id} className="admin-card" style={{ borderLeft: "4px solid #f59e0b" }}>
@@ -265,12 +266,13 @@ export default function AdminDefaultTemplatesPage() {
                     {hasOwner ? (
                       <span>
                         Owned by <strong>{t.owner.first_name} {t.owner.last_name}</strong>
+                        {ownerIsAdmin && <span className="admin-owner-role"> · Admin</span>}
                         <br />
                         <span style={{ color: "#94a3b8" }}>{t.owner.email}</span>
                       </span>
                     ) : (
                       <span style={{ color: "#94a3b8" }}>
-                        No customer linked{t.user_email ? ` (${t.user_email})` : ""}
+                        No user linked{t.user_email ? ` (${t.user_email})` : ""}
                       </span>
                     )}
                   </div>
@@ -281,10 +283,18 @@ export default function AdminDefaultTemplatesPage() {
                         className="admin-btn admin-btn-primary"
                         onClick={() => handleRevert(t)}
                         disabled={isBusy}
-                        title="Return this template to the customer who created it"
+                        title={
+                          ownerIsAdmin
+                            ? "Return this template to the admin who created it"
+                            : "Return this template to the customer who created it"
+                        }
                       >
                         <Undo2 size={16} />
-                        {isBusy ? "Working..." : "Change to Customer"}
+                        {isBusy
+                          ? "Working..."
+                          : ownerIsAdmin
+                            ? "Change to Personal"
+                            : "Change to Customer"}
                       </button>
                     ) : (
                       <>
@@ -292,10 +302,10 @@ export default function AdminDefaultTemplatesPage() {
                           className="admin-btn admin-btn-primary"
                           onClick={() => handleAssignOwner(t)}
                           disabled={isBusy}
-                          title="Link this default template to an existing customer"
+                          title="Link this default template to an existing customer or admin"
                         >
                           <Link2 size={16} />
-                          {isBusy ? "Working..." : "Link to Customer"}
+                          {isBusy ? "Working..." : "Link to User"}
                         </button>
                         <button
                           className="admin-btn admin-btn-delete"

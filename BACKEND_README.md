@@ -34,15 +34,23 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 
 #### User Templates Table
 - `id` (PK): Template ID
-- `user_email` (FK, Nullable): Owner (null for default templates)
+- `user_email` (FK, Nullable): The author of the template
 - `template_role_type_id` (FK): Role type reference
 - `title`, `context`: Template content
 - `filename`, `cv_bytes`: CV file data
 - `template_scope`: Enum (default, customer)
-- **Rules**: 
-  - Default templates: Admin-owned, no owner
-  - Customer templates: User-owned, max 2 per user
-  - Default templates don't count against user's limit
+- **Rules**:
+  - Every template records its author in `user_email`, including default
+    templates created by an admin. Only legacy rows created before the
+    `e4a7c9b12f80` migration may still be NULL.
+  - Customer templates: user-owned, max 2 per user
+  - Promoting a template to `default` keeps `user_email`, so it can be
+    reverted to its author and still counts against a customer's limit
+- **Ownership labels** (`GET /api/v1/templates`): each template is returned
+  with `ownership_label` and `display_group` for the template dropdowns —
+  `Owned by you` (0), `Default · Owned by you` (0), `Default` (1), `User` (2).
+  Templates are ordered by group: the requester's own, then defaults, then
+  other users'. See `core/template_display.py`.
 
 #### Email Automation Requests Table
 - `id` (PK): Request ID
@@ -319,13 +327,19 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 - **Authentication**: Admin only
 
 #### GET `/api/v1/admin/default-templates`
-- **Description**: List all default templates
+- **Description**: List all default templates with their author (`owner`,
+  including the owner's `role`)
 - **Authentication**: Admin only
 
 #### POST `/api/v1/admin/default-templates`
 - **Description**: Create default template
 - **Authentication**: Admin only
 - **Request**: Multipart form with template_role_type_id, title, context, cv_pdf
+- **Notes**:
+  - The creating admin's e-mail is stored in `user_email`, so the template is
+    attributable and revertible like any other. It is *not* left NULL.
+  - `template_role` is lower-cased; a duplicate role for the same admin is
+    rejected with 409, and the 2-default limit is enforced with 400.
 
 ## Security Features
 

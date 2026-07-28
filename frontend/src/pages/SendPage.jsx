@@ -3,6 +3,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchTemplatesV2, sendEmail, getCurrentUser } from "../api/client";
 import { Send, CheckCircle2, Copy, Link, Mail, Lock } from "lucide-react";
 import { getAccessToken } from "../api/tokenStorage";
+import {
+  canSendWithTemplate,
+  getTemplateOptionLabel,
+  sortTemplatesForDisplay,
+} from "../utils/templateDisplay";
 
 export default function SendPage() {
   const [searchParams] = useSearchParams();
@@ -33,24 +38,20 @@ export default function SendPage() {
 
       try {
         const items = await fetchTemplatesV2();
-        // Show the templates this user authored: their personal ones plus any
-        // of their CVs an admin promoted to a platform default.
-        // We accept both `is_mine` flag and direct `user_email` match so that
-        // after admin promotion the customer can still use his own templates.
-        const ownerEmail = fetchedUser?.email || currentUser?.email;
-        const sendableTemplates = items.filter(
-          (t) =>
-            t.template_scope === "default" ||
-            t.template_scope === "customer" ||
-            t.is_mine ||
-            (ownerEmail && t.user_email === ownerEmail)
-        );
+        // Order the picker the way users expect to read it: their own
+        // templates first, then platform defaults, then other users'.
+        const sendableTemplates = sortTemplatesForDisplay(items, fetchedUser);
         setTemplates(sendableTemplates);
         if (sendableTemplates.length > 0) {
           const requestedTemplate = sendableTemplates.find(
             (template) => String(template.id) === requestedTemplateId
           );
-          setSelectedTemplateId(String(requestedTemplate?.id || sendableTemplates[0].id));
+          // Default to a template this user is actually allowed to send with
+          // (the backend rejects other people's templates for customers).
+          const firstUsable =
+            sendableTemplates.find((template) => canSendWithTemplate(template, fetchedUser)) ||
+            sendableTemplates[0];
+          setSelectedTemplateId(String(requestedTemplate?.id || firstUsable.id));
         } else {
           setSelectedTemplateId("");
         }
@@ -74,9 +75,22 @@ export default function SendPage() {
       ? "Your account needs approval before sending emails."
       : "You need to log in to send emails.";
 
+  const selectedTemplate = templates.find((t) => String(t.id) === String(selectedTemplateId));
+  // Customers may only send with templates they authored. Flag it up front
+  // instead of letting the request come back as a 403.
+  const selectedNotSendable =
+    Boolean(currentUser) &&
+    Boolean(selectedTemplate) &&
+    !isDisabled &&
+    !canSendWithTemplate(selectedTemplate, currentUser);
+
   async function handleSubmit(event) {
     event.preventDefault();
     if (isDisabled) return;
+    if (selectedNotSendable) {
+      setError("You can only send emails with your own templates. Pick one labelled “Owned by you”.");
+      return;
+    }
     setLoading(true);
     setMessage("");
     setError("");
@@ -138,12 +152,16 @@ export default function SendPage() {
               <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} required disabled={false}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.title} · {template.template_role} · {template.template_scope === "default"
-                      ? (template.is_mine ? "Default · Owned by you" : "Default")
-                      : (template.is_mine ? "Owned by you" : "User")}
+                    {getTemplateOptionLabel(template, currentUser)}
                   </option>
                 ))}
               </select>
+              <p className="input-hint">Role type · ownership. Your templates are listed first.</p>
+              {selectedNotSendable && (
+                <p className="input-hint" style={{ color: "#b45309" }}>
+                  This template belongs to someone else. Choose one labelled “Owned by you” to send.
+                </p>
+              )}
             </label>
 
             <label>
@@ -158,7 +176,18 @@ export default function SendPage() {
               />
             </label>
 
-            <button type="submit" disabled={loading || isDisabled || !selectedTemplateId} title={isDisabled ? "Login to use it" : ""} style={{ marginTop: '16px' }}>
+            <button
+              type="submit"
+              disabled={loading || isDisabled || !selectedTemplateId || selectedNotSendable}
+              title={
+                isDisabled
+                  ? "Login to use it"
+                  : selectedNotSendable
+                    ? "You can only send with your own templates"
+                    : ""
+              }
+              style={{ marginTop: '16px' }}
+            >
               <Send size={18} />
               {loading ? "Sending..." : "Send Email"}
             </button>

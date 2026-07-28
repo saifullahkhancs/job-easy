@@ -3,6 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { fetchCvBlobUrlV2, fetchTemplateV2, fetchTemplatesV2, getCvUrlV2, getCurrentUser } from "../api/client";
 import { Lock } from "lucide-react";
 import { getAccessToken } from "../api/tokenStorage";
+import {
+  getTemplateOptionLabel,
+  getTemplateOwnershipLabel,
+  sortTemplatesForDisplay,
+} from "../utils/templateDisplay";
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -37,16 +42,10 @@ export default function ViewPage() {
         
         // fetchTemplatesV2 already handles guest access (returns default templates for unauthenticated users)
         const items = await fetchTemplatesV2();
-        
-        let visibleTemplates = items;
-        if (user && user.role === "customer") {
-          visibleTemplates = items.filter(
-            (t) => t.template_scope === "default" || t.is_mine || t.user_email === user.email
-          );
-        } else if (user && user.role === "visitor") {
-          visibleTemplates = items.filter((t) => t.template_scope === "default");
-        }
-        
+
+        // Same order as every other picker: mine → defaults → other users'.
+        const visibleTemplates = sortTemplatesForDisplay(items, user);
+
         setTemplates(visibleTemplates);
         
         if (visibleTemplates.length > 0) {
@@ -142,16 +141,17 @@ export default function ViewPage() {
       ) : (
         <div className="view-page-container">
           <div className="form-group" style={{ marginBottom: '24px' }}>
-            <label htmlFor="template-select">Select Job Type</label>
+            <label htmlFor="template-select">Select Template</label>
             <div className="input-wrapper">
               <select id="template-select" value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.title} ({template.template_role})
+                    {getTemplateOptionLabel(template, currentUser)}
                   </option>
                 ))}
               </select>
             </div>
+            <p className="input-hint">Role type · ownership. Your templates are listed first.</p>
           </div>
 
           {detailLoading && <p className="muted">Loading details...</p>}
@@ -172,8 +172,8 @@ export default function ViewPage() {
                       <dd>{detail.title || 'N/A'}</dd>
                     </div>
                     <div>
-                      <dt>Scope</dt>
-                      <dd>{detail.template_scope || 'default'}</dd>
+                      <dt>Ownership</dt>
+                      <dd>{getTemplateOwnershipLabel(detail, currentUser)}</dd>
                     </div>
                     <div>
                       <dt>CV Filename</dt>

@@ -241,6 +241,9 @@ def _template_to_dict(tmpl: UserTemplate, owner: User | None = None) -> dict:
             "first_name": owner.first_name,
             "last_name": owner.last_name,
             "email": owner.email,
+            # Lets the UI word actions correctly: an admin-authored default is
+            # returned to an admin, not "to a customer".
+            "role": owner.role.value if hasattr(owner.role, "value") else owner.role,
         }
     return data
 
@@ -366,8 +369,8 @@ async def revert_default_to_customer(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                "This default template has no original owner (it was created by an admin), "
-                "so it cannot be reverted. Delete it instead."
+                "This default template has no owner recorded, so it cannot be reverted. "
+                "Link it to a user first, or delete it."
             ),
         )
 
@@ -380,29 +383,31 @@ async def revert_default_to_customer(
             detail="The original owner of this template no longer exists. Delete it instead.",
         )
 
-    if owner.role != UserRole.CUSTOMER:
+    if owner.role not in (UserRole.CUSTOMER, UserRole.ADMIN):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The original owner is not a customer, so this template cannot be returned.",
+            detail="The original owner is not a customer or admin, so this template cannot be returned.",
         )
 
     # Respect the customer authored-template limit of 2. Exclude the default row
     # currently being moved so a 1 personal + 1 promoted customer can recover it.
-    result = await db.execute(
-        select(UserTemplate).where(
-            UserTemplate.user_email == template.user_email,
-            UserTemplate.id != template.id,
-            UserTemplate.is_active == True,
+    # Admins are not capped, so the check only applies to customers.
+    if owner.role == UserRole.CUSTOMER:
+        result = await db.execute(
+            select(UserTemplate).where(
+                UserTemplate.user_email == template.user_email,
+                UserTemplate.id != template.id,
+                UserTemplate.is_active == True,
+            )
         )
-    )
-    if len(result.scalars().all()) >= CUSTOMER_TEMPLATE_LIMIT:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                f"{owner.first_name} {owner.last_name} already has "
-                f"{CUSTOMER_TEMPLATE_LIMIT} authored templates, so this one cannot be returned."
-            ),
-        )
+        if len(result.scalars().all()) >= CUSTOMER_TEMPLATE_LIMIT:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    f"{owner.first_name} {owner.last_name} already has "
+                    f"{CUSTOMER_TEMPLATE_LIMIT} authored templates, so this one cannot be returned."
+                ),
+            )
 
     template.template_scope = TemplateScope.CUSTOMER
     await db.commit()
@@ -420,7 +425,11 @@ async def assign_default_template_owner(
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
-    """Link an ownerless default template to a customer for later recovery."""
+    """Link an ownerless default template to a customer or admin.
+
+    Legacy default templates were stored without a `user_email`; this endpoint
+    is how those rows get an owner so they can be attributed and reverted.
+    """
     result = await db.execute(select(UserTemplate).where(UserTemplate.id == template_id))
     template = result.scalars().first()
     if not template:
@@ -429,19 +438,19 @@ async def assign_default_template_owner(
     if template.template_scope != TemplateScope.DEFAULT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only default templates can be linked to a customer",
+            detail="Only default templates can be linked to a user",
         )
 
     target_email = str(payload.user_email).strip()
     result = await db.execute(select(User).where(User.email == target_email))
     customer = result.scalars().first()
     if not customer:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Customer not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    if customer.role != UserRole.CUSTOMER:
+    if customer.role not in (UserRole.CUSTOMER, UserRole.ADMIN):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Default templates can only be linked to customer accounts",
+            detail="Default templates can only be linked to customer or admin accounts",
         )
 
     result = await db.execute(
@@ -479,18 +488,54 @@ async def create_default_template(
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
-    """Create a default template (admin only)."""
+    """Create a default template (admin only).
+
+    The admin who uploads the template is stored in `user_email`, exactly like
+    every other template row. Leaving it NULL used to make admin-created
+    defaults ownerless, so they could not be attributed, reverted or filtered
+    by owner anywhere in the app.
+    """
     if cv_pdf.content_type != "application/pdf":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File must be a PDF",
         )
 
+    # Keep the platform showcase within the advertised limit; the promote
+    # endpoint already enforces the same cap.
+    result = await db.execute(
+        select(UserTemplate).where(UserTemplate.template_scope == TemplateScope.DEFAULT)
+    )
+    if len(result.scalars().all()) >= MAX_DEFAULT_TEMPLATES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"Maximum of {MAX_DEFAULT_TEMPLATES} default templates allowed. "
+                "Revert or remove an existing default template first."
+            ),
+        )
+
+    # Roles are stored lowercase everywhere so ownership uniqueness is stable.
+    normalized_template_role = template_role.strip().lower()
+
+    result = await db.execute(
+        select(UserTemplate).where(
+            UserTemplate.user_email == current_user.email,
+            UserTemplate.template_role == normalized_template_role,
+        )
+    )
+    if result.scalars().first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A template with the role '{template_role}' already exists.",
+        )
+
     cv_bytes = await cv_pdf.read()
 
     template = UserTemplate(
-        user_email=None,  # Default templates have no owner
-        template_role=template_role,
+        # Default templates keep the e-mail of the admin who created them.
+        user_email=current_user.email,
+        template_role=normalized_template_role,
         title=title,
         context=context,
         cv_bytes=cv_bytes,
@@ -502,4 +547,4 @@ async def create_default_template(
     await db.commit()
     await db.refresh(template)
 
-    return _template_to_dict(template)
+    return _template_to_dict(template, current_user)
