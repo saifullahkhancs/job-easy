@@ -168,7 +168,7 @@ export default function ViewPage() {
                       <dd>{detail.template_role || 'N/A'}</dd>
                     </div>
                     <div>
-                      <dt>CV Type</dt>
+                      <dt>Email Title</dt>
                       <dd>{detail.title || 'N/A'}</dd>
                     </div>
                     <div>

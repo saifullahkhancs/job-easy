@@ -210,7 +210,10 @@ async def create_template(
     
     # Normalize template role to lowercase for consistency and check for uniqueness
     normalized_template_role = template_role.lower()
-    owner_email_for_check = current_user.email if current_user.role == UserRole.CUSTOMER else None
+    # Admin-authored templates are personal templates too. They become
+    # platform defaults only when explicitly created/promoted through the
+    # admin default-templates workflow.
+    owner_email_for_check = current_user.email
 
     result = await db.execute(
         select(UserTemplate).where(
@@ -227,13 +230,13 @@ async def create_template(
     cv_bytes = await cv_pdf.read()
     
     template = UserTemplate(
-        user_email=current_user.email if current_user.role == UserRole.CUSTOMER else None,
+        user_email=current_user.email,
         template_role=normalized_template_role,
         title=title,
         context=context,
         cv_bytes=cv_bytes,
         filename=cv_pdf.filename or "cv.pdf",
-        template_scope=TemplateScope.CUSTOMER if current_user.role == UserRole.CUSTOMER else TemplateScope.DEFAULT,
+        template_scope=TemplateScope.CUSTOMER,
     )
     
     db.add(template)
