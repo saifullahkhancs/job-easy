@@ -44,8 +44,9 @@ export default function TemplateCreatePage() {
     setMessage("");
     setError("");
 
-    // Check template limit
-    if (currentUser && currentUser.current_template_count >= currentUser.template_limit) {
+    // Check template limit (only for non-admin users)
+    const isAdmin = currentUser?.role === "admin";
+    if (currentUser && !isAdmin && currentUser.current_template_count >= currentUser.template_limit) {
       setError(`You've reached your maximum of ${currentUser.template_limit} templates. Delete an existing template to create a new one.`);
       setLoading(false);
       return;
@@ -93,7 +94,7 @@ export default function TemplateCreatePage() {
       </div>
 
       <div className="template-limit-info">
-        <p>Templates used: {currentUser?.current_template_count || 0} / {currentUser?.template_limit || 2}</p>
+        <p>Templates used: {currentUser?.current_template_count || 0} / {currentUser?.role === "admin" ? "Unlimited" : (currentUser?.template_limit || 2)}</p>
       </div>
 
       {error && <div className="error-message" style={{ marginBottom: '16px' }}>{error}</div>}
