@@ -22,57 +22,63 @@ import AdminUsersPage from "./admin/AdminUsersPage";
 import AdminDefaultTemplatesPage from "./admin/AdminDefaultTemplatesPage";
 import SessionExpiredDialog from "./components/SessionExpiredDialog";
 import LandingPage from "./pages/LandingPage";
+import { VoiceControlProvider } from "./voice/VoiceControlProvider";
+import VoiceIndicator from "./voice/VoiceIndicator";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <SessionExpiredDialog />
-      <Routes>
-        {/* Public auth routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ForgotPasswordPage />} />
-        
-        {/* Admin routes - no auth guard (internal/dev-only) */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboardPage />} />
-          <Route path="requests" element={<AdminRequestsPage />} />
-          <Route path="users" element={<AdminUsersPage />} />
-          <Route path="default-templates" element={<AdminDefaultTemplatesPage />} />
-        </Route>
-        
-        {/* Main application routes with shared layout */}
-        <Route path="/app" element={<Layout />}>
-          {/* Publicly accessible routes (components handle guest/visitor state) */}
-          <Route index element={<Navigate to="templates" replace />} />
-          <Route path="templates" element={<DashboardPage />} />
-          <Route path="templates/:id" element={<TemplateViewPage />} />
-          <Route path="new" element={<TemplateCreatePage />} />
-          <Route path="send" element={<SendPage />} />
-          <Route path="view" element={<ViewPage />} />
-          <Route path="update" element={<PatchPage />} />
-          <Route path="request-access" element={<RequestAccessPage />} />
-          <Route path="request-status" element={<RequestStatusPage />} />
-
-          {/* Protected routes that require authentication */}
-          <Route element={<AuthGuard />}>
-            <Route path="templates/:id/edit" element={<TemplateEditPage />} />
+      {/* VoiceControlProvider must be inside BrowserRouter since it uses useNavigate and useLocation */}
+      <VoiceControlProvider>
+        <SessionExpiredDialog />
+        <Routes>
+          {/* Public auth routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ForgotPasswordPage />} />
+          
+          {/* Admin routes - no auth guard (internal/dev-only) */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboardPage />} />
+            <Route path="requests" element={<AdminRequestsPage />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="default-templates" element={<AdminDefaultTemplatesPage />} />
           </Route>
-        </Route>
-        
-        {/* Landing page */}
-        <Route path="/" element={<LandingPage />} />
-        
-        {/* Legacy route redirects */}
-        <Route path="/home" element={<LandingPage />} />
-        <Route path="/view" element={<Navigate to="/app/view" replace />} />
-        <Route path="/update" element={<Navigate to="/app/update" replace />} />
-        
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          
+          {/* Main application routes with shared layout */}
+          <Route path="/app" element={<Layout />}>
+            {/* Publicly accessible routes (components handle guest/visitor state) */}
+            <Route index element={<Navigate to="templates" replace />} />
+            <Route path="templates" element={<DashboardPage />} />
+            <Route path="templates/:id" element={<TemplateViewPage />} />
+            <Route path="new" element={<TemplateCreatePage />} />
+            <Route path="send" element={<SendPage />} />
+            <Route path="view" element={<ViewPage />} />
+            <Route path="update" element={<PatchPage />} />
+            <Route path="request-access" element={<RequestAccessPage />} />
+            <Route path="request-status" element={<RequestStatusPage />} />
+
+            {/* Protected routes that require authentication */}
+            <Route element={<AuthGuard />}>
+              <Route path="templates/:id/edit" element={<TemplateEditPage />} />
+            </Route>
+          </Route>
+          
+          {/* Landing page */}
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* Legacy route redirects */}
+          <Route path="/home" element={<LandingPage />} />
+          <Route path="/view" element={<Navigate to="/app/view" replace />} />
+          <Route path="/update" element={<Navigate to="/app/update" replace />} />
+          
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <VoiceIndicator />
+      </VoiceControlProvider>
     </BrowserRouter>
   );
 }
