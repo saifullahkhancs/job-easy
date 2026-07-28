@@ -1,5 +1,7 @@
 import asyncio
+import html
 import logging
+import re
 from email.utils import formataddr
 
 import resend
@@ -8,6 +10,72 @@ from resend import Attachment
 from core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def plain_text_to_html(text: str) -> str:
+    """Convert plain text to HTML, preserving line breaks and trailing spaces.
+    
+    - Escapes HTML special characters
+    - Converts newlines to <br> tags
+    - Preserves trailing spaces using &nbsp;
+    - Wraps content in a properly styled HTML structure
+    """
+    if not text:
+        return ""
+    
+    # Escape HTML special characters first (before adding our own tags)
+    escaped = html.escape(text)
+    
+    # Split into lines to process each one
+    lines = escaped.split('\n')
+    processed_lines = []
+    
+    for line in lines:
+        # Handle trailing spaces - replace trailing spaces with &nbsp;
+        # We need to be careful not to convert spaces that are just normal word spacing
+        # We'll convert 1+ trailing spaces on each line
+        trailing_match = re.search(r'( +)$', line)
+        if trailing_match:
+            trailing_spaces = len(trailing_match.group(1))
+            line = line[:-trailing_spaces] + '&nbsp;' * trailing_spaces
+        
+        # Handle leading spaces (indentation)
+        leading_match = re.match(r'^( +)', line)
+        if leading_match:
+            leading_spaces = len(leading_match.group(1))
+            line = '&nbsp;' * leading_spaces + line.lstrip()
+        
+        processed_lines.append(line)
+    
+    # Join lines with <br> tags (except for double newlines which become paragraph breaks)
+    html_content = '<br>\n'.join(processed_lines)
+    
+    # Wrap in a styled HTML structure
+    return f'''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }}
+        p {{
+            margin: 0 0 16px 0;
+        }}
+    </style>
+</head>
+<body>
+{html_content}
+</body>
+</html>'''
 
 
 class EmailDeliveryError(Exception):
@@ -107,12 +175,18 @@ async def send_job_application_email(
     cv_bytes: bytes,
     cv_filename: str,
 ) -> None:
-    """Send job application email with CV attachment via SMTP."""
+    """Send job application email with CV attachment via SMTP.
+    
+    The context is converted from plain text to HTML to preserve formatting.
+    """
+    # Convert plain text context to HTML with preserved formatting
+    html_content = plain_text_to_html(context)
+    
     await asyncio.to_thread(
         _send_email_sync,
         to_email=recipient_email,
         subject=subject,
-        html_content=context,
+        html_content=html_content,
         from_name=sender_name,
         from_email=sender_email,
         attachment_bytes=cv_bytes,
