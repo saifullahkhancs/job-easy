@@ -4901,9 +4901,14 @@ button:disabled {
   background: #4a4a4a;
 }
 
-.voice-indicator-awake {
+/* Mic is open and actively listening (no wake word — always live while on). */
+.voice-indicator-live {
   background: #16a34a;
   animation: voice-pulse 1.2s ease-in-out infinite;
+}
+
+.voice-indicator-error {
+  background: #b91c1c;
 }
 
 @keyframes voice-pulse {
@@ -4921,12 +4926,21 @@ button:disabled {
 }
 
 .voice-indicator-heard,
-.voice-indicator-feedback {
+.voice-indicator-feedback,
+.voice-indicator-hint {
   color: #bbb;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.voice-indicator-heard {
+  font-style: italic;
+}
+
+.voice-feedback-success { color: #4ade80; }
+.voice-feedback-warn { color: #fbbf24; }
+.voice-feedback-error { color: #f87171; }
 
 @media (max-width: 640px) {
   .voice-indicator {
