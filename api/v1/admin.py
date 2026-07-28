@@ -205,11 +205,12 @@ async def review_approval_request(
     request.reviewed_by_admin_email = current_user.email
     request.admin_notes = request_in.admin_notes
 
-    # If approved, change user role to customer
+    # Approval grants email access; it must never change an existing admin's
+    # platform role. Admins remain admins while using this same workflow.
     if request_in.status == RequestStatus.APPROVED:
         result = await db.execute(select(User).where(User.email == request.user_email))
         user = result.scalars().first()
-        if user:
+        if user and user.role != UserRole.ADMIN:
             user.role = UserRole.CUSTOMER
 
     await db.commit()
