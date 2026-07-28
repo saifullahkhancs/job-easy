@@ -422,7 +422,12 @@ async def get_me(
     # Determine permissions
     can_manage_templates = current_user.role in [UserRole.ADMIN, UserRole.CUSTOMER]
     can_send_email = current_user.role == UserRole.CUSTOMER
-    template_limit = 2 if current_user.role == UserRole.CUSTOMER else 0
+    if current_user.role == UserRole.ADMIN:
+        template_limit = 100
+    elif current_user.role == UserRole.CUSTOMER:
+        template_limit = 2
+    else:
+        template_limit = 0
     
     return UserProfileResponse(
         first_name=current_user.first_name,
