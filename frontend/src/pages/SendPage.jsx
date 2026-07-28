@@ -63,7 +63,16 @@ export default function SendPage() {
 
   const isGuest = !currentUser;
   const isVisitor = currentUser?.role === "visitor";
-  const isDisabled = isGuest || isVisitor;
+  const isAdmin = currentUser?.role === "admin";
+  const needsAdminAccess = isAdmin && currentUser?.approval_status !== "approved";
+  const isDisabled = isGuest || isVisitor || needsAdminAccess;
+  const accessMessage = needsAdminAccess
+    ? currentUser?.approval_status === "pending"
+      ? "Your email access request is pending admin approval."
+      : "Request email access before sending."
+    : isVisitor
+      ? "Your account needs approval before sending emails."
+      : "You need to log in to send emails.";
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -85,12 +94,17 @@ export default function SendPage() {
 
   return (
     <div className="page-container page-container-full-width" style={{ width: "100%", margin: 0 }}>
-      {(isGuest || isVisitor) && (
+      {(isGuest || isVisitor || needsAdminAccess) && (
         <div className="visitor-banner">
           <Lock size={24} className="banner-icon" />
           <div className="banner-content">
             <h3>{isGuest ? "Preview Mode" : "Visitor Mode"}</h3>
-            <p>{isGuest ? "You need to log in to send emails." : "Your account is in Visitor mode. You need approval from an admin to send emails."}</p>
+            <p>{isGuest ? "You need to log in to send emails." : accessMessage}</p>
+            {needsAdminAccess && (
+              <button type="button" className="primary-btn" onClick={() => navigate("/app/request-access")}>
+                {currentUser?.approval_status === "pending" ? "View Request Status" : "Request Access"}
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -124,7 +138,9 @@ export default function SendPage() {
               <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} required disabled={false}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.title} {template.template_scope === "default" ? "(Default - Yours)" : ""}
+                    {template.title} · {template.template_role} · {template.template_scope === "default"
+                      ? (template.is_mine ? "Default · Owned by you" : "Default")
+                      : (template.is_mine ? "Owned by you" : "User")}
                   </option>
                 ))}
               </select>

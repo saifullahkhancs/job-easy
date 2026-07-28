@@ -113,39 +113,6 @@ export default function RequestStatusPage() {
     );
   }
 
-  // Admins don't have approval requests — point them at the admin panel.
-  if (currentUser?.role === "admin") {
-    return (
-      <div className="page-container page-container-full-width">
-        <section className="card" style={{ minHeight: "auto", height: "auto" }}>
-          <div className="page-accent-header accent-request">
-            <div>
-              <h2>Approval Requests</h2>
-              <p>Approval requests are for customer accounts only.</p>
-            </div>
-            <div className="page-accent-badge">
-              <ShieldCheck size={22} />
-            </div>
-          </div>
-
-          <div className="result-panel">
-            <div className="result-icon-ring result-icon-info">
-              <AlertCircle size={44} />
-            </div>
-            <h2>Not Available for Admins</h2>
-            <p>Use the Admin Panel to review and action requests submitted by customers.</p>
-            <div className="action-buttons centered">
-              <button className="primary-btn" onClick={() => navigate("/admin/requests")}>
-                Go to Admin Panel
-                <ArrowRight size={18} className="btn-icon" />
-              </button>
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
   const config = request ? STATUS_CONFIG[request.status] : null;
   const StatusIcon = config?.icon;
 

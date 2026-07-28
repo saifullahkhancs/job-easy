@@ -173,5 +173,14 @@ function getMainNavItems(currentUser) {
     ];
   }
 
+  // Admins also need the request workflow to unlock email sending.
+  if (currentUser.role === ROLES.ADMIN) {
+    return [
+      ...sharedItems,
+      { to: "/app/request-access", label: "Request Access", icon: Clock },
+      { to: "/app/request-status", label: "Access Status", icon: CheckCircle2 },
+    ];
+  }
+
   return sharedItems;
 }
