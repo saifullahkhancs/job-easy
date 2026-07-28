@@ -824,6 +824,15 @@ textarea {
   }
 }
 
+/* Template pickers render "<role type> · <ownership>" in each option. Give the
+   rows a little breathing room so the two halves stay easy to read. Native
+   <option> styling is limited, so this pairs with the non-breaking spaces the
+   option text itself uses (see utils/templateDisplay.js). */
+select option {
+  padding: 8px 4px;
+  line-height: 1.6;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -4310,6 +4319,12 @@ button:disabled {
 .admin-owner-chip svg {
   margin-top: 2px;
   flex-shrink: 0;
+}
+
+/* Marks a default template that an admin authored themselves. */
+.admin-owner-role {
+  color: #7c3aed;
+  font-weight: 600;
 }
 
 .admin-template-rows {

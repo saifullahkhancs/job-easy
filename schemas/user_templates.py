@@ -38,6 +38,11 @@ class UserTemplateResponse(UserTemplateBase):
     # A default template can still be owned by the customer who created it,
     # which lets the UI congratulate them instead of showing an empty state.
     is_mine: bool = False
+    # Ownership/type label used by every template dropdown:
+    # "Owned by you" | "Default" | "Default · Owned by you" | "User".
+    ownership_label: str = ""
+    # Display group used for ordering: 0 = mine, 1 = default, 2 = other users.
+    display_group: int = 0
 
     class Config:
         from_attributes = True

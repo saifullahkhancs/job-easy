@@ -3,6 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { fetchTemplateV2, fetchTemplatesV2, updateTemplateV2, updateTemplateCvV2, getCurrentUser } from "../api/client";
 import { ShieldCheck, Check, Save, Lock } from "lucide-react";
 import { getAccessToken } from "../api/tokenStorage";
+import {
+  getTemplateOptionLabel,
+  isOwnedByUser,
+  sortTemplatesForDisplay,
+} from "../utils/templateDisplay";
 
 function canEditTemplate(template, user) {
   if (!user) {
@@ -11,7 +16,7 @@ function canEditTemplate(template, user) {
   if (user.role === "admin") {
     return true;
   }
-  return user.role === "customer" && Boolean(template.is_mine || template.user_email === user.email);
+  return user.role === "customer" && Boolean(template.is_mine || isOwnedByUser(template, user));
 }
 
 export default function PatchPage() {
@@ -43,9 +48,11 @@ export default function PatchPage() {
         }
 
         const items = await fetchTemplatesV2();
-        const visibleTemplates = user
+        const editable = user
           ? items.filter((template) => canEditTemplate(template, user))
           : items;
+        // Same order as every other picker: mine → defaults → other users'.
+        const visibleTemplates = sortTemplatesForDisplay(editable, user);
         setTemplates(visibleTemplates);
 
         if (visibleTemplates.length > 0) {
@@ -168,10 +175,11 @@ export default function PatchPage() {
               <select value={selectedTemplateId} onChange={(e) => setSelectedTemplateId(e.target.value)} disabled={false}>
                 {templates.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.title} ({template.template_role})
+                    {getTemplateOptionLabel(template, currentUser)}
                   </option>
                 ))}
               </select>
+              <p className="input-hint">Role type · ownership. Your templates are listed first.</p>
             </label>
 
             <div className="patch-options-group">

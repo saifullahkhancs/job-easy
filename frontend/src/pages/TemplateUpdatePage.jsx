@@ -9,11 +9,16 @@ import {
 } from "../api/client";
 import { Save, UploadCloud, ShieldCheck, Lock, Edit } from "lucide-react";
 import { getAccessToken } from "../api/tokenStorage";
+import {
+  getTemplateOptionLabel,
+  isOwnedByUser,
+  sortTemplatesForDisplay,
+} from "../utils/templateDisplay";
 
 function canEditTemplate(template, user) {
   if (!user) return false;
   if (user.role === "admin") return true;
-  return user.role === "customer" && Boolean(template.is_mine || (user.email && template.user_email === user.email));
+  return user.role === "customer" && Boolean(template.is_mine || isOwnedByUser(template, user));
 }
 
 export default function TemplateUpdatePage() {
@@ -59,9 +64,12 @@ export default function TemplateUpdatePage() {
         const items = await fetchTemplatesV2();
         // For logged-in customers, include personal + their own promoted defaults
         // so that after admin promotion they can still edit their own templates.
-        const editable = token
+        const editableItems = token
           ? items.filter((t) => (user ? canEditTemplate(t, user) : t.template_scope === "customer"))
           : items;
+
+        // Same order as every other picker: mine → defaults → other users'.
+        const editable = sortTemplatesForDisplay(editableItems, user);
 
         setTemplates(editable);
         if (!id && editable.length > 0) {
@@ -213,10 +221,11 @@ export default function TemplateUpdatePage() {
             >
               {templates.map((t) => (
                 <option key={t.id} value={String(t.id)}>
-                  {t.title} {t.template_scope === "default" ? "(Default - Yours)" : ""} — {t.template_role || t.title}
+                  {getTemplateOptionLabel(t, currentUser)}
                 </option>
               ))}
             </select>
+            <p className="input-hint">Role type · ownership. Your templates are listed first.</p>
           </label>
         )}
 
