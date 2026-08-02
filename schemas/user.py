@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr, HttpUrl
 from models.roles import UserRole
 
@@ -8,6 +9,11 @@ class UserResponse(BaseModel):
     email: EmailStr
     is_verified: bool
     role: UserRole
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+    # Legacy field still expected by the admin UI; not present in current User model
+    # but kept optional so the response remains backward compatible.
+    linkedin_url: str | None = None
 
     class Config:
         from_attributes = True

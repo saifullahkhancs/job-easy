@@ -58,8 +58,8 @@ async def update_user(
     if "is_verified" in update_data:
         user.is_verified = update_data["is_verified"]
     if "role" in update_data:
-        role = update_data["role"]
-        user.role = role.value if hasattr(role, "value") else role
+        # role is a UserRole enum instance; assign directly to preserve SQLAlchemy Enum mapping
+        user.role = update_data["role"]
 
     await db.commit()
     await db.refresh(user)

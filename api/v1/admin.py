@@ -128,7 +128,9 @@ async def update_user(
     update_data = user_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         if field == "role":
-            user.role = value.value if hasattr(value, "value") else value
+            # value is already a UserRole enum (Pydantic parses it); assign enum directly
+            # so SQLAlchemy's Enum column stores it correctly and can be re-loaded.
+            user.role = value
         elif field == "password":
             from core.security import hash_password
             user.hashed_password = hash_password(value)
