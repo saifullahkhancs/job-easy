@@ -5,6 +5,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 
 from api.dependencies import get_current_user, get_db
+from core.config import settings
 from core.encryption import encrypt_data, decrypt_data, mask_email
 from models.roles import UserRole
 from models.user import User
@@ -74,12 +75,23 @@ async def get_email_info(
     )
     email_info = result.scalars().first()
     
+    if current_user.role == UserRole.VISITOR:
+        return UserEmailInfoMaskedResponse(
+            id=None,
+            user_email=current_user.email,
+            sender_email=mask_email(settings.EMAIL_FROM),
+            sender_name=settings.EMAIL_FROM_NAME,
+            email_provider="default",
+            created_at=email_info.created_at if email_info else None,
+            updated_at=email_info.updated_at if email_info else None,
+        )
+
     if not email_info:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Email configuration not found",
         )
-    
+
     # Return masked response (never expose password)
     return UserEmailInfoMaskedResponse(
         id=email_info.id,
