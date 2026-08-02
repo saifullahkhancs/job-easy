@@ -14,7 +14,7 @@ router = APIRouter(prefix="/api/v1/users", tags=["users"])
 @router.get("/", response_model=list[UserResponse])
 async def get_users(
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_roles([UserRole.ADMIN.value])),
+    _current_user: User = Depends(require_roles([UserRole.ADMIN])),
 ):
     result = await db.execute(select(User))
     return result.scalars().all()
@@ -40,7 +40,7 @@ async def update_user(
     email: str,
     user_in: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_roles([UserRole.ADMIN.value])),
+    _current_user: User = Depends(require_roles([UserRole.ADMIN])),
 ):
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
@@ -70,7 +70,7 @@ async def update_user(
 async def delete_user(
     email: str,
     db: AsyncSession = Depends(get_db),
-    _current_user: User = Depends(require_roles([UserRole.ADMIN.value])),
+    _current_user: User = Depends(require_roles([UserRole.ADMIN])),
 ):
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalars().first()
