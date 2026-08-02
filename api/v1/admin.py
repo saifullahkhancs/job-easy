@@ -1,11 +1,26 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    UploadFile,
+    status,
+)
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from api.dependencies import get_current_user, get_db, require_roles
+from core.email import (
+    notify_safe,
+    send_request_approved_email,
+    send_request_rejected_email,
+)
 from core.encryption import mask_email
 from models.roles import UserRole
 from models.user import User
@@ -175,6 +190,7 @@ async def get_approval_request(
 async def review_approval_request(
     request_id: int,
     request_in: EmailAutomationRequestUpdate,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(require_roles([UserRole.ADMIN])),
     db: AsyncSession = Depends(get_db),
 ):
@@ -205,18 +221,48 @@ async def review_approval_request(
     request.reviewed_by_admin_email = current_user.email
     request.admin_notes = request_in.admin_notes
 
+    result = await db.execute(select(User).where(User.email == request.user_email))
+    user = result.scalars().first()
+
     # Approval grants email access; it must never change an existing admin's
     # platform role. Admins remain admins while using this same workflow.
     if request_in.status == RequestStatus.APPROVED:
-        result = await db.execute(select(User).where(User.email == request.user_email))
-        user = result.scalars().first()
         if user and user.role != UserRole.ADMIN:
             user.role = UserRole.CUSTOMER
 
     await db.commit()
     await db.refresh(request)
 
+    # Close the loop with the customer: they asked, an admin decided, so they
+    # hear about it. Queued in the background and failure-tolerant so a mail
+    # outage cannot undo a decision that is already persisted.
+    recipient_name = ""
+    if user:
+        recipient_name = " ".join(
+            part for part in [user.first_name, user.last_name] if part
+        ).strip()
+
+    notifier = (
+        send_request_approved_email
+        if request_in.status == RequestStatus.APPROVED
+        else send_request_rejected_email
+    )
+    background_tasks.add_task(
+        _notify_requester,
+        notifier,
+        request.user_email,
+        recipient_name or None,
+        request.admin_notes,
+    )
+
     return _build_admin_request_response(request)
+
+
+async def _notify_requester(notifier, user_email: str, user_name: str | None, admin_notes: str | None) -> None:
+    """Send the decision email to the requester without raising on failure."""
+    await notify_safe(
+        notifier(user_email=user_email, user_name=user_name, admin_notes=admin_notes)
+    )
 
 
 def _template_to_dict(tmpl: UserTemplate, owner: User | None = None) -> dict:

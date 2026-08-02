@@ -217,7 +217,11 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
     "user_email_info_id": 1
   }
   ```
-- **Notes**: One pending request per user at a time
+- **Notes**:
+  - One pending request per user at a time
+  - Every admin account (plus any address in `ADMIN_NOTIFICATION_EMAILS`) receives a
+    "new access request" email with the requester details and a link to the review
+    queue. It is sent as a background task, so a mail failure never blocks the request.
 
 #### GET `/api/v1/approval/status`
 - **Description**: Get current approval request status
@@ -309,6 +313,9 @@ This FastAPI backend implements a multi-tenant workflow for email automation wit
 - **Notes**: 
   - On approval: User role changes to customer
   - On rejection: User remains visitor
+  - The requester is emailed the decision (approval or rejection, including
+    `admin_notes` when provided) as a background task. Delivery failures are logged
+    and never revert the decision.
 
 #### GET `/api/v1/admin/template-role-types`
 - **Description**: List all template role types
@@ -405,6 +412,12 @@ SMTP_FROM_NAME=Your Name
 SMTP_USE_TLS=true
 SMTP_USE_SSL=false
 
+# Notification links & recipients
+FRONTEND_BASE_URL=https://www.jobeasy.online
+# Optional extra recipients for new-approval-request emails (comma separated).
+# Admin accounts in the database are always notified.
+ADMIN_NOTIFICATION_EMAILS=ops@jobeasy.online
+
 # CORS
 BACKEND_CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
@@ -449,12 +462,14 @@ Tests cover:
 2. **Verification**: User verifies email via code
 3. **Email Config**: User sets up email configuration (encrypted app password)
 4. **Approval Request**: User submits approval request
-5. **Admin Review**: Admin reviews request
-6. **Approval**: 
+5. **Admin Notification**: Every admin is emailed that a request is waiting
+6. **Admin Review**: Admin reviews request
+7. **Decision Email**: The requester is emailed the outcome
+8. **Approval**: 
    - If approved: User role changes to customer
    - If rejected: User remains visitor
-7. **Template Creation**: Customer can create up to 2 personal templates
-8. **Email Sending**: Customer can send emails using their approved configuration
+9. **Template Creation**: Customer can create up to 2 personal templates
+10. **Email Sending**: Customer can send emails using their approved configuration
 
 ## Important Notes
 
