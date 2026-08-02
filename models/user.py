@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, Integer, TypeDecorator
+from sqlalchemy import Boolean, Column, DateTime, String, ForeignKey, Integer, TypeDecorator, Enum as SQLEnum
 from sqlalchemy.orm import declarative_base, relationship
 from models.roles import UserRole
 
@@ -16,30 +16,39 @@ class FlexibleUserRoleType(TypeDecorator):
     normalizing to NAME on write, so corrupted rows self-heal on next update.
     """
 
-    impl = String(20)
+    impl = SQLEnum(
+        UserRole,
+        name="userrole",
+        native_enum=True,
+        values_callable=lambda x: [e.name for e in x],
+    )
     cache_ok = True
 
     def process_bind_param(self, value, dialect):
         if value is None:
             return None
         if isinstance(value, UserRole):
-            return value.name
+            return value
         raw = str(value).strip()
         if not raw:
             return None
         upper = raw.upper()
         if upper in UserRole.__members__:
-            return upper
+            return UserRole[upper]
         lower = raw.lower()
         for member in UserRole:
             if member.value == lower:
-                return member.name
+                return member
         # Fallback: store uppercased if possible, else raw
-        return upper if upper in UserRole.__members__ else raw
+        if upper in UserRole.__members__:
+            return UserRole[upper]
+        return value
 
     def process_result_value(self, value, dialect):
         if value is None:
             return None
+        if isinstance(value, UserRole):
+            return value
         # Direct name match
         if value in UserRole.__members__:
             return UserRole[value]

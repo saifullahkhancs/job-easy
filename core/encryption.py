@@ -81,3 +81,9 @@ def mask_email(email: str) -> str:
         masked_local = local[0] + '*' * (len(local) - 2) + local[-1]
     
     return f"{masked_local}@{domain}"
+
+
+# Aliases for backward compatibility
+encrypt_app_password = encrypt_data
+decrypt_app_password = decrypt_data
+
