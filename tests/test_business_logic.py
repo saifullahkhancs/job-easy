@@ -99,8 +99,6 @@ class TestUserRoleTransitions:
             first_name="John",
             last_name="Doe",
             email="john@example.com",
-            linkedin_url="https://linkedin.com/in/john-doe",
-            linkedin_url_normalized="https://linkedin.com/in/john-doe",
             hashed_password="hashed_password",
             is_verified=True,
             role=UserRole.VISITOR,
@@ -145,8 +143,6 @@ class TestUserRoleTransitions:
             first_name="Jane",
             last_name="Smith",
             email="jane@example.com",
-            linkedin_url="https://linkedin.com/in/jane-smith",
-            linkedin_url_normalized="https://linkedin.com/in/jane-smith",
             hashed_password="hashed_password",
             is_verified=True,
             role=UserRole.VISITOR,
@@ -194,8 +190,6 @@ class TestTemplateLimit:
             first_name="Bob",
             last_name="Johnson",
             email="bob@example.com",
-            linkedin_url="https://linkedin.com/in/bob-johnson",
-            linkedin_url_normalized="https://linkedin.com/in/bob-johnson",
             hashed_password="hashed_password",
             is_verified=True,
             role=UserRole.CUSTOMER,
@@ -206,8 +200,8 @@ class TestTemplateLimit:
         # Create 2 templates (should succeed)
         for i in range(2):
             template = UserTemplate(
-                owner_user_email=user.email,
-                template_role_type_id=1,
+                user_email=user.email,
+                template_role=f"role{i+1}",
                 title=f"Template {i+1}",
                 context=f"Context {i+1}",
                 filename=f"cv{i+1}.pdf",
@@ -235,8 +229,6 @@ class TestTemplateLimit:
             first_name="Alice",
             last_name="Williams",
             email="alice@example.com",
-            linkedin_url="https://linkedin.com/in/alice-williams",
-            linkedin_url_normalized="https://linkedin.com/in/alice-williams",
             hashed_password="hashed_password",
             is_verified=True,
             role=UserRole.CUSTOMER,
@@ -247,8 +239,8 @@ class TestTemplateLimit:
         # Create 2 customer templates
         for i in range(2):
             template = UserTemplate(
-                owner_user_email=user.email,
-                template_role_type_id=1,
+                user_email=user.email,
+                template_role=f"cust_role{i+1}",
                 title=f"Customer Template {i+1}",
                 context=f"Context {i+1}",
                 filename=f"cv{i+1}.pdf",
@@ -261,7 +253,7 @@ class TestTemplateLimit:
         for i in range(5):
             default_template = UserTemplate(
                 user_email=None,  # No owner for default templates
-                template_role_type_id=1,
+                template_role=f"def_role{i+1}",
                 title=f"Default Template {i+1}",
                 context=f"Default Context {i+1}",
                 filename=f"default_cv{i+1}.pdf",
@@ -294,8 +286,6 @@ class TestEmailInfoOneToOne:
             first_name="Charlie",
             last_name="Brown",
             email="charlie@example.com",
-            linkedin_url="https://linkedin.com/in/charlie-brown",
-            linkedin_url_normalized="https://linkedin.com/in/charlie-brown",
             hashed_password="hashed_password",
             is_verified=True,
             role=UserRole.VISITOR,
@@ -354,10 +344,16 @@ class TestSecretNonExposure:
 @pytest.fixture
 async def db():
     """Database session fixture."""
-    from database import async_session
+    from database import async_session, engine
+    from models.user import Base
+    from models.user_email_info import UserEmailInfo
+    from models.user_templates import UserTemplate
+    from models.email_automation_requests import EmailAutomationRequest
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     async with async_session() as session:
         yield session
-        # Cleanup would happen here in a real test setup
+        await session.rollback()
 
 
 if __name__ == "__main__":
