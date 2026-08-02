@@ -73,7 +73,7 @@ export default function AdminRequestsPage() {
     setReviewing(requestId);
     try {
       await reviewAdminRequest(requestId, { status: "approved", admin_notes: adminNote });
-      setMessage("Request approved successfully");
+      setMessage("Request approved — the customer has been emailed that they now have access.");
       setAdminNote("");
       await fetchRequests();
     } catch (error) {
@@ -91,7 +91,7 @@ export default function AdminRequestsPage() {
     setReviewing(requestId);
     try {
       await reviewAdminRequest(requestId, { status: "rejected", admin_notes: adminNote });
-      setMessage("Request rejected successfully");
+      setMessage("Request rejected — the customer has been emailed with your note.");
       setAdminNote("");
       await fetchRequests();
     } catch (error) {

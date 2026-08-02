@@ -317,7 +317,7 @@ export default function RequestAccessPage() {
                   </li>
                   <li>
                     <strong>Decision</strong>
-                    <span>You'll be notified once it's approved or rejected.</span>
+                    <span>You'll get an email as soon as it's approved or rejected.</span>
                   </li>
                   <li>
                     <strong>Full access</strong>
@@ -337,8 +337,8 @@ export default function RequestAccessPage() {
             </div>
             <h2>Request Submitted Successfully</h2>
             <p>
-              Your email automation request is now in the review queue. We'll let you know as soon
-              as an admin makes a decision.
+              Your email automation request is now in the review queue and our admins have been
+              notified by email. We'll email you as soon as a decision is made.
             </p>
 
             <div className="result-steps">
@@ -352,7 +352,7 @@ export default function RequestAccessPage() {
               <div className="result-step">
                 <span className="result-step-index">2</span>
                 <div>
-                  <strong>You get a decision</strong>
+                  <strong>You get a decision by email</strong>
                   <p>Approved or rejected, with notes if anything needs fixing.</p>
                 </div>
               </div>

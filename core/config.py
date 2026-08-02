@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     PASSWORD_RESET_URL: str = os.environ.get(
         "PASSWORD_RESET_URL", "https://www.jobeasy.online/forgot-password"
     )
+    # Public URL of the SPA, used to build links inside notification emails.
+    FRONTEND_BASE_URL: str = os.environ.get(
+        "FRONTEND_BASE_URL", "https://www.jobeasy.online"
+    )
+    # Extra recipients (comma separated) that should always receive the
+    # "new approval request" notification, on top of the admins stored in DB.
+    ADMIN_NOTIFICATION_EMAILS: str = os.environ.get("ADMIN_NOTIFICATION_EMAILS", "")
     BACKEND_CORS_ORIGINS: str | None = None
 
     # SMTP configuration for system emails (Resend)
@@ -53,6 +60,12 @@ class Settings(BaseSettings):
         if self.ENVIRONMENT == "production" and self.JWT_SECRET in ["dev-secret-change-me", "change-me", "secret"]:
             raise ValueError("JWT_SECRET must be set to a strong random value in production")
         return self
+
+    @property
+    def admin_notification_emails(self) -> list[str]:
+        """Static admin recipients configured via environment."""
+        raw = self.ADMIN_NOTIFICATION_EMAILS or ""
+        return [email.strip() for email in raw.split(",") if email.strip()]
 
     @property
     def cors_origins(self) -> list[str]:
