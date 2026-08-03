@@ -76,6 +76,33 @@ export default function LandingPage() {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  // Enable scroll-reveal animations. We only hide/reveal elements while JS is
+  // running (via the .js-anim marker), so all content stays visible if JS is off.
+  useEffect(() => {
+    if (typeof document === "undefined") return undefined;
+    document.documentElement.classList.add("js-anim");
+
+    const targets = Array.from(document.querySelectorAll('[data-reveal="scroll"]'));
+    if (!("IntersectionObserver" in window) || targets.length === 0) {
+      targets.forEach((el) => el.classList.add("revealed"));
+      return undefined;
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("revealed");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+    targets.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!isMobile || !sidebarOpen) return undefined;
     const handleKeyDown = (event) => {
@@ -136,7 +163,7 @@ export default function LandingPage() {
         </button>
         <div className="landing-topbar-brand" onClick={() => navigate("/")}>
           <div className="landing-logo-mark small">
-            <LayoutGrid size={18} />
+            <Briefcase size={18} />
           </div>
           <span>Job Easy</span>
         </div>
@@ -186,22 +213,22 @@ export default function LandingPage() {
 
           <div className="landing-hero-inner">
             <div className="landing-hero-content">
-              <div className="landing-badge">
+              <div className="landing-badge" data-reveal="hero">
                 <Sparkles size={14} />
                 <span>Trusted in early beta</span>
                 <span className="landing-badge-dot" />
                 <span className="landing-badge-new">Auto-send with CV attachment</span>
               </div>
 
-              <h1 className="landing-h1">
+              <h1 className="landing-h1" data-reveal="hero">
                 Automate your <span className="landing-h1-gradient">job applications</span> in seconds, not hours
               </h1>
 
-              <p className="landing-hero-sub">
+              <p className="landing-hero-sub" data-reveal="hero">
                 Upload your CV once, create smart templates, and send tailored applications with attachments — tracked, managed, and approved. Built for visitors, customers, and hiring teams.
               </p>
 
-              <div className="landing-hero-ctas">
+              <div className="landing-hero-ctas" data-reveal="hero">
                 <button className="landing-cta-primary" onClick={() => navigate(isLoggedIn ? "/app/templates" : "/signup")}>
                   <Zap size={18} />
                   Start Sending Emails
@@ -212,7 +239,7 @@ export default function LandingPage() {
                 </button>
               </div>
 
-              <div className="landing-trust">
+              <div className="landing-trust" data-reveal="hero">
                 <div className="landing-trust-avatars">
                   <span>A</span>
                   <span>B</span>
@@ -364,12 +391,12 @@ export default function LandingPage() {
         {/* Features */}
         <section id="features" className="landing-section">
           <div className="landing-section-inner">
-            <div className="landing-section-header">
+            <div className="landing-section-header" data-reveal="scroll">
               <span className="landing-kicker">Features</span>
               <h2>Everything you need to win your next role</h2>
               <p>From visitor to customer to admin, Job Easy handles templates, approvals, and delivery so you focus on interviews.</p>
             </div>
-            <div className="landing-features-grid">
+            <div className="landing-features-grid" data-reveal="scroll">
               <div className="landing-feature-card">
                 <div className="landing-feature-icon orange">
                   <UploadCloud size={22} />
@@ -425,11 +452,11 @@ export default function LandingPage() {
         {/* How it works */}
         <section id="how" className="landing-section landing-section-alt">
           <div className="landing-section-inner">
-            <div className="landing-section-header">
+            <div className="landing-section-header" data-reveal="scroll">
               <span className="landing-kicker">How it works</span>
               <h2>From zero to sent in 3 steps</h2>
             </div>
-            <div className="landing-steps">
+            <div className="landing-steps" data-reveal="scroll">
               <div className="landing-step">
                 <div className="landing-step-number">1</div>
                 <div className="landing-step-icon">
@@ -472,12 +499,12 @@ export default function LandingPage() {
         {/* Templates preview */}
         <section id="templates" className="landing-section">
           <div className="landing-section-inner">
-            <div className="landing-section-header">
+            <div className="landing-section-header" data-reveal="scroll">
               <span className="landing-kicker">Templates</span>
               <h2>Built for every role</h2>
               <p>Guests see defaults. Customers see their own + defaults. Admins see all. Your promoted templates stay usable for you.</p>
             </div>
-            <div className="landing-templates-grid">
+            <div className="landing-templates-grid" data-reveal="scroll">
               <div className="landing-template-card">
                 <div className="landing-template-top">
                   <span className="landing-template-badge default">Default</span>
@@ -526,7 +553,7 @@ export default function LandingPage() {
 
         {/* Final CTA */}
         <section className="landing-cta-section">
-          <div className="landing-cta-inner">
+          <div className="landing-cta-inner" data-reveal="scroll">
             <div className="landing-cta-content">
               <h2>Ready to land your dream job?</h2>
               <p>Join early beta automating applications. Upload CV once, send forever. No spam, just interviews. All stats are demo estimates.</p>
@@ -555,10 +582,10 @@ export default function LandingPage() {
 
         {/* Footer */}
         <footer className="landing-footer">
-          <div className="landing-footer-inner">
+          <div className="landing-footer-inner" data-reveal="scroll">
             <div className="landing-footer-brand">
               <div className="landing-logo-mark">
-                <LayoutGrid size={18} />
+                <Briefcase size={18} />
               </div>
               <div>
                 <strong>Job Easy</strong>

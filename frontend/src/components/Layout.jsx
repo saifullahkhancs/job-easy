@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import { LayoutGrid, Menu, X } from "lucide-react";
+import { Briefcase, Menu, X } from "lucide-react";
 import { getCurrentUser, logout } from "../api/client";
 import { getAccessToken } from "../api/tokenStorage";
 import MainSidebar from "./MainSidebar";
@@ -146,7 +146,7 @@ export default function Layout() {
 
         <div className="app-topbar-brand">
           <div className="brand-icon brand-icon-sm">
-            <LayoutGrid size={18} />
+            <Briefcase size={18} />
           </div>
           <span>Job Easy</span>
         </div>
