@@ -1939,6 +1939,130 @@
   50% { background-position: 100% 50%; }
 }
 
+/* Reading progress bar — thin gradient bar fixed to the top of the viewport. */
+.landing-scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #e77b60, #d95e40 55%, #f59e0b);
+  transform: scaleX(0);
+  transform-origin: left center;
+  z-index: 80;
+  pointer-events: none;
+  box-shadow: 0 1px 6px rgba(217, 94, 64, 0.35);
+  transition: transform 0.12s linear;
+}
+
+/* Navbar entrance — slides down softly on first paint. */
+.landing-header {
+  animation: headerDrop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes headerDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated underline under landing nav links on hover/focus. */
+.landing-nav a {
+  position: relative;
+}
+
+.landing-nav a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #e77b60, #d95e40);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.landing-nav a:hover::after,
+.landing-nav a:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* Feature icon pops and tilts gently when the card is hovered. */
+.landing-feature-icon {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease;
+}
+
+.landing-feature-card:hover .landing-feature-icon {
+  transform: scale(1.12) rotate(-5deg);
+  box-shadow: 0 10px 22px rgba(231, 123, 96, 0.28);
+}
+
+/* Shimmer sweep across template cards on hover. */
+.landing-template-card {
+  position: relative;
+}
+
+.landing-template-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -65%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  transform: skewX(-20deg);
+  transition: left 0.65s ease;
+  pointer-events: none;
+}
+
+.landing-template-card:hover::after {
+  left: 120%;
+}
+
+/* Tactile press on primary/secondary CTAs. */
+.landing-cta-primary:active,
+.landing-primary-btn:active,
+.landing-cta-secondary:active,
+.landing-ghost-btn:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+/* Stagger the proof-number values in on scroll (only when JS is active, so
+   the figures are never hidden if scripting is unavailable). */
+.js-anim .landing-proof-numbers div {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.js-anim .landing-proof.revealed .landing-proof-numbers div {
+  opacity: 1;
+  transform: none;
+}
+
+.js-anim .landing-proof.revealed .landing-proof-numbers div:nth-child(2) {
+  transition-delay: 0.08s;
+}
+
+.js-anim .landing-proof.revealed .landing-proof-numbers div:nth-child(3) {
+  transition-delay: 0.16s;
+}
+
 /* Accessible: honour users who prefer reduced motion. */
 @media (prefers-reduced-motion: reduce) {
   [data-reveal="hero"],
@@ -1950,10 +2074,34 @@
   .landing-hero-blob,
   .landing-cta-primary,
   .landing-h1-gradient,
-  .landing-mock-card {
+  .landing-mock-card,
+  .landing-header,
+  .landing-feature-icon,
+  .landing-template-card::after,
+  .landing-proof-numbers div {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Hide the decorative progress bar entirely for reduced-motion users. */
+  .landing-scroll-progress {
+    display: none !important;
+  }
+
+  /* Keep hover affordances but drop the motion. */
+  .landing-nav a::after,
+  .landing-feature-card:hover .landing-feature-icon,
+  .landing-template-card:hover::after {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .landing-cta-primary:active,
+  .landing-primary-btn:active,
+  .landing-cta-secondary:active,
+  .landing-ghost-btn:active {
     transform: none !important;
   }
 }

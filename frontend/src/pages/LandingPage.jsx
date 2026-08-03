@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
@@ -131,6 +131,35 @@ export default function LandingPage() {
     });
   }, [isMobile]);
 
+  // Drive the thin reading-progress bar at the top of the landing page.
+  // Purely decorative — it never hides or alters any content.
+  const progressRef = useRef(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const doc = document.documentElement;
+      const top = window.scrollY || doc.scrollTop || 0;
+      const height = doc.scrollHeight - doc.clientHeight;
+      const ratio = height > 0 ? Math.min(1, Math.max(0, top / height)) : 0;
+      if (progressRef.current) {
+        progressRef.current.style.transform = `scaleX(${ratio})`;
+      }
+    };
+    const onScroll = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
   const handleLogout = () => {
     logout();
     setCurrentUser(null);
@@ -149,6 +178,9 @@ export default function LandingPage() {
 
   return (
     <div className={landingRootClass}>
+      {/* Thin reading-progress bar (decorative) */}
+      <div className="landing-scroll-progress" ref={progressRef} aria-hidden="true" />
+
       {/* Topbar for mobile drawer open button */}
       <header className="landing-topbar">
         <button
@@ -355,7 +387,7 @@ export default function LandingPage() {
         </section>
 
         {/* Social proof bar */}
-        <section className="landing-proof">
+        <section className="landing-proof" data-reveal="scroll">
           <div className="landing-proof-inner">
             <div className="landing-proof-left">
               <span className="landing-proof-label">
