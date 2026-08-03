@@ -1,10 +1,10 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
+  Briefcase,
   CheckCircle2,
   Clock,
   Edit,
   FolderKanban,
-  LayoutGrid,
   LayoutTemplate,
   LogOut,
   PanelLeftClose,
@@ -63,7 +63,7 @@ export default function MainSidebar({
           title="Go to Job Easy home"
         >
           <div className="brand-icon brand-icon-main">
-            <LayoutGrid size={24} />
+            <Briefcase size={24} />
           </div>
           <h2>Job Easy</h2>
         </button>

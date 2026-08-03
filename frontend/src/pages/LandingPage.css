@@ -1832,3 +1832,128 @@
     text-align: left !important;
   }
 }
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+/* Hero entrance — these run on load and never hide content permanently. */
+/* The visual column fades in as a whole while its mock cards keep floating. */
+.landing-hero-visual {
+  opacity: 0;
+  animation: heroFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.2s forwards;
+}
+
+[data-reveal="hero"] {
+  opacity: 0;
+  animation: heroFadeUp 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--hero-delay, 0) * 1ms);
+}
+
+.landing-badge { --hero-delay: 40; }
+.landing-h1 { --hero-delay: 140; }
+.landing-hero-sub { --hero-delay: 240; }
+.landing-hero-ctas { --hero-delay: 340; }
+.landing-trust { --hero-delay: 440; }
+
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll reveal — only applied when JS is present (.js-anim), so no content
+   is ever lost if scripting is unavailable. Elements start visible and are
+   re-hidden + transitioned in by the reveal observer. */
+.js-anim [data-reveal="scroll"] {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+
+.js-anim [data-reveal="scroll"].revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Gentle stagger for cards inside a revealed grid. */
+.js-anim [data-reveal="scroll"] .landing-feature-card,
+.js-anim [data-reveal="scroll"] .landing-step,
+.js-anim [data-reveal="scroll"] .landing-template-card {
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease;
+}
+
+.js-anim [data-reveal="scroll"].revealed .landing-feature-card,
+.js-anim [data-reveal="scroll"].revealed .landing-step,
+.js-anim [data-reveal="scroll"].revealed .landing-template-card {
+  opacity: 1;
+  transform: none;
+}
+
+.js-anim [data-reveal="scroll"].revealed .landing-feature-card:nth-child(2) { transition-delay: 0.06s; }
+.js-anim [data-reveal="scroll"].revealed .landing-feature-card:nth-child(3) { transition-delay: 0.12s; }
+.js-anim [data-reveal="scroll"].revealed .landing-feature-card:nth-child(4) { transition-delay: 0.06s; }
+.js-anim [data-reveal="scroll"].revealed .landing-feature-card:nth-child(5) { transition-delay: 0.12s; }
+.js-anim [data-reveal="scroll"].revealed .landing-feature-card:nth-child(6) { transition-delay: 0.18s; }
+
+/* Ambient drifting background blobs. */
+.landing-hero-blob {
+  animation: blobFloat 16s ease-in-out infinite;
+}
+.landing-hero-blob.blob-1 { animation-delay: 0s; }
+.landing-hero-blob.blob-2 { animation-delay: -5s; }
+.landing-hero-blob.blob-3 { animation-delay: -10s; }
+
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(24px, -32px) scale(1.05); }
+  66% { transform: translate(-18px, 22px) scale(0.96); }
+}
+
+/* Primary CTA breathing glow. */
+.landing-cta-primary {
+  animation: ctaGlow 3.2s ease-in-out infinite;
+}
+
+@keyframes ctaGlow {
+  0%, 100% { box-shadow: 0 8px 20px rgba(231, 123, 96, 0.32); }
+  50% { box-shadow: 0 8px 30px rgba(231, 123, 96, 0.52); }
+}
+
+/* Shimmering gradient on the hero heading highlight. */
+.landing-h1-gradient {
+  background-size: 200% auto;
+  animation: gradientShift 5s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Accessible: honour users who prefer reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal="hero"],
+  .landing-hero-visual,
+  .js-anim [data-reveal="scroll"],
+  .js-anim [data-reveal="scroll"] .landing-feature-card,
+  .js-anim [data-reveal="scroll"] .landing-step,
+  .js-anim [data-reveal="scroll"] .landing-template-card,
+  .landing-hero-blob,
+  .landing-cta-primary,
+  .landing-h1-gradient,
+  .landing-mock-card {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
