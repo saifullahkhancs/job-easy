@@ -69,16 +69,48 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (you can start from `.env.example`):
 
 ```env
 DATABASE_URL=postgresql+asyncpg://user:password@localhost/job_easy
 JWT_SECRET=your-strong-secret-key
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxx
-RESEND_FROM_EMAIL=your-verified-domain@example.com
-RESEND_FROM_NAME=Job Easy
+
+# AI Job Description Matcher — pick a FREE provider (no credit card needed)
+AI_PROVIDER=auto                  # auto | gemini | groq
+GEMINI_API_KEY=                   # free key: https://aistudio.google.com/app/apikey
+GROQ_API_KEY=                     # free key: https://console.groq.com/keys
+
+# Email via SMTP (SMTP_PASSWORD doubles as the Resend API key)
+SMTP_HOST=smtp.resend.com
+SMTP_PORT=587
+SMTP_USERNAME=resend
+SMTP_PASSWORD=re_xxxxxxxxxxxxxxxxxxxxxxxxx
+SMTP_FROM_EMAIL=your-verified-domain@example.com
+SMTP_FROM_NAME=Job Easy
+SMTP_USE_TLS=true
+
 CORS_ORIGINS=http://localhost:5173
 ```
+
+### Free AI API keys (no credit card required)
+
+The AI job-description matcher works with **either** of two providers that offer
+a genuinely free tier — you only need one free key:
+
+| Provider | Where to get the key | Free tier (approx.) | Config |
+| --- | --- | --- | --- |
+| **Google Gemini** | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) — sign in with Google, click "Create API key" | ~1,500 requests/day on Flash models, 15 RPM | `GEMINI_API_KEY` |
+| **Groq** (Llama) | [console.groq.com/keys](https://console.groq.com/keys) — sign up with email/GitHub/Google, click "Create API Key" | ~14,400 requests/day, 30 RPM | `GROQ_API_KEY` |
+
+1. Copy the key from the provider console.
+2. Paste it into your `.env` next to `GEMINI_API_KEY=` or `GROQ_API_KEY=`.
+3. Leave `AI_PROVIDER=auto` (it uses whichever key is set; set `gemini` or
+   `groq` explicitly to force one).
+4. Restart the backend.
+
+Free-tier keys are shared-rate-limited, which is why each user gets a daily cap
+(`AI_MATCH_DAILY_LIMIT`, default 20). If the provider is rate-limited the API
+answers with a clean `ai_unavailable` error instead of retrying in a loop.
 
 Run database migrations:
 

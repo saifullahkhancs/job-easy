@@ -4,8 +4,13 @@ The Job Description Matcher needs exactly one thing from an LLM: turn a job
 description plus the user's visible templates into a single structured JSON
 document (ranked matches + an optional contact email). Everything provider
 specific lives in this module, so the API layer never has to know whether the
-brain behind the feature is Gemini, Groq or OpenRouter — it only ever calls
+brain behind the feature is Gemini or Groq — it only ever calls
 ``match_job_description``.
+
+Two providers are wired in, both with a genuinely free tier (no credit card):
+Google Gemini (AI Studio) and Groq (OpenAI-compatible). ``AI_PROVIDER`` in the
+environment picks one explicitly; the default ``auto`` uses whichever free key
+is present.
 
 Providers are deliberately single-shot: there are **no retry loops**. The
 feature runs on a free-tier key with a tiny daily allowance, so a rate limit
@@ -108,7 +113,10 @@ Job description:
 async def _call_gemini(prompt: str) -> dict:
     """A single Gemini ``generateContent`` call, returning the parsed JSON."""
     if not settings.GEMINI_API_KEY:
-        raise LLMUnavailableError("AI matching is not configured yet.")
+        raise LLMUnavailableError(
+            "AI matching is not configured yet. Set GEMINI_API_KEY to a free "
+            "key from https://aistudio.google.com/app/apikey and restart."
+        )
 
     url = (
         f"{settings.GEMINI_BASE_URL.rstrip('/')}"
@@ -159,6 +167,97 @@ async def _call_gemini(prompt: str) -> dict:
     return _extract_json_object(text)
 
 
+async def _call_groq(prompt: str) -> dict:
+    """A single Groq chat-completions call (OpenAI-compatible), parsed JSON."""
+    if not settings.GROQ_API_KEY:
+        raise LLMUnavailableError(
+            "AI matching is not configured yet. Set GROQ_API_KEY to a free "
+            "key from https://console.groq.com/keys and restart."
+        )
+
+    url = f"{settings.GROQ_BASE_URL.rstrip('/')}/chat/completions"
+    payload = {
+        "model": settings.GROQ_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.2,
+        # JSON mode + the prompt's "ONLY a JSON object" keep the reply parseable.
+        "response_format": {"type": "json_object"},
+        "max_completion_tokens": 4096,
+    }
+    headers = {"Authorization": f"Bearer {settings.GROQ_API_KEY}"}
+
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=15.0)) as client:
+            response = await client.post(url, headers=headers, json=payload)
+    except httpx.TimeoutException as exc:
+        raise LLMUnavailableError("The AI service timed out. Please try again in a moment.") from exc
+    except httpx.HTTPError as exc:
+        raise LLMUnavailableError("Could not reach the AI service. Please try again.") from exc
+
+    if response.status_code in (401, 403):
+        raise LLMUnavailableError(
+            "The AI provider rejected GROQ_API_KEY. Create a new free key at "
+            "https://console.groq.com/keys and update the environment."
+        )
+    if response.status_code == 429:
+        raise LLMRateLimitedError("The AI service is at capacity right now. Please try again later.")
+    if response.status_code >= 500:
+        raise LLMUnavailableError("The AI service is temporarily unavailable. Please try again later.")
+    if response.status_code != 200:
+        raise LLMError("The AI service returned an unexpected error.")
+
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise LLMError("The AI service returned an unreadable response.") from exc
+
+    try:
+        text = data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise LLMError("The AI returned an empty response.") from exc
+
+    return _extract_json_object(text)
+
+
+def _resolve_provider() -> str:
+    """Pick the LLM provider from settings: explicit choice, else first key set."""
+    choice = (settings.AI_PROVIDER or "auto").strip().lower()
+
+    if choice == "gemini":
+        if not settings.GEMINI_API_KEY:
+            raise LLMUnavailableError(
+                "AI_PROVIDER is set to 'gemini' but GEMINI_API_KEY is empty. "
+                "Grab a free key at https://aistudio.google.com/app/apikey."
+            )
+        return "gemini"
+
+    if choice == "groq":
+        if not settings.GROQ_API_KEY:
+            raise LLMUnavailableError(
+                "AI_PROVIDER is set to 'groq' but GROQ_API_KEY is empty. "
+                "Grab a free key at https://console.groq.com/keys."
+            )
+        return "groq"
+
+    if choice != "auto":
+        raise LLMUnavailableError(
+            f"Unknown AI_PROVIDER '{settings.AI_PROVIDER}'. Use 'auto', 'gemini' or 'groq'."
+        )
+
+    # auto: prefer the provider whose free key is present. Gemini first to
+    # stay backward compatible with deployments that predate Groq support.
+    if settings.GEMINI_API_KEY:
+        return "gemini"
+    if settings.GROQ_API_KEY:
+        return "groq"
+
+    raise LLMUnavailableError(
+        "AI matching is not configured yet. Set a free key and restart: "
+        "GEMINI_API_KEY from https://aistudio.google.com/app/apikey "
+        "or GROQ_API_KEY from https://console.groq.com/keys."
+    )
+
+
 async def match_job_description(job_description: str, templates: list[dict]) -> dict:
     """One batched call: rank ``templates`` and extract a contact email.
 
@@ -166,8 +265,11 @@ async def match_job_description(job_description: str, templates: list[dict]) -> 
     "context"}``. Returns the raw parsed model output (``matches`` +
     ``contact_email``); callers sanitise it with ``core.ai_matching``.
 
-    Swap providers by replacing ``_call_gemini`` (or branching here) without
-    touching the endpoint.
+    The provider is resolved from ``AI_PROVIDER`` / the configured free keys,
+    so swapping providers never touches the endpoint.
     """
+    provider = _resolve_provider()
     prompt = _build_prompt(job_description, templates)
+    if provider == "groq":
+        return await _call_groq(prompt)
     return await _call_gemini(prompt)
