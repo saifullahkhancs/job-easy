@@ -13,7 +13,7 @@ from core.config import settings
 from database import init_db
 from api.v1 import auth, users
 from api.v1 import user_email_info, approval, admin
-from api.v1 import templates_v2, email
+from api.v1 import templates_v2, email, ai_matcher
 
 
 # Rate limiting
@@ -29,6 +29,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Email Automation API", lifespan=lifespan)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(ai_matcher.AIMatcherError, ai_matcher.ai_matcher_error_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,6 +47,7 @@ app.include_router(approval.router)
 app.include_router(admin.router)
 app.include_router(templates_v2.router)
 app.include_router(email.router)
+app.include_router(ai_matcher.router)
 
 @app.get("/api/health")
 async def health_check():

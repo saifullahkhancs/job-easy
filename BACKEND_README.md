@@ -402,6 +402,15 @@ RATE_LIMIT_ENABLED=true
 RATE_LIMIT_REQUESTS=100
 RATE_LIMIT_PERIOD=60
 
+# AI Job Description Matcher (Gemini — provider is swappable in core/llm.py)
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-1.5-flash
+GEMINI_BASE_URL=https://generativelanguage.googleapis.com
+# Soft per-user daily cap (protects the shared free-tier key)
+AI_MATCH_DAILY_LIMIT=20
+AI_MATCH_MIN_CHARS=120
+AI_MATCH_MAX_CHARS=12000
+
 # Email (SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587

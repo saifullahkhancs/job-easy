@@ -42,36 +42,29 @@ def _to_response(template: UserTemplate, current_user: User | None) -> UserTempl
     return _decorate_ownership(response, template, current_user)
 
 
-@router.get("", response_model=list[UserTemplateResponse])
-async def list_templates(
-    current_user: User | None = Depends(get_current_user_optional),
-    db: AsyncSession = Depends(get_db),
-):
-    """List templates based on user role. Guests (unauthenticated) see default templates."""
-    if current_user is None:
-        # Guest users see only default templates
+async def get_visible_templates(
+    db: AsyncSession, current_user: User | None
+) -> list[UserTemplate]:
+    """Templates the given user is allowed to see — single source of truth.
+
+    Mirrors the picker rules used across the app:
+      * guests & visitors  → active default templates only
+      * admins             → every template
+      * customers          → their own active templates + active defaults
+
+    Shared by the template list endpoint and the AI job matcher so the model
+    can never score a template the user is not allowed to see.
+    """
+    if current_user is None or current_user.role == UserRole.VISITOR:
         result = await db.execute(
             select(UserTemplate).where(
                 UserTemplate.template_scope == TemplateScope.DEFAULT,
                 UserTemplate.is_active == True
             ).order_by(UserTemplate.created_at.desc())
         )
-        templates = result.scalars().all()
     elif current_user.role == UserRole.ADMIN:
-        # Admins see all templates
         result = await db.execute(select(UserTemplate).order_by(UserTemplate.created_at.desc()))
-        templates = result.scalars().all()
-    elif current_user.role == UserRole.VISITOR:
-        # Visitors see only default templates
-        result = await db.execute(
-            select(UserTemplate).where(
-                UserTemplate.template_scope == TemplateScope.DEFAULT,
-                UserTemplate.is_active == True
-            ).order_by(UserTemplate.created_at.desc())
-        )
-        templates = result.scalars().all()
     else:  # CUSTOMER
-        # Customers see their own templates + default templates
         result = await db.execute(
             select(UserTemplate).where(
                 ((UserTemplate.user_email == current_user.email) & (UserTemplate.template_scope == TemplateScope.CUSTOMER)) |
@@ -79,8 +72,17 @@ async def list_templates(
                 UserTemplate.is_active == True
             ).order_by(UserTemplate.created_at.desc())
         )
-        templates = result.scalars().all()
-    
+    return result.scalars().all()
+
+
+@router.get("", response_model=list[UserTemplateResponse])
+async def list_templates(
+    current_user: User | None = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+):
+    """List templates based on user role. Guests (unauthenticated) see default templates."""
+    templates = await get_visible_templates(db, current_user)
+
     # Keep the selector useful by grouping templates in the same order users
     # expect to see them: the requester's own templates first, then platform
     # defaults, then templates owned by other users.  Admins get the same

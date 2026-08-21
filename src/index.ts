@@ -27,6 +27,12 @@ const PASSTHROUGH_ENV_KEYS = [
   "RATE_LIMIT_ENABLED",
   "RATE_LIMIT_REQUESTS",
   "RATE_LIMIT_PERIOD",
+  "GEMINI_API_KEY",
+  "GEMINI_MODEL",
+  "GEMINI_BASE_URL",
+  "AI_MATCH_DAILY_LIMIT",
+  "AI_MATCH_MIN_CHARS",
+  "AI_MATCH_MAX_CHARS",
 ] as const;
 
 function buildContainerEnvVars(): Record<string, string> {

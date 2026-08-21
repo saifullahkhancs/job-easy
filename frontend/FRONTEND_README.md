@@ -23,6 +23,7 @@ This React + Vite frontend implements a role-based workflow for email automation
 - `/app/templates/new` - Create template (customer only)
 - `/app/templates/:id/edit` - Edit template (customer only)
 - `/app/send` - Send email (customer only)
+- `/app/match` - Match Jobs: paste a job description, get template rankings + a detected recruiter email
 - `/app/request-access` - Request email automation approval (visitor)
 - `/app/request-status` - Check approval status (visitor)
 

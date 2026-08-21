@@ -6,6 +6,7 @@ import AdminLayout from "./admin/AdminLayout";
 import UploadPage from "./pages/UploadPage";
 import ViewPage from "./pages/ViewPage";
 import SendPage from "./pages/SendPage";
+import MatchPage from "./pages/MatchPage";
 import PatchPage from "./pages/PatchPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="templates/:id" element={<TemplateViewPage />} />
             <Route path="new" element={<TemplateCreatePage />} />
             <Route path="send" element={<SendPage />} />
+            <Route path="match" element={<MatchPage />} />
             <Route path="view" element={<ViewPage />} />
             <Route path="update" element={<PatchPage />} />
             <Route path="request-access" element={<RequestAccessPage />} />
