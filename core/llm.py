@@ -32,7 +32,16 @@ GEMINI_GENERATE_PATH = "/v1beta/models/{model}:generateContent"
 
 # How much of each template's email body we send to the model. Keeps prompts
 # small on the free tier while still giving the model enough signal to score.
-CONTEXT_CHAR_CAP = 1000
+# Groq's free tier caps tokens-per-minute (6,000-8,000 depending on the
+# model), so every character here is budget that cannot go to the job
+# description or the completion.
+CONTEXT_CHAR_CAP = 800
+
+# Cap on the generated reply. The expected JSON (a few ranked matches plus a
+# short reason each) fits in well under this; reserving more would count
+# against the free tier's per-minute token allowance before a single token
+# is generated.
+MAX_COMPLETION_TOKENS = 1024
 
 
 class LLMError(Exception):
@@ -76,8 +85,21 @@ def _extract_json_object(text: str) -> dict:
 
 
 def _build_prompt(job_description: str, templates: list[dict]) -> str:
-    """One prompt that asks for both the ranking and the email extraction."""
-    template_block = json.dumps(templates, ensure_ascii=False)
+    """One prompt that asks for both the ranking and the email extraction.
+
+    Template contexts are hard-capped at ``CONTEXT_CHAR_CAP`` characters here
+    (not just in the API layer) so the whole prompt always fits the free
+    tier's tokens-per-minute allowance.
+    """
+    trimmed = []
+    for template in templates:
+        brief = dict(template)
+        context = str(brief.get("context") or "")
+        if len(context) > CONTEXT_CHAR_CAP:
+            context = context[:CONTEXT_CHAR_CAP] + "…"
+        brief["context"] = context
+        trimmed.append(brief)
+    template_block = json.dumps(trimmed, ensure_ascii=False)
     return f"""You are a job-application assistant. You are given a job description and a list of the user's saved application templates.
 
 Each template object has:
@@ -182,7 +204,10 @@ async def _call_groq(prompt: str) -> dict:
         "temperature": 0.2,
         # JSON mode + the prompt's "ONLY a JSON object" keep the reply parseable.
         "response_format": {"type": "json_object"},
-        "max_completion_tokens": 4096,
+        # Small on purpose: Groq's free tier counts the reservation against
+        # its tokens-per-minute allowance, so reserving 4096+ tokens would
+        # push even small prompts over the 6,000-8,000 TPM cap.
+        "max_completion_tokens": MAX_COMPLETION_TOKENS,
     }
     headers = {"Authorization": f"Bearer {settings.GROQ_API_KEY}"}
 
@@ -201,9 +226,45 @@ async def _call_groq(prompt: str) -> dict:
         )
     if response.status_code == 429:
         raise LLMRateLimitedError("The AI service is at capacity right now. Please try again later.")
+    if response.status_code == 413:
+        raise LLMRateLimitedError(
+            "Groq's free tier hit its tokens-per-minute limit for this model. "
+            "Wait a minute and try again, or shorten the job description."
+        )
     if response.status_code >= 500:
         raise LLMUnavailableError("The AI service is temporarily unavailable. Please try again later.")
+
+    if response.status_code == 400:
+        body = {}
+        try:
+            body = response.json()
+        except ValueError:
+            pass
+        error = body.get("error") if isinstance(body, dict) else None
+        message = str(error.get("message") or "") if isinstance(error, dict) else ""
+        if "decommissioned" in message or "no longer supported" in message:
+            raise LLMUnavailableError(
+                f"GROQ_MODEL '{settings.GROQ_MODEL}' has been retired by Groq. "
+                "Set GROQ_MODEL to a current free model, e.g. qwen/qwen3.6-27b."
+            )
+        if "does not support chat completions" in message:
+            raise LLMUnavailableError(
+                f"GROQ_MODEL '{settings.GROQ_MODEL}' is not a chat model. "
+                "Set GROQ_MODEL to a current free model, e.g. qwen/qwen3.6-27b."
+            )
+        if "max_tokens" in message or "reduce the length" in message:
+            raise LLMError(
+                "The request was too large for Groq's free tier. Shorten the "
+                "job description or use fewer templates."
+            )
+
     if response.status_code != 200:
+        raw_body = str(getattr(response, "text", "") or "")[:500]
+        logger.warning(
+            "Groq API unexpected status: %s. Response body: %s",
+            response.status_code,
+            raw_body,
+        )
         raise LLMError("The AI service returned an unexpected error.")
 
     try:

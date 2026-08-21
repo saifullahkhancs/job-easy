@@ -64,7 +64,10 @@ class Settings(BaseSettings):
         env=["GEMINI_BASE_URL"],
     )
     GROQ_API_KEY: str = Field("", env=["GROQ_API_KEY"])
-    GROQ_MODEL: str = Field("llama-3.3-70b-versatile", env=["GROQ_MODEL"])
+    # qwen3.6-27b is a current free-tier Groq model (8,000 TPM). Groq retires
+    # models frequently — if it stops working, the error message lists a
+    # replacement. Check the live free list at https://console.groq.com/docs/models
+    GROQ_MODEL: str = Field("qwen/qwen3.6-27b", env=["GROQ_MODEL"])
     GROQ_BASE_URL: str = Field(
         "https://api.groq.com/openai/v1",
         env=["GROQ_BASE_URL"],
@@ -73,7 +76,10 @@ class Settings(BaseSettings):
     # not be able to burn the whole app's allowance. No retry loops anywhere.
     AI_MATCH_DAILY_LIMIT: int = Field(20, env=["AI_MATCH_DAILY_LIMIT"])
     AI_MATCH_MIN_CHARS: int = Field(120, env=["AI_MATCH_MIN_CHARS"])
-    AI_MATCH_MAX_CHARS: int = Field(12000, env=["AI_MATCH_MAX_CHARS"])
+    # 4000 chars keeps the prompt comfortably inside Groq's free-tier
+    # tokens-per-minute allowance (see core/llm.py). Raise this and the
+    # free tier may start rejecting requests with 413.
+    AI_MATCH_MAX_CHARS: int = Field(4000, env=["AI_MATCH_MAX_CHARS"])
 
     @field_validator("DATABASE_URL")
     @classmethod

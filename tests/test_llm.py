@@ -190,6 +190,7 @@ async def test_call_groq_sends_bearer_auth_and_json_mode(monkeypatch):
     client = holder["client"]
     assert client.last_kwargs["headers"]["Authorization"] == "Bearer q-key"
     assert client.last_kwargs["json"]["response_format"] == {"type": "json_object"}
+    assert client.last_kwargs["json"]["max_completion_tokens"] == llm.MAX_COMPLETION_TOKENS
 
 
 @pytest.mark.asyncio
@@ -207,6 +208,73 @@ async def test_call_groq_rate_limited_raises(monkeypatch):
     _install_fake_client(monkeypatch, _FakeResponse(429, {"error": "slow down"}))
 
     with pytest.raises(llm.LLMRateLimitedError):
+        await llm._call_groq(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_groq_tpm_exceeded_raises_rate_limited(monkeypatch):
+    """Groq free tier answers 413 when the request exceeds tokens/minute."""
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            413,
+            {"error": {"message": "Request too large ... tokens per minute (TPM)",
+                       "type": "tokens", "code": "rate_limit_exceeded"}},
+        ),
+    )
+
+    with pytest.raises(llm.LLMRateLimitedError, match="tokens-per-minute"):
+        await llm._call_groq(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_groq_decommissioned_model_raises_unavailable(monkeypatch):
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    monkeypatch.setattr(settings, "GROQ_MODEL", "old-retired-model")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            400,
+            {"error": {"message": "The model `old-retired-model` has been decommissioned "
+                                 "and is no longer supported.",
+                       "type": "invalid_request_error", "code": "model_decommissioned"}},
+        ),
+    )
+
+    with pytest.raises(llm.LLMUnavailableError, match="retired by Groq"):
+        await llm._call_groq(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_groq_non_chat_model_raises_unavailable(monkeypatch):
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            400,
+            {"error": {"message": "The model `whisper-large-v3` does not support "
+                                 "chat completions", "type": "invalid_request_error"}},
+        ),
+    )
+
+    with pytest.raises(llm.LLMUnavailableError, match="not a chat model"):
+        await llm._call_groq(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_groq_oversized_request_raises_llm_error(monkeypatch):
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            400,
+            {"error": {"message": "Please reduce the length of the messages or completion.",
+                       "type": "invalid_request_error", "param": "messages"}},
+        ),
+    )
+
+    with pytest.raises(llm.LLMError, match="too large"):
         await llm._call_groq(PROMPT)
 
 
@@ -235,3 +303,23 @@ async def test_call_groq_unreadable_response_raises_llm_error(monkeypatch):
 
     with pytest.raises(llm.LLMError, match="unreadable"):
         await llm._call_groq(PROMPT)
+
+
+# ── _build_prompt size control ──────────────────────────────────────────────
+
+
+def test_build_prompt_truncates_long_template_contexts():
+    templates = [
+        {"id": 1, "title": "t", "template_role": "r", "context": "x" * 3000},
+    ]
+    prompt = llm._build_prompt("job description", templates)
+    assert "x" * 3000 not in prompt
+    assert ("x" * llm.CONTEXT_CHAR_CAP) + "…" in prompt
+
+
+def test_build_prompt_keeps_short_contexts_untouched():
+    templates = [
+        {"id": 1, "title": "t", "template_role": "r", "context": "short body"},
+    ]
+    prompt = llm._build_prompt("job description", templates)
+    assert "short body" in prompt

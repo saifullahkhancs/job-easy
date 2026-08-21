@@ -22,6 +22,7 @@ from core import ai_matching
 from core.ai_usage import DailyLimitExceeded, consume_allowance, remaining_today
 from core.config import settings
 from core.llm import (
+    CONTEXT_CHAR_CAP,
     LLMError,
     LLMRateLimitedError,
     LLMUnavailableError,
@@ -56,8 +57,8 @@ async def ai_matcher_error_handler(request: Request, exc: AIMatcherError) -> JSO
 def _template_brief(template) -> dict:
     """A trimmed view of one template for the prompt (no CV bytes sent)."""
     context = (template.context or "").strip()
-    if len(context) > 1000:
-        context = context[:1000] + "…"
+    if len(context) > CONTEXT_CHAR_CAP:
+        context = context[:CONTEXT_CHAR_CAP] + "…"
     return {
         "id": template.id,
         "title": template.title or "",
