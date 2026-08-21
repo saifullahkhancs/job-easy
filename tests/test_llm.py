@@ -19,10 +19,11 @@ PROMPT = "score these templates"
 
 
 class _FakeResponse:
-    def __init__(self, status_code, payload=None, json_exc=None):
+    def __init__(self, status_code, payload=None, json_exc=None, text=""):
         self.status_code = status_code
         self._payload = payload
         self._json_exc = json_exc
+        self.text = text
 
     def json(self):
         if self._json_exc is not None:
@@ -61,10 +62,13 @@ def _install_fake_client(monkeypatch, response):
     return holder
 
 
-def _set_ai_settings(monkeypatch, provider="auto", gemini_key="", groq_key=""):
+def _set_ai_settings(
+    monkeypatch, provider="auto", gemini_key="", groq_key="", openrouter_key=""
+):
     monkeypatch.setattr(settings, "AI_PROVIDER", provider)
     monkeypatch.setattr(settings, "GEMINI_API_KEY", gemini_key)
     monkeypatch.setattr(settings, "GROQ_API_KEY", groq_key)
+    monkeypatch.setattr(settings, "OPENROUTER_API_KEY", openrouter_key)
 
 
 # ── _resolve_provider ──────────────────────────────────────────────────────
@@ -96,6 +100,22 @@ def test_explicit_groq_without_key_raises(monkeypatch):
     _set_ai_settings(monkeypatch, provider="groq")
     with pytest.raises(llm.LLMUnavailableError, match="GROQ_API_KEY"):
         llm._resolve_provider()
+
+
+def test_explicit_openrouter_without_key_raises(monkeypatch):
+    _set_ai_settings(monkeypatch, provider="openrouter")
+    with pytest.raises(llm.LLMUnavailableError, match="OPENROUTER_API_KEY"):
+        llm._resolve_provider()
+
+
+def test_explicit_openrouter_returns_openrouter(monkeypatch):
+    _set_ai_settings(monkeypatch, provider="openrouter", openrouter_key="o-key")
+    assert llm._resolve_provider() == "openrouter"
+
+
+def test_auto_uses_openrouter_when_only_openrouter_key_present(monkeypatch):
+    _set_ai_settings(monkeypatch, openrouter_key="o-key")
+    assert llm._resolve_provider() == "openrouter"
 
 
 def test_unknown_provider_raises(monkeypatch):
@@ -133,6 +153,23 @@ async def test_match_job_description_routes_to_gemini_by_default(monkeypatch):
 
     monkeypatch.setattr(llm, "_call_gemini", fake_gemini)
     monkeypatch.setattr(llm, "_call_groq", fake_groq)
+
+    result = await llm.match_job_description("job description", [{"id": 1}])
+    assert result == {"matches": [], "contact_email": None}
+
+
+@pytest.mark.asyncio
+async def test_match_job_description_routes_to_openrouter(monkeypatch):
+    _set_ai_settings(monkeypatch, provider="openrouter", openrouter_key="o-key")
+
+    async def fake_openrouter(prompt):
+        return {"matches": [], "contact_email": None}
+
+    async def fake_gemini(prompt):  # pragma: no cover - must not be called
+        raise AssertionError("gemini caller should not run when provider=openrouter")
+
+    monkeypatch.setattr(llm, "_call_openrouter", fake_openrouter)
+    monkeypatch.setattr(llm, "_call_gemini", fake_gemini)
 
     result = await llm.match_job_description("job description", [{"id": 1}])
     assert result == {"matches": [], "contact_email": None}
@@ -181,6 +218,7 @@ async def test_call_groq_unfences_markdown_json(monkeypatch):
 @pytest.mark.asyncio
 async def test_call_groq_sends_bearer_auth_and_json_mode(monkeypatch):
     _set_ai_settings(monkeypatch, groq_key="q-key")
+    monkeypatch.setattr(settings, "GROQ_MODEL", "qwen/qwen3.6-27b")
     response = _FakeResponse(
         200, {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]}
     )
@@ -191,6 +229,36 @@ async def test_call_groq_sends_bearer_auth_and_json_mode(monkeypatch):
     assert client.last_kwargs["headers"]["Authorization"] == "Bearer q-key"
     assert client.last_kwargs["json"]["response_format"] == {"type": "json_object"}
     assert client.last_kwargs["json"]["max_completion_tokens"] == llm.MAX_COMPLETION_TOKENS
+    assert client.last_kwargs["json"]["reasoning_effort"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_call_groq_reasoning_model_disables_reasoning(monkeypatch):
+    """qwen3.6 is a reasoning model; its thinking must be switched off so the
+    completion budget goes to the JSON answer instead of an empty response."""
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    monkeypatch.setattr(settings, "GROQ_MODEL", "qwen/qwen3.6-27b")
+    response = _FakeResponse(
+        200, {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]}
+    )
+    holder = _install_fake_client(monkeypatch, response)
+
+    await llm._call_groq(PROMPT)
+    assert holder["client"].last_kwargs["json"]["reasoning_effort"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_call_groq_non_reasoning_model_omits_reasoning_effort(monkeypatch):
+    """reasoning_effort must not be sent to models that do not support it."""
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    monkeypatch.setattr(settings, "GROQ_MODEL", "meta-llama/llama-3.3-70b-versatile")
+    response = _FakeResponse(
+        200, {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]}
+    )
+    holder = _install_fake_client(monkeypatch, response)
+
+    await llm._call_groq(PROMPT)
+    assert "reasoning_effort" not in holder["client"].last_kwargs["json"]
 
 
 @pytest.mark.asyncio
@@ -279,6 +347,31 @@ async def test_call_groq_oversized_request_raises_llm_error(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_call_groq_json_validation_failure_raises_llm_error(monkeypatch):
+    """The exact 400 Groq returns when reasoning eats the reply budget and the
+    model emits an empty answer (json_validate_failed, empty failed_generation)."""
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            400,
+            {
+                "error": {
+                    "message": "Failed to validate JSON. Please adjust your prompt. "
+                               "See 'failed_generation' for more details.",
+                    "type": "invalid_request_error",
+                    "code": "json_validate_failed",
+                    "failed_generation": "",
+                }
+            },
+        ),
+    )
+
+    with pytest.raises(llm.LLMError, match="no usable JSON"):
+        await llm._call_groq(PROMPT)
+
+
+@pytest.mark.asyncio
 async def test_call_groq_server_error_raises_unavailable(monkeypatch):
     _set_ai_settings(monkeypatch, groq_key="q-key")
     _install_fake_client(monkeypatch, _FakeResponse(503, {"error": "down"}))
@@ -303,6 +396,108 @@ async def test_call_groq_unreadable_response_raises_llm_error(monkeypatch):
 
     with pytest.raises(llm.LLMError, match="unreadable"):
         await llm._call_groq(PROMPT)
+
+
+# ── _call_openrouter ────────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_call_openrouter_missing_key_raises(monkeypatch):
+    _set_ai_settings(monkeypatch, provider="openrouter", openrouter_key="")
+    with pytest.raises(llm.LLMUnavailableError, match="OPENROUTER_API_KEY"):
+        await llm._call_openrouter(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_openrouter_success_parses_json(monkeypatch):
+    _set_ai_settings(monkeypatch, openrouter_key="o-key")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            200,
+            {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]},
+        ),
+    )
+
+    result = await llm._call_openrouter(PROMPT)
+    assert result == {"matches": [], "contact_email": None}
+
+
+@pytest.mark.asyncio
+async def test_call_openrouter_sends_bearer_auth_without_json_mode(monkeypatch):
+    _set_ai_settings(monkeypatch, openrouter_key="o-key")
+    response = _FakeResponse(
+        200, {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]}
+    )
+    holder = _install_fake_client(monkeypatch, response)
+
+    await llm._call_openrouter(PROMPT)
+    client = holder["client"]
+    assert client.last_kwargs["headers"]["Authorization"] == "Bearer o-key"
+    # OpenRouter ":free" models do not reliably support JSON mode.
+    assert "response_format" not in client.last_kwargs["json"]
+    assert client.last_kwargs["json"]["max_tokens"] == llm.MAX_COMPLETION_TOKENS
+
+
+@pytest.mark.asyncio
+async def test_call_openrouter_rejected_key_raises_unavailable(monkeypatch):
+    _set_ai_settings(monkeypatch, openrouter_key="bad-key")
+    _install_fake_client(monkeypatch, _FakeResponse(401, {"error": "invalid"}))
+
+    with pytest.raises(llm.LLMUnavailableError, match="rejected"):
+        await llm._call_openrouter(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_openrouter_insufficient_credits_raises_unavailable(monkeypatch):
+    _set_ai_settings(monkeypatch, openrouter_key="o-key")
+    _install_fake_client(monkeypatch, _FakeResponse(402, {"error": "no credits"}))
+
+    with pytest.raises(llm.LLMUnavailableError, match="credits"):
+        await llm._call_openrouter(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_openrouter_model_not_found_raises_unavailable(monkeypatch):
+    _set_ai_settings(monkeypatch, openrouter_key="o-key")
+    _install_fake_client(monkeypatch, _FakeResponse(404, {"error": "not found"}))
+
+    with pytest.raises(llm.LLMUnavailableError, match="not found"):
+        await llm._call_openrouter(PROMPT)
+
+
+# ── _call_gemini error mapping ──────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_call_gemini_rejected_key_raises_unavailable(monkeypatch):
+    _set_ai_settings(monkeypatch, gemini_key="bad-key")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            400,
+            text='{"error": {"message": "API key not valid. Please pass a valid API key."}}',
+        ),
+    )
+
+    with pytest.raises(llm.LLMUnavailableError, match="rejected by Google"):
+        await llm._call_gemini(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_gemini_model_not_found_raises_unavailable(monkeypatch):
+    _set_ai_settings(monkeypatch, gemini_key="g-key")
+    monkeypatch.setattr(settings, "GEMINI_MODEL", "gemini-retired-model")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            404,
+            text='{"error": {"message": "models/gemini-retired-model is not found."}}',
+        ),
+    )
+
+    with pytest.raises(llm.LLMUnavailableError, match="was not found"):
+        await llm._call_gemini(PROMPT)
 
 
 # ── _build_prompt size control ──────────────────────────────────────────────
