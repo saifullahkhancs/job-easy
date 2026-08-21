@@ -52,8 +52,7 @@ async def get_visible_templates(
       * admins             → every template
       * customers          → their own active templates + active defaults
 
-    Shared by the template list endpoint and the AI job matcher so the model
-    can never score a template the user is not allowed to see.
+    Shared by the template list endpoint so pickers stay consistent.
     """
     if current_user is None or current_user.role == UserRole.VISITOR:
         result = await db.execute(
@@ -72,6 +71,26 @@ async def get_visible_templates(
                 UserTemplate.is_active == True
             ).order_by(UserTemplate.created_at.desc())
         )
+    return result.scalars().all()
+
+
+async def get_owned_templates(
+    db: AsyncSession, current_user: User
+) -> list[UserTemplate]:
+    """Active CVs/templates authored by the logged-in user.
+
+    Used by the AI job matcher so it scores only the requester's own
+    resumes — never platform defaults or other users' templates, even
+    when those are visible in the picker.
+    """
+    result = await db.execute(
+        select(UserTemplate)
+        .where(
+            UserTemplate.user_email == current_user.email,
+            UserTemplate.is_active == True,
+        )
+        .order_by(UserTemplate.created_at.desc())
+    )
     return result.scalars().all()
 
 

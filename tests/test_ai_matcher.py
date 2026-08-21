@@ -249,8 +249,12 @@ async def test_too_short_description_rejected(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_visibility_only_scores_visible_templates(monkeypatch):
-    """A customer's model input must not include another customer's template."""
+async def test_only_scores_logged_in_users_own_cvs(monkeypatch):
+    """The model must only see CVs owned by the logged-in user.
+
+    Platform defaults and other users' resumes stay out of the prompt even
+    though customers can still pick them in the send flow.
+    """
     async with Harness() as h:
         user = _customer("alice@example.com")
         other = _customer("bob@example.com")
@@ -259,6 +263,7 @@ async def test_visibility_only_scores_visible_templates(monkeypatch):
             other,
             _template(1, user.email, "mine"),
             _template(2, other.email, "theirs"),
+            _template(3, None, "default", scope=TemplateScope.DEFAULT),
         )
         h.login_as(user)
 
@@ -271,3 +276,38 @@ async def test_visibility_only_scores_visible_templates(monkeypatch):
         response = await h.client().post("/api/v1/ai/match", json={"job_description": LONG_JD})
         assert response.status_code == 200
         assert seen["ids"] == [1]
+        assert [m["template_id"] for m in response.json()["matches"]] == [1]
+
+
+@pytest.mark.asyncio
+async def test_admin_only_scores_own_cvs_not_every_resume(monkeypatch):
+    """Admins can see every template, but matching still only rates their CVs."""
+    async with Harness() as h:
+        admin = User(
+            email="admin@example.com",
+            first_name="Ada",
+            last_name="Admin",
+            hashed_password="x",
+            is_verified=True,
+            role=UserRole.ADMIN,
+        )
+        other = _customer("bob@example.com")
+        await h.add(
+            admin,
+            other,
+            _template(1, admin.email, "admin_cv"),
+            _template(2, other.email, "customer_cv"),
+            _template(3, None, "default", scope=TemplateScope.DEFAULT),
+        )
+        h.login_as(admin)
+
+        seen = {}
+        async def fake(job_description, templates):
+            seen["ids"] = [t["id"] for t in templates]
+            return {"matches": [{"template_id": 1, "score": 70, "reason": "ok"}], "contact_email": None}
+
+        monkeypatch.setattr(ai_matcher, "match_job_description", fake)
+        response = await h.client().post("/api/v1/ai/match", json={"job_description": LONG_JD})
+        assert response.status_code == 200
+        assert seen["ids"] == [1]
+        assert [m["template_id"] for m in response.json()["matches"]] == [1]

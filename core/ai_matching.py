@@ -2,7 +2,7 @@
 
 Everything here is provider-agnostic and side-effect free so it can be unit
 tested without network access: email validation, score clamping, and the
-mapping of raw model output back onto the user's visible templates.
+mapping of raw model output back onto the user's own templates.
 
 The model is never trusted blindly — its JSON is validated field by field, and
 anything that does not look like a real email address is discarded.
@@ -43,18 +43,18 @@ def clamp_score(value) -> int:
 
 
 def sanitize_result(raw, templates) -> tuple[dict, str | None]:
-    """Validate raw model output against the user's visible templates.
+    """Validate raw model output against the user's own templates.
 
     Returns ``(matches_by_id, contact_email)`` where ``matches_by_id`` maps
     ``template_id -> {"score": int, "reason": str}`` and is guaranteed to
-    contain an entry for **every** visible template. ``contact_email`` is the
+    contain an entry for **every** owned template. ``contact_email`` is the
     sanitised address or ``None``.
     """
     raw_matches = raw.get("matches") if isinstance(raw, dict) else None
     if not isinstance(raw_matches, list):
         raw_matches = []
 
-    visible_ids = {getattr(t, "id") for t in templates}
+    owned_ids = {getattr(t, "id") for t in templates}
 
     matches_by_id: dict = {}
     for item in raw_matches:
@@ -64,7 +64,7 @@ def sanitize_result(raw, templates) -> tuple[dict, str | None]:
             template_id = int(item.get("template_id"))
         except (TypeError, ValueError):
             continue
-        if template_id not in visible_ids:
+        if template_id not in owned_ids:
             continue
 
         reason = str(item.get("reason") or "").strip()
@@ -73,7 +73,7 @@ def sanitize_result(raw, templates) -> tuple[dict, str | None]:
             "reason": reason or "No explanation provided.",
         }
 
-    # Guarantee full coverage: a visible template the model skipped still gets
+    # Guarantee full coverage: an owned template the model skipped still gets
     # a result rather than silently disappearing from the ranking.
     for template in templates:
         matches_by_id.setdefault(

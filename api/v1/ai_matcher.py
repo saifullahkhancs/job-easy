@@ -1,9 +1,10 @@
 """AI Job Description Matcher + contact-email extractor.
 
 One endpoint, one batched LLM call per submission: the model scores every
-template the user is allowed to see *and* extracts a recruiter email from the
+CV/template the logged-in user owns *and* extracts a recruiter email from the
 pasted job description in the same request. That single-call shape is what
-keeps the feature inside a free-tier daily allowance.
+keeps the feature inside a free-tier daily allowance. Platform defaults and
+other users' resumes are never sent to the model.
 
 Error handling is deliberately explicit — running dry on a free key is
 expected — so provider outages, rate limits and the per-user daily cap each
@@ -17,7 +18,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies import get_current_user, get_db
-from api.v1.templates_v2 import get_visible_templates
+from api.v1.templates_v2 import get_owned_templates
 from core import ai_matching
 from core.ai_usage import DailyLimitExceeded, consume_allowance, remaining_today
 from core.config import settings
@@ -83,7 +84,7 @@ async def match_job_description_endpoint(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Score the user's templates against a pasted job description."""
+    """Score the logged-in user's own CVs against a pasted job description."""
     description = (payload.job_description or "").strip()
 
     if len(description) < settings.AI_MATCH_MIN_CHARS:
@@ -103,8 +104,8 @@ async def match_job_description_endpoint(
             ),
         )
 
-    # Reuse the exact visibility rules from the templates API.
-    templates = await get_visible_templates(db, current_user)
+    # Only score CVs that belong to the logged-in user.
+    templates = await get_owned_templates(db, current_user)
 
     # Nothing to score: answer without spending the shared AI quota.
     if not templates:
