@@ -671,6 +671,26 @@ iframe {
   flex: 1;
 }
 
+/* Live subject/body preview inside the Send Email side card. */
+.dark-preview-subject {
+  font-weight: 700;
+  color: #ffffff;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.dark-preview-body {
+  color: #cbd5e1;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 .form-page-layout {
   display: grid;
   grid-template-columns: 1fr; /* Stacks panels by default on small screens */
@@ -4875,6 +4895,320 @@ button:disabled {
   .cv-preview-section .link-button:hover,
   .full-width .link-button:hover {
     background: linear-gradient(135deg, #d95e40, #c94e30) !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Match Jobs — AI job description matcher page
+   ═══════════════════════════════════════════════════════════════════════════ */
+.accent-match { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+
+/* Character counter row under the job-description textarea. */
+.char-hint {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: -4px 0 0;
+}
+
+.char-hint .char-hint-ok {
+  color: #15803d;
+  font-weight: 600;
+}
+
+/* Loading / quota / capacity / failure panels. */
+.matcher-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 48px 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.matcher-state-card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.matcher-state-card p {
+  margin: 0;
+  color: #64748b;
+  max-width: 540px;
+  line-height: 1.6;
+}
+
+.matcher-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  flex-shrink: 0;
+}
+
+.matcher-state-icon-spin {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.matcher-state-quota .matcher-state-icon {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.matcher-state-capacity .matcher-state-icon {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.matcher-state-error .matcher-state-icon {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ── Results ─────────────────────────────────────────────────────────────── */
+.match-results {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.match-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.match-results-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.match-results-header .muted {
+  margin: 4px 0 0;
+}
+
+.quota-left {
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Detected recruiter email banner. */
+.contact-email-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #bfdbfe;
+}
+
+.contact-email-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.contact-email-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.contact-email-controls input {
+  flex: 1;
+  min-width: 220px;
+}
+
+/* Prominent one-click send action: full-width CTA + what-will-load hint. */
+.contact-email-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.contact-email-cta .primary-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.contact-email-cta-hint {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #1e40af;
+  opacity: 0.9;
+}
+
+/* Ranked template cards. */
+.match-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.match-card {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 20px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.match-card:hover {
+  border-color: var(--brand-orange);
+  box-shadow: 0 8px 24px rgba(231, 123, 96, 0.12);
+  transform: translateY(-1px);
+}
+
+.match-card-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fef6f5;
+  border: 1px solid #f3c2b6;
+  color: #d95e40;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.match-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.match-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.match-card-title-row h4 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.match-card-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.match-card-role {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #fef6f5;
+  border: 1px solid #f3c2b6;
+  color: #b4472c;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.match-card-ownership {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.match-reason {
+  margin: 10px 0 0;
+  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.match-card-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Colour-coded score pill. */
+.match-score {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.match-score-value {
+  font-size: 1.1rem;
+}
+
+.match-score-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.match-score-high { background: #dcfce7; color: #166534; }
+.match-score-medium { background: #fef3c7; color: #92400e; }
+.match-score-low { background: #fee2e2; color: #991b1b; }
+
+@media (max-width: 640px) {
+  .match-card {
+    flex-direction: column;
+  }
+
+  .match-card-actions {
+    width: 100%;
+  }
+
+  .match-card-actions .secondary-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .contact-email-controls .secondary-btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 

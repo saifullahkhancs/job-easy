@@ -355,6 +355,20 @@ export function VoiceControlProvider({ children }) {
         feedback: "Opening Send Email.",
       },
       {
+        id: "app-match-jobs",
+        label: "Match Jobs",
+        patterns: [
+          "match jobs",
+          "match job",
+          "job matcher",
+          "match my templates",
+          "analyze job description",
+          "analyse job description",
+        ],
+        run: go("/app/match"),
+        feedback: "Opening Match Jobs.",
+      },
+      {
         id: "app-update-template",
         label: "Update Template",
         patterns: ["update template", "edit template", "patch template", "update"],

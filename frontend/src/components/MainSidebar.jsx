@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Send,
+  Sparkles,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -154,6 +155,7 @@ function getMainNavItems(currentUser) {
     { to: "/app/new", label: "New Template", icon: UploadCloud },
     { to: "/app/view", label: "View Templates", icon: LayoutTemplate },
     { to: "/app/send", label: "Send Email", icon: Send },
+    { to: "/app/match", label: "Match Jobs", icon: Sparkles },
     { to: "/app/update", label: "Update Template", icon: Edit },
   ];
 

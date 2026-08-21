@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchTemplatesV2, sendEmail, getCurrentUser } from "../api/client";
-import { Send, CheckCircle2, Copy, Link, Mail, Lock } from "lucide-react";
+import { Send, CheckCircle2, Copy, Link, Mail, Lock, RotateCcw } from "lucide-react";
 import { getAccessToken } from "../api/tokenStorage";
 import {
   canSendWithTemplate,
@@ -12,9 +12,12 @@ import {
 export default function SendPage() {
   const [searchParams] = useSearchParams();
   const requestedTemplateId = searchParams.get("template");
+  const requestedRecipient = searchParams.get("recipient");
   const [templates, setTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -62,6 +65,14 @@ export default function SendPage() {
     init();
   }, [requestedTemplateId]);
 
+  // A recruiter email detected on the Match Jobs page can be deep-linked here
+  // as `?recipient=...` so the user does not have to re-type it.
+  useEffect(() => {
+    if (requestedRecipient) {
+      setRecipientEmail(requestedRecipient.trim());
+    }
+  }, [requestedRecipient]);
+
   const isGuest = !currentUser;
   const isVisitor = currentUser?.role === "visitor";
   const isAdmin = currentUser?.role === "admin";
@@ -84,6 +95,28 @@ export default function SendPage() {
     !isDisabled &&
     !canSendWithTemplate(selectedTemplate, currentUser);
 
+  const templateSubject = selectedTemplate?.title || "";
+  const templateBody = selectedTemplate?.context || "";
+
+  // When the chosen template changes, pre-fill the editable fields with that
+  // template's defaults. This only runs on a template switch, so a user's
+  // in-progress edits are never clobbered.
+  useEffect(() => {
+    if (selectedTemplate) {
+      setSubject(selectedTemplate.title || "");
+      setBody(selectedTemplate.context || "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTemplate?.id]);
+
+  // Return the editable fields to the selected template's stored defaults.
+  function resetToTemplate() {
+    setSubject(templateSubject);
+    setBody(templateBody);
+  }
+
+  const hasOverrides = subject !== templateSubject || body !== templateBody;
+
   async function handleSubmit(event) {
     event.preventDefault();
     if (isDisabled) return;
@@ -96,9 +129,15 @@ export default function SendPage() {
     setError("");
 
     try {
-      const result = await sendEmail(recipientEmail, selectedTemplateId);
+      const result = await sendEmail(recipientEmail, selectedTemplateId, {
+        subject,
+        body,
+      });
       setMessage(`${result.message} to ${result.recipient}`);
       setRecipientEmail("");
+      // Per-send overrides only apply to the email that was just sent — put
+      // the subject/body fields back to the template's original defaults.
+      resetToTemplate();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -127,7 +166,7 @@ export default function SendPage() {
       <div className="page-header">
         <div>
           <h2>Send Email</h2>
-          <p className="muted">Choose a template, add the recipient, and send the application with its CV attachment.</p>
+          <p className="muted">Choose a template, tweak the subject or body for this send, add the recipient, and send the application with its CV attachment.</p>
         </div>
         <button type="button" className="header-action" disabled={isDisabled} title={isDisabled ? "Login to use it" : ""} style={{ background: '#1e3a8a', color: 'white', border: 'none', padding: '12px', borderRadius: '16px', opacity: isDisabled ? 0.5 : 1 }}>
           <Send size={20} />
@@ -176,6 +215,43 @@ export default function SendPage() {
               />
             </label>
 
+            <label>
+              Email Subject
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder={templateSubject || "Application for Python Developer"}
+                disabled={false}
+              />
+              <p className="input-hint">Pre-filled from the template. Edit it only for this email — the template itself stays unchanged.</p>
+            </label>
+
+            <label>
+              Email Body
+              <textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                placeholder={templateBody || "Dear Hiring Manager,\n\nI hope you are doing well. I am writing to apply for..."}
+                rows={9}
+                disabled={false}
+              />
+              <p className="input-hint">Pre-filled from the template. Edit it only for this email — the template itself stays unchanged.</p>
+            </label>
+
+            {hasOverrides && (
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={resetToTemplate}
+                title="Restore the template's original subject and body"
+                style={{ justifySelf: 'start' }}
+              >
+                <RotateCcw size={14} />
+                Reset to template
+              </button>
+            )}
+
             <button
               type="submit"
               disabled={loading || isDisabled || !selectedTemplateId || selectedNotSendable}
@@ -204,9 +280,14 @@ export default function SendPage() {
             </div>
             
             <div className="dark-preview-content" style={{ fontSize: '0.9rem', marginBottom: '24px' }}>
-              {isDisabled
-                ? "Login and get approved to send automated job application emails with your own templates and CV."
-                : "The selected template includes a subject line, tailored email body, and CV attachment. Add the recipient address to complete the flow."}
+              {isDisabled ? (
+                "Login and get approved to send automated job application emails with your own templates and CV."
+              ) : (
+                <>
+                  <div className="dark-preview-subject">{subject || templateSubject || "Email subject"}</div>
+                  <div className="dark-preview-body">{body || templateBody || "Your tailored email body appears here. Add the recipient address to complete the flow."}</div>
+                </>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '16px', color: '#94a3b8' }}>

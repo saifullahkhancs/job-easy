@@ -6,6 +6,7 @@ from models.job_template import JobTemplate
 from models.user_templates import UserTemplate
 from models.user_email_info import UserEmailInfo
 from models.email_automation_requests import EmailAutomationRequest
+from models.ai_usage import AiUsage
 
 engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
 

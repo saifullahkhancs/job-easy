@@ -79,7 +79,7 @@ export async function patchTemplate(type, formData) {
   return handleResponse(response);
 }
 
-export async function sendEmail(recipientEmail, templateId) {
+export async function sendEmail(recipientEmail, templateId, overrides = {}) {
   const token = getAccessToken();
   const headers = {
     "Content-Type": "application/json",
@@ -87,13 +87,18 @@ export async function sendEmail(recipientEmail, templateId) {
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
+  const payload = {
+    recipient_email: recipientEmail,
+    template_id: Number(templateId),
+  };
+  // Optional one-off subject/body overrides — the stored template is never
+  // touched, these only personalise the email being sent right now.
+  if (overrides.subject !== undefined) payload.subject = overrides.subject;
+  if (overrides.body !== undefined) payload.body = overrides.body;
   const response = await fetch(`${API_BASE}/api/v1/email/send`, {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      recipient_email: recipientEmail,
-      template_id: Number(templateId),
-    }),
+    body: JSON.stringify(payload),
   });
   return handleResponse(response);
 }
@@ -102,6 +107,33 @@ export async function sendEmail(recipientEmail, templateId) {
 export async function sendEmailLegacy(recipientEmail, type) {
   // type was old job-type string; now we expect templateId, so this is deprecated
   return sendEmail(recipientEmail, type);
+}
+
+// AI Job Description Matcher — one batched call per submission.
+// Uses its own fetch (not handleResponse) so the structured `code` on
+// matcher errors (daily_limit_reached / ai_unavailable / ai_failed) survives.
+export async function matchJobDescription(jobDescription) {
+  const token = getAccessToken();
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE}/api/v1/ai/match`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ job_description: jobDescription }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(
+      typeof data.detail === "string" ? data.detail : "Request failed"
+    );
+    error.status = response.status;
+    error.code = data.code;
+    error.data = data;
+    throw error;
+  }
+  return data;
 }
 
 // Auth API functions

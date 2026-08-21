@@ -48,6 +48,21 @@ class Settings(BaseSettings):
     RATE_LIMIT_REQUESTS: int = 100
     RATE_LIMIT_PERIOD: int = 60  # seconds
 
+    # ── AI Job Description Matcher ─────────────────────────────────────────
+    # Provider is swappable via these fields; the endpoint only ever talks to
+    # `core.llm.match_job_description`, never to a provider directly.
+    GEMINI_API_KEY: str = Field("", env=["GEMINI_API_KEY"])
+    GEMINI_MODEL: str = Field("gemini-1.5-flash", env=["GEMINI_MODEL"])
+    GEMINI_BASE_URL: str = Field(
+        "https://generativelanguage.googleapis.com",
+        env=["GEMINI_BASE_URL"],
+    )
+    # Soft per-user daily cap. Runs on a shared free-tier key, so one user must
+    # not be able to burn the whole app's allowance. No retry loops anywhere.
+    AI_MATCH_DAILY_LIMIT: int = Field(20, env=["AI_MATCH_DAILY_LIMIT"])
+    AI_MATCH_MIN_CHARS: int = Field(120, env=["AI_MATCH_MIN_CHARS"])
+    AI_MATCH_MAX_CHARS: int = Field(12000, env=["AI_MATCH_MAX_CHARS"])
+
     @field_validator("DATABASE_URL")
     @classmethod
     def clean_db_url(cls, v: str) -> str:

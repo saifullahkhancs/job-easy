@@ -76,13 +76,27 @@ async def send_email_v2(
             detail="User has not configured email sending information.",
         )
 
+    # Allow one-off subject/body tweaks for this send only. Blank or missing
+    # overrides fall back to the stored template values, so the template itself
+    # is never mutated — the sender just personalises the email at send time.
+    subject = (
+        payload.subject
+        if payload.subject is not None and payload.subject.strip()
+        else template.title
+    )
+    body = (
+        payload.body
+        if payload.body is not None and payload.body.strip()
+        else template.context
+    )
+
     try:
         await send_job_application_email(
             recipient_email=payload.recipient_email,
-            subject=template.title,
+            subject=subject,
             sender_email=settings.EMAIL_FROM, # Use platform email from config
             sender_name=user_email_info.sender_name,
-            context=template.context,
+            context=body,
             cv_bytes=template.cv_bytes,
             cv_filename=template.filename,
         )
