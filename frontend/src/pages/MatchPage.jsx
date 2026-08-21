@@ -167,7 +167,7 @@ export default function MatchPage() {
                   How matching works
                 </div>
                 <ul className="fact-list">
-                  <li>Every template you're allowed to see is scored 0–100 against the job description.</li>
+                  <li>Every CV you own is scored 0–100 against the job description.</li>
                   <li>We also pull out the recruiter's contact email if the posting lists one.</li>
                   <li>One analysis per submission keeps us inside our shared free AI allowance.</li>
                 </ul>

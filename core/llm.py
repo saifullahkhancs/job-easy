@@ -1,7 +1,7 @@
 """Swap-in LLM provider behind a single entry point.
 
 The Job Description Matcher needs exactly one thing from an LLM: turn a job
-description plus the user's visible templates into a single structured JSON
+description plus the logged-in user's own templates into a single structured JSON
 document (ranked matches + an optional contact email). Everything provider
 specific lives in this module, so the API layer never has to know whether the
 brain behind the feature is Gemini or Groq — it only ever calls
