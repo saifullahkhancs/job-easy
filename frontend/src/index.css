@@ -5044,6 +5044,26 @@ button:disabled {
   min-width: 220px;
 }
 
+/* Prominent one-click send action: full-width CTA + what-will-load hint. */
+.contact-email-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.contact-email-cta .primary-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.contact-email-cta-hint {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #1e40af;
+  opacity: 0.9;
+}
+
 /* Ranked template cards. */
 .match-cards {
   display: flex;
@@ -5186,7 +5206,6 @@ button:disabled {
     justify-content: center;
   }
 
-  .contact-email-controls .primary-btn,
   .contact-email-controls .secondary-btn {
     flex: 1 1 auto;
     justify-content: center;

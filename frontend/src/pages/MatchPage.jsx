@@ -57,9 +57,14 @@ export default function MatchPage() {
   const charCount = jobDescription.length;
   const canSubmit = jobDescription.trim().length >= MIN_CHARS && !loading && !isGuest;
 
+  // The single highest-scoring template — the backend already returns the
+  // ranked list sorted by score, so the top match is just the first item.
+  const topMatch = result?.matches?.length ? result.matches[0] : null;
+  const trimmedRecipient = detectedEmail.trim();
+
   function buildSendLink(templateId) {
     const params = new URLSearchParams({ template: String(templateId) });
-    if (detectedEmail) params.set("recipient", detectedEmail.trim());
+    if (trimmedRecipient) params.set("recipient", trimmedRecipient);
     return `/app/send?${params.toString()}`;
   }
 
@@ -266,7 +271,7 @@ export default function MatchPage() {
               </span>
             </div>
 
-            {detectedEmail && (
+            {detectedEmail && topMatch && (
               <div className="contact-email-card">
                 <div className="contact-email-label">
                   <Mail size={18} />
@@ -288,14 +293,21 @@ export default function MatchPage() {
                     <X size={16} />
                     Clear
                   </button>
+                </div>
+                <div className="contact-email-cta">
                   <button
                     type="button"
                     className="primary-btn"
-                    onClick={() => navigate(buildSendLink(result.matches[0].template_id))}
+                    onClick={() => navigate(buildSendLink(topMatch.template_id))}
                   >
-                    <Send size={16} />
+                    <Send size={18} />
                     Send with top match
                   </button>
+                  <span className="contact-email-cta-hint">
+                    Opens the send page with “{topMatch.title}”
+                    {trimmedRecipient ? ` and ${trimmedRecipient}` : ""} already filled in —
+                    you still review before sending.
+                  </span>
                 </div>
               </div>
             )}
