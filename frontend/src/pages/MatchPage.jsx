@@ -113,7 +113,7 @@ export default function MatchPage() {
       <section className="card" style={{ minHeight: "auto", height: "auto" }}>
         <div className="page-accent-header accent-match">
           <div>
-            <h2>Match Jobs</h2>
+            <h2>Match Template</h2>
             <p>Paste a job description — we'll rank your templates and find the recruiter's email.</p>
           </div>
           <div className="page-accent-badge">

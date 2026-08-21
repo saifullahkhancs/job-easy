@@ -18,6 +18,8 @@ import {
   FileCheck,
   Layers,
   Briefcase,
+  Gauge,
+  Target,
   Menu,
   X,
 } from "lucide-react";
@@ -28,6 +30,12 @@ import "./LandingPage.css";
 
 const MOBILE_BREAKPOINT = 1024;
 const SIDEBAR_KEY = "jobeasy.landing.sidebar.open";
+
+// Marketing copy for the AI matcher. Mirrors the backend defaults
+// (AI_MATCH_DAILY_LIMIT / AI_MATCH_MIN_CHARS in core/config.py) — the API is
+// still the source of truth and shows the live remaining quota after a match.
+const AI_MATCH_DAILY_LIMIT = 20;
+const AI_MATCH_MIN_CHARS = 120;
 
 function readSidebarPref() {
   if (typeof window === "undefined") return true;
@@ -220,6 +228,7 @@ export default function LandingPage() {
             <nav className="landing-nav landing-nav-left" aria-label="Landing page sections">
               <a href="#features">Features</a>
               <a href="#how">How it works</a>
+              <a href="#ai-match">AI Matching</a>
               <a href="#templates">Templates</a>
             </nav>
             <div className="landing-header-actions landing-header-actions-left">
@@ -524,6 +533,108 @@ export default function LandingPage() {
                   Send Email
                 </button>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* AI Match Template */}
+        <section id="ai-match" className="landing-section landing-ai-section">
+          <div className="landing-section-inner">
+            <div className="landing-section-header" data-reveal="scroll">
+              <span className="landing-kicker">AI Match Template</span>
+              <h2>Paste a job description — we pick the right template</h2>
+              <p>
+                Match Template is the AI step in the sidebar. It reads any job posting, scores every
+                template you own from 0 to 100, and hands you the best one with the recruiter's email
+                already filled in.
+              </p>
+            </div>
+
+            <div className="landing-ai-grid" data-reveal="scroll">
+              <div className="landing-ai-steps">
+                <div className="landing-ai-step">
+                  <div className="landing-ai-step-icon">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h3>1. Paste the posting</h3>
+                    <p>
+                      Drop in the full job description — responsibilities, skills, and the apply-to
+                      address. Anything from {AI_MATCH_MIN_CHARS} characters up works.
+                    </p>
+                  </div>
+                </div>
+                <div className="landing-ai-step">
+                  <div className="landing-ai-step-icon">
+                    <Gauge size={20} />
+                  </div>
+                  <div>
+                    <h3>2. Every template gets scored</h3>
+                    <p>
+                      The AI compares each of your CV templates against the role and returns a 0–100
+                      match score with a short plain-English reason for the ranking.
+                    </p>
+                  </div>
+                </div>
+                <div className="landing-ai-step">
+                  <div className="landing-ai-step-icon">
+                    <Target size={20} />
+                  </div>
+                  <div>
+                    <h3>3. Recruiter email detected</h3>
+                    <p>
+                      If the posting lists a contact address, we extract it and deep-link straight into
+                      Send Email with the top template and recipient pre-filled — you still review
+                      before anything goes out.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <aside className="landing-ai-panel">
+                <div className="landing-ai-panel-head">
+                  <div className="landing-feature-icon purple">
+                    <Sparkles size={22} />
+                  </div>
+                  <div>
+                    <h3>Good to know</h3>
+                    <span>How the AI matcher is metered</span>
+                  </div>
+                </div>
+
+                <div className="landing-ai-quota">
+                  <strong>{AI_MATCH_DAILY_LIMIT}</strong>
+                  <span>AI matches per user, per day</span>
+                </div>
+
+                <ul className="landing-ai-facts">
+                  <li>
+                    <CheckCircle2 size={15} />
+                    The daily quota resets at midnight UTC.
+                  </li>
+                  <li>
+                    <CheckCircle2 size={15} />
+                    Each submission is one AI call — no retry loops burning your allowance.
+                  </li>
+                  <li>
+                    <CheckCircle2 size={15} />
+                    Runs on shared free-tier AI keys, so the cap keeps it free for everyone.
+                  </li>
+                  <li>
+                    <CheckCircle2 size={15} />
+                    Login required — guests see the page in preview mode only.
+                  </li>
+                  <li>
+                    <Clock size={15} />
+                    Typical analysis takes a few seconds.
+                  </li>
+                </ul>
+
+                <button className="landing-primary-btn" onClick={() => navigate("/app/match")}>
+                  <Sparkles size={16} />
+                  Try Match Template
+                </button>
+              </aside>
             </div>
           </div>
         </section>

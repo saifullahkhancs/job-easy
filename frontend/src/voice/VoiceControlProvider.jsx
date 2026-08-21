@@ -356,8 +356,10 @@ export function VoiceControlProvider({ children }) {
       },
       {
         id: "app-match-jobs",
-        label: "Match Jobs",
+        label: "Match Template",
         patterns: [
+          "match template",
+          "match templates",
           "match jobs",
           "match job",
           "job matcher",
@@ -366,7 +368,7 @@ export function VoiceControlProvider({ children }) {
           "analyse job description",
         ],
         run: go("/app/match"),
-        feedback: "Opening Match Jobs.",
+        feedback: "Opening Match Template.",
       },
       {
         id: "app-update-template",
