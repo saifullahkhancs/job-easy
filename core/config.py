@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     )
     # Soft per-user daily cap. Runs on a shared free-tier key, so one user must
     # not be able to burn the whole app's allowance. No retry loops anywhere.
-    AI_MATCH_DAILY_LIMIT: int = Field(20, env=["AI_MATCH_DAILY_LIMIT"])
+    AI_MATCH_DAILY_LIMIT: int = Field(200, env=["AI_MATCH_DAILY_LIMIT"])
     AI_MATCH_MIN_CHARS: int = Field(120, env=["AI_MATCH_MIN_CHARS"])
     # 4000 chars keeps the prompt comfortably inside Groq's free-tier
     # tokens-per-minute allowance (see core/llm.py). Raise this and the
