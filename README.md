@@ -76,9 +76,10 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost/job_easy
 JWT_SECRET=your-strong-secret-key
 
 # AI Job Description Matcher — pick a FREE provider (no credit card needed)
-AI_PROVIDER=auto                  # auto | gemini | groq
+AI_PROVIDER=auto                  # auto | gemini | groq | openrouter
 GEMINI_API_KEY=                   # free key: https://aistudio.google.com/app/apikey
 GROQ_API_KEY=                     # free key: https://console.groq.com/keys
+OPENROUTER_API_KEY=               # free key: https://openrouter.ai/keys (use a ":free" model)
 
 # Email via SMTP (SMTP_PASSWORD doubles as the Resend API key)
 SMTP_HOST=smtp.resend.com
@@ -101,12 +102,19 @@ a genuinely free tier — you only need one free key:
 | --- | --- | --- | --- |
 | **Google Gemini** | [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey) — sign in with Google, click "Create API key" | ~1,500 requests/day on Flash models, 15 RPM | `GEMINI_API_KEY` |
 | **Groq** (Llama/Qwen) | [console.groq.com/keys](https://console.groq.com/keys) — sign up with email/GitHub/Google, click "Create API Key" | ~1,000 requests/day, 30 RPM, 6–8k tokens/minute | `GROQ_API_KEY` |
+| **OpenRouter** (any model) | [openrouter.ai/keys](https://openrouter.ai/keys) — sign up, create a key; use a `:free` model | ~50 requests/day on free models (no card needed) | `OPENROUTER_API_KEY` |
 
 1. Copy the key from the provider console.
-2. Paste it into your `.env` next to `GEMINI_API_KEY=` or `GROQ_API_KEY=`.
-3. Leave `AI_PROVIDER=auto` (it uses whichever key is set; set `gemini` or
-   `groq` explicitly to force one).
+2. Paste it into your `.env` next to `GEMINI_API_KEY=`, `GROQ_API_KEY=` or
+   `OPENROUTER_API_KEY=`.
+3. Leave `AI_PROVIDER=auto` (it uses whichever key is set; set `gemini`,
+   `groq` or `openrouter` explicitly to force one).
 4. Restart the backend.
+
+OpenRouter note: its free models carry a `:free` suffix and rotate regularly
+(e.g. `meta-llama/llama-3.3-70b-instruct:free`, `openai/gpt-oss-20b:free`).
+Pick a current one from [openrouter.ai/models](https://openrouter.ai/models) and
+set `OPENROUTER_MODEL`.
 
 Two Groq-specific notes, since its free tier is token-tight:
 

@@ -51,12 +51,13 @@ class Settings(BaseSettings):
     # ── AI Job Description Matcher ─────────────────────────────────────────
     # Provider is swappable via these fields; the endpoint only ever talks to
     # `core.llm.match_job_description`, never to a provider directly.
-    # Both providers offer a genuinely FREE tier (no credit card required):
-    #   - Gemini: free key at https://aistudio.google.com/app/apikey
-    #   - Groq:   free key at https://console.groq.com/keys
-    # `auto` uses whichever free key is present (Gemini preferred when both
+    # Every provider offers a genuinely FREE tier (no credit card required):
+    #   - Gemini:    free key at https://aistudio.google.com/app/apikey
+    #   - Groq:      free key at https://console.groq.com/keys
+    #   - OpenRouter: free key at https://openrouter.ai/keys (use a ":free" model)
+    # `auto` uses whichever free key is present (Gemini preferred when several
     # are set, for backward compatibility).
-    AI_PROVIDER: str = Field("auto", env=["AI_PROVIDER"])  # auto | gemini | groq
+    AI_PROVIDER: str = Field("auto", env=["AI_PROVIDER"])  # auto | gemini | groq | openrouter
     GEMINI_API_KEY: str = Field("", env=["GEMINI_API_KEY"])
     GEMINI_MODEL: str = Field("gemini-2.5-flash", env=["GEMINI_MODEL"])
     GEMINI_BASE_URL: str = Field(
@@ -71,6 +72,18 @@ class Settings(BaseSettings):
     GROQ_BASE_URL: str = Field(
         "https://api.groq.com/openai/v1",
         env=["GROQ_BASE_URL"],
+    )
+    OPENROUTER_API_KEY: str = Field("", env=["OPENROUTER_API_KEY"])
+    # OpenRouter is OpenAI-compatible too. Free models carry a ":free" suffix
+    # and rotate often — check https://openrouter.ai/models for the live list
+    # (e.g. meta-llama/llama-3.3-70b-instruct:free, openai/gpt-oss-20b:free).
+    OPENROUTER_MODEL: str = Field(
+        "meta-llama/llama-3.3-70b-instruct:free",
+        env=["OPENROUTER_MODEL"],
+    )
+    OPENROUTER_BASE_URL: str = Field(
+        "https://openrouter.ai/api/v1",
+        env=["OPENROUTER_BASE_URL"],
     )
     # Soft per-user daily cap. Runs on a shared free-tier key, so one user must
     # not be able to burn the whole app's allowance. No retry loops anywhere.

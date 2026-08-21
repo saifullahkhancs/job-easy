@@ -7,10 +7,10 @@ specific lives in this module, so the API layer never has to know whether the
 brain behind the feature is Gemini or Groq — it only ever calls
 ``match_job_description``.
 
-Two providers are wired in, both with a genuinely free tier (no credit card):
-Google Gemini (AI Studio) and Groq (OpenAI-compatible). ``AI_PROVIDER`` in the
-environment picks one explicitly; the default ``auto`` uses whichever free key
-is present.
+Three providers are wired in, all with a genuinely free tier (no credit card):
+Google Gemini (AI Studio), Groq and OpenRouter (both OpenAI-compatible).
+``AI_PROVIDER`` in the environment picks one explicitly; the default ``auto``
+uses whichever free key is present.
 
 Providers are deliberately single-shot: there are **no retry loops**. The
 feature runs on a free-tier key with a tiny daily allowance, so a rate limit
@@ -171,7 +171,32 @@ async def _call_gemini(prompt: str) -> dict:
     if response.status_code >= 500:
         raise LLMUnavailableError("The AI service is temporarily unavailable. Please try again later.")
     if response.status_code != 200:
-        raise LLMError("The AI service returned an unexpected error.")
+        raw_body = str(getattr(response, "text", "") or "")[:500]
+        # Log the body so the exact reason (bad key, retired model, safety
+        # block…) is visible in the server log instead of a bare "502".
+        logger.warning(
+            "Gemini API unexpected status: %s. Response body: %s",
+            response.status_code,
+            raw_body,
+        )
+        lowered = raw_body.lower()
+        if response.status_code in (400, 401, 403):
+            if "api key not valid" in lowered or "api_key_invalid" in lowered:
+                raise LLMUnavailableError(
+                    "GEMINI_API_KEY was rejected by Google. Create a new free key "
+                    "at https://aistudio.google.com/app/apikey and restart."
+                )
+            raise LLMError(
+                "The Gemini service rejected the request. Check the server log for "
+                "the exact error — common causes are an invalid GEMINI_API_KEY or "
+                "a retired GEMINI_MODEL."
+            )
+        if response.status_code == 404:
+            raise LLMUnavailableError(
+                f"GEMINI_MODEL '{settings.GEMINI_MODEL}' was not found. Pick a "
+                "current model from https://ai.google.dev/gemini-api/docs/models."
+            )
+        raise LLMError("The Gemini service returned an unexpected error.")
 
     try:
         data = response.json()
@@ -310,6 +335,76 @@ async def _call_groq(prompt: str) -> dict:
     return _extract_json_object(text)
 
 
+async def _call_openrouter(prompt: str) -> dict:
+    """A single OpenRouter chat-completions call (OpenAI-compatible), parsed JSON."""
+    if not settings.OPENROUTER_API_KEY:
+        raise LLMUnavailableError(
+            "AI matching is not configured yet. Set OPENROUTER_API_KEY to a key "
+            "from https://openrouter.ai/keys and restart."
+        )
+
+    url = f"{settings.OPENROUTER_BASE_URL.rstrip('/')}/chat/completions"
+    payload = {
+        "model": settings.OPENROUTER_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.2,
+        # No response_format here: OpenRouter's ":free" models rotate and many
+        # do not support JSON mode. _extract_json_object already un-fences the
+        # reply, so plain-text prompting is the compatible default.
+        "max_tokens": MAX_COMPLETION_TOKENS,
+    }
+    headers = {"Authorization": f"Bearer {settings.OPENROUTER_API_KEY}"}
+
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=15.0)) as client:
+            response = await client.post(url, headers=headers, json=payload)
+    except httpx.TimeoutException as exc:
+        raise LLMUnavailableError("The AI service timed out. Please try again in a moment.") from exc
+    except httpx.HTTPError as exc:
+        raise LLMUnavailableError("Could not reach the AI service. Please try again.") from exc
+
+    if response.status_code in (401, 403):
+        raise LLMUnavailableError(
+            "OpenRouter rejected OPENROUTER_API_KEY. Create a new key at "
+            "https://openrouter.ai/keys and update the environment."
+        )
+    if response.status_code == 402:
+        raise LLMUnavailableError(
+            "OpenRouter needs credits for this model. Use a free ':free' model "
+            "(see https://openrouter.ai/models) or add credits."
+        )
+    if response.status_code == 404:
+        raise LLMUnavailableError(
+            f"OPENROUTER_MODEL '{settings.OPENROUTER_MODEL}' was not found. Pick a "
+            "current model from https://openrouter.ai/models."
+        )
+    if response.status_code == 429:
+        raise LLMRateLimitedError("The AI service is at capacity right now. Please try again later.")
+    if response.status_code >= 500:
+        raise LLMUnavailableError("The AI service is temporarily unavailable. Please try again later.")
+
+    if response.status_code != 200:
+        raw_body = str(getattr(response, "text", "") or "")[:500]
+        logger.warning(
+            "OpenRouter API unexpected status: %s. Response body: %s",
+            response.status_code,
+            raw_body,
+        )
+        raise LLMError("The AI service returned an unexpected error.")
+
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise LLMError("The AI service returned an unreadable response.") from exc
+
+    try:
+        text = data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise LLMError("The AI returned an empty response.") from exc
+
+    return _extract_json_object(text)
+
+
 def _resolve_provider() -> str:
     """Pick the LLM provider from settings: explicit choice, else first key set."""
     choice = (settings.AI_PROVIDER or "auto").strip().lower()
@@ -330,9 +425,18 @@ def _resolve_provider() -> str:
             )
         return "groq"
 
+    if choice == "openrouter":
+        if not settings.OPENROUTER_API_KEY:
+            raise LLMUnavailableError(
+                "AI_PROVIDER is set to 'openrouter' but OPENROUTER_API_KEY is empty. "
+                "Grab a key at https://openrouter.ai/keys."
+            )
+        return "openrouter"
+
     if choice != "auto":
         raise LLMUnavailableError(
-            f"Unknown AI_PROVIDER '{settings.AI_PROVIDER}'. Use 'auto', 'gemini' or 'groq'."
+            f"Unknown AI_PROVIDER '{settings.AI_PROVIDER}'. Use 'auto', 'gemini', "
+            "'groq' or 'openrouter'."
         )
 
     # auto: prefer the provider whose free key is present. Gemini first to
@@ -341,11 +445,14 @@ def _resolve_provider() -> str:
         return "gemini"
     if settings.GROQ_API_KEY:
         return "groq"
+    if settings.OPENROUTER_API_KEY:
+        return "openrouter"
 
     raise LLMUnavailableError(
         "AI matching is not configured yet. Set a free key and restart: "
-        "GEMINI_API_KEY from https://aistudio.google.com/app/apikey "
-        "or GROQ_API_KEY from https://console.groq.com/keys."
+        "GEMINI_API_KEY from https://aistudio.google.com/app/apikey, "
+        "GROQ_API_KEY from https://console.groq.com/keys, "
+        "or OPENROUTER_API_KEY from https://openrouter.ai/keys."
     )
 
 
@@ -363,4 +470,6 @@ async def match_job_description(job_description: str, templates: list[dict]) -> 
     prompt = _build_prompt(job_description, templates)
     if provider == "groq":
         return await _call_groq(prompt)
+    if provider == "openrouter":
+        return await _call_openrouter(prompt)
     return await _call_gemini(prompt)
