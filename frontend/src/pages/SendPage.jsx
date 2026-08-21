@@ -65,7 +65,7 @@ export default function SendPage() {
     init();
   }, [requestedTemplateId]);
 
-  // A recruiter email detected on the Match Jobs page can be deep-linked here
+  // A recruiter email detected on the Match Template page can be deep-linked here
   // as `?recipient=...` so the user does not have to re-type it.
   useEffect(() => {
     if (requestedRecipient) {
