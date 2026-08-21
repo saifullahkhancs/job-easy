@@ -189,6 +189,25 @@ async def _call_gemini(prompt: str) -> dict:
     return _extract_json_object(text)
 
 
+def _groq_reasoning_effort(model: str) -> str | None:
+    """Reasoning-effort value to send for a Groq model, or ``None`` to omit it.
+
+    ``qwen/qwen3.6-27b`` (the default ``GROQ_MODEL``) is a reasoning model.
+    Left to its own devices it spends completion tokens "thinking" before it
+    answers; combined with JSON mode and the small ``max_completion_tokens``
+    reservation below, the thinking can swallow the entire budget and leave an
+    empty answer, which Groq rejects with HTTP 400 ``json_validate_failed``.
+
+    This feature is plain extraction (score + email), not reasoning, so disable
+    thinking for models that honour ``reasoning_effort`` and leave the
+    parameter off for every other model — sending it to a model that does not
+    support it would itself be a 400.
+    """
+    if "qwen3.6" in model.lower():
+        return "none"
+    return None
+
+
 async def _call_groq(prompt: str) -> dict:
     """A single Groq chat-completions call (OpenAI-compatible), parsed JSON."""
     if not settings.GROQ_API_KEY:
@@ -209,6 +228,11 @@ async def _call_groq(prompt: str) -> dict:
         # push even small prompts over the 6,000-8,000 TPM cap.
         "max_completion_tokens": MAX_COMPLETION_TOKENS,
     }
+    # Reasoning models would otherwise spend this whole budget "thinking" and
+    # hand JSON mode an empty answer (HTTP 400 json_validate_failed).
+    reasoning_effort = _groq_reasoning_effort(settings.GROQ_MODEL)
+    if reasoning_effort is not None:
+        payload["reasoning_effort"] = reasoning_effort
     headers = {"Authorization": f"Bearer {settings.GROQ_API_KEY}"}
 
     try:
@@ -242,6 +266,7 @@ async def _call_groq(prompt: str) -> dict:
             pass
         error = body.get("error") if isinstance(body, dict) else None
         message = str(error.get("message") or "") if isinstance(error, dict) else ""
+        code = str(error.get("code") or "") if isinstance(error, dict) else ""
         if "decommissioned" in message or "no longer supported" in message:
             raise LLMUnavailableError(
                 f"GROQ_MODEL '{settings.GROQ_MODEL}' has been retired by Groq. "
@@ -256,6 +281,11 @@ async def _call_groq(prompt: str) -> dict:
             raise LLMError(
                 "The request was too large for Groq's free tier. Shorten the "
                 "job description or use fewer templates."
+            )
+        if code == "json_validate_failed" or "json" in message.lower():
+            raise LLMError(
+                "The AI model returned no usable JSON for this job description. "
+                "Try a shorter job description or fewer templates."
             )
 
     if response.status_code != 200:

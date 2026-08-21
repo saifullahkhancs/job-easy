@@ -181,6 +181,7 @@ async def test_call_groq_unfences_markdown_json(monkeypatch):
 @pytest.mark.asyncio
 async def test_call_groq_sends_bearer_auth_and_json_mode(monkeypatch):
     _set_ai_settings(monkeypatch, groq_key="q-key")
+    monkeypatch.setattr(settings, "GROQ_MODEL", "qwen/qwen3.6-27b")
     response = _FakeResponse(
         200, {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]}
     )
@@ -191,6 +192,36 @@ async def test_call_groq_sends_bearer_auth_and_json_mode(monkeypatch):
     assert client.last_kwargs["headers"]["Authorization"] == "Bearer q-key"
     assert client.last_kwargs["json"]["response_format"] == {"type": "json_object"}
     assert client.last_kwargs["json"]["max_completion_tokens"] == llm.MAX_COMPLETION_TOKENS
+    assert client.last_kwargs["json"]["reasoning_effort"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_call_groq_reasoning_model_disables_reasoning(monkeypatch):
+    """qwen3.6 is a reasoning model; its thinking must be switched off so the
+    completion budget goes to the JSON answer instead of an empty response."""
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    monkeypatch.setattr(settings, "GROQ_MODEL", "qwen/qwen3.6-27b")
+    response = _FakeResponse(
+        200, {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]}
+    )
+    holder = _install_fake_client(monkeypatch, response)
+
+    await llm._call_groq(PROMPT)
+    assert holder["client"].last_kwargs["json"]["reasoning_effort"] == "none"
+
+
+@pytest.mark.asyncio
+async def test_call_groq_non_reasoning_model_omits_reasoning_effort(monkeypatch):
+    """reasoning_effort must not be sent to models that do not support it."""
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    monkeypatch.setattr(settings, "GROQ_MODEL", "meta-llama/llama-3.3-70b-versatile")
+    response = _FakeResponse(
+        200, {"choices": [{"message": {"content": '{"matches": [], "contact_email": null}'}}]}
+    )
+    holder = _install_fake_client(monkeypatch, response)
+
+    await llm._call_groq(PROMPT)
+    assert "reasoning_effort" not in holder["client"].last_kwargs["json"]
 
 
 @pytest.mark.asyncio
@@ -275,6 +306,31 @@ async def test_call_groq_oversized_request_raises_llm_error(monkeypatch):
     )
 
     with pytest.raises(llm.LLMError, match="too large"):
+        await llm._call_groq(PROMPT)
+
+
+@pytest.mark.asyncio
+async def test_call_groq_json_validation_failure_raises_llm_error(monkeypatch):
+    """The exact 400 Groq returns when reasoning eats the reply budget and the
+    model emits an empty answer (json_validate_failed, empty failed_generation)."""
+    _set_ai_settings(monkeypatch, groq_key="q-key")
+    _install_fake_client(
+        monkeypatch,
+        _FakeResponse(
+            400,
+            {
+                "error": {
+                    "message": "Failed to validate JSON. Please adjust your prompt. "
+                               "See 'failed_generation' for more details.",
+                    "type": "invalid_request_error",
+                    "code": "json_validate_failed",
+                    "failed_generation": "",
+                }
+            },
+        ),
+    )
+
+    with pytest.raises(llm.LLMError, match="no usable JSON"):
         await llm._call_groq(PROMPT)
 
 
