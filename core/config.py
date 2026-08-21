@@ -51,17 +51,35 @@ class Settings(BaseSettings):
     # ── AI Job Description Matcher ─────────────────────────────────────────
     # Provider is swappable via these fields; the endpoint only ever talks to
     # `core.llm.match_job_description`, never to a provider directly.
+    # Both providers offer a genuinely FREE tier (no credit card required):
+    #   - Gemini: free key at https://aistudio.google.com/app/apikey
+    #   - Groq:   free key at https://console.groq.com/keys
+    # `auto` uses whichever free key is present (Gemini preferred when both
+    # are set, for backward compatibility).
+    AI_PROVIDER: str = Field("auto", env=["AI_PROVIDER"])  # auto | gemini | groq
     GEMINI_API_KEY: str = Field("", env=["GEMINI_API_KEY"])
-    GEMINI_MODEL: str = Field("gemini-1.5-flash", env=["GEMINI_MODEL"])
+    GEMINI_MODEL: str = Field("gemini-2.5-flash", env=["GEMINI_MODEL"])
     GEMINI_BASE_URL: str = Field(
         "https://generativelanguage.googleapis.com",
         env=["GEMINI_BASE_URL"],
+    )
+    GROQ_API_KEY: str = Field("", env=["GROQ_API_KEY"])
+    # qwen3.6-27b is a current free-tier Groq model (8,000 TPM). Groq retires
+    # models frequently — if it stops working, the error message lists a
+    # replacement. Check the live free list at https://console.groq.com/docs/models
+    GROQ_MODEL: str = Field("qwen/qwen3.6-27b", env=["GROQ_MODEL"])
+    GROQ_BASE_URL: str = Field(
+        "https://api.groq.com/openai/v1",
+        env=["GROQ_BASE_URL"],
     )
     # Soft per-user daily cap. Runs on a shared free-tier key, so one user must
     # not be able to burn the whole app's allowance. No retry loops anywhere.
     AI_MATCH_DAILY_LIMIT: int = Field(20, env=["AI_MATCH_DAILY_LIMIT"])
     AI_MATCH_MIN_CHARS: int = Field(120, env=["AI_MATCH_MIN_CHARS"])
-    AI_MATCH_MAX_CHARS: int = Field(12000, env=["AI_MATCH_MAX_CHARS"])
+    # 4000 chars keeps the prompt comfortably inside Groq's free-tier
+    # tokens-per-minute allowance (see core/llm.py). Raise this and the
+    # free tier may start rejecting requests with 413.
+    AI_MATCH_MAX_CHARS: int = Field(4000, env=["AI_MATCH_MAX_CHARS"])
 
     @field_validator("DATABASE_URL")
     @classmethod

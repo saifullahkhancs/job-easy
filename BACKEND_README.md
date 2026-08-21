@@ -402,14 +402,20 @@ RATE_LIMIT_ENABLED=true
 RATE_LIMIT_REQUESTS=100
 RATE_LIMIT_PERIOD=60
 
-# AI Job Description Matcher (Gemini — provider is swappable in core/llm.py)
+# AI Job Description Matcher — free-tier providers, no credit card required.
+# Keys: Gemini → https://aistudio.google.com/app/apikey
+#       Groq   → https://console.groq.com/keys
+AI_PROVIDER=auto            # auto (uses whichever key is set) | gemini | groq
 GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.5-flash
 GEMINI_BASE_URL=https://generativelanguage.googleapis.com
+GROQ_API_KEY=your-groq-api-key
+GROQ_MODEL=qwen/qwen3.6-27b   # Groq retires models often — check console.groq.com/docs/models
+GROQ_BASE_URL=https://api.groq.com/openai/v1
 # Soft per-user daily cap (protects the shared free-tier key)
 AI_MATCH_DAILY_LIMIT=20
 AI_MATCH_MIN_CHARS=120
-AI_MATCH_MAX_CHARS=12000
+AI_MATCH_MAX_CHARS=4000     # keep small: Groq free tier caps tokens per minute
 
 # Email (SMTP)
 SMTP_HOST=smtp.gmail.com
