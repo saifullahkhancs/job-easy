@@ -15,8 +15,11 @@ This React + Vite frontend implements a role-based workflow for email automation
 
 #### Public Routes
 - `/login` - Login page
-- `/signup` - Registration page
+- `/signup` - Registration page (requires the Terms/Privacy consent checkbox)
 - `/forgot-password` - Password reset flow
+- `/terms` - Terms of Service
+- `/privacy` - Privacy Policy
+  - Aliases that redirect: `/terms-of-service`, `/privacy-policy`, `/legal`
 
 #### Authenticated Routes (`/app/*`)
 - `/app` or `/app/templates` - Dashboard (role-based)
@@ -30,6 +33,25 @@ This React + Vite frontend implements a role-based workflow for email automation
 #### Route Guards
 - **AuthGuard**: Protects all `/app/*` routes, redirects unauthenticated users to `/login`
 - **RoleGuard**: Protects customer-only routes (create, edit, send), redirects visitors to `/app`
+
+### Legal Pages (Terms / Privacy)
+
+Both public documents are rendered by one component so they stay visually identical:
+
+- `src/pages/LegalPage.jsx` - layout, sticky table of contents, section numbering,
+  deep-link scrolling (`/privacy#your-rights`), print stylesheet, client-side
+  navigation for links inside the copy. Takes a `doc` prop (`"terms"` / `"privacy"`).
+- `src/legal/termsContent.jsx` / `src/legal/privacyContent.jsx` - the actual wording as
+  `{ key, title, subtitle, updated, note, sections: [{ id, title, body }] }`. Edit copy
+  here, not in the component. Section ids are deep-link targets, so keep them stable.
+- `src/legal/index.js` - registry used by the page and by the footer/tab links.
+- `src/pages/LandingPage.css` - footer "Legal" column + Terms/Privacy line under the copyright.
+
+Two housekeeping rules for this copy: every technical claim must match the code it
+describes (limits come from `core/config.py`, crypto from `core/encryption.py`, token
+storage from `src/api/tokenStorage.js`), and both pages carry a "Draft notice" banner
+(`note`) that should only be removed once the operator entity is registered and the
+text has been reviewed by a lawyer.
 
 ### Permission Behavior
 

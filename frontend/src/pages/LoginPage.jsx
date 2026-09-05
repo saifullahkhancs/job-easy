@@ -238,6 +238,11 @@ export default function LoginPage() {
           <p>
             <Link to="/forgot-password">Forgot password?</Link>
           </p>
+          <p className="auth-legal-links">
+            <Link to="/terms">Terms of Service</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/privacy">Privacy Policy</Link>
+          </p>
         </div>
       </div>
     </div>

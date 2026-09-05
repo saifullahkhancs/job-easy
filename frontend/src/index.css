@@ -1188,6 +1188,90 @@ button:disabled {
   text-decoration: underline;
 }
 
+/* Terms / Privacy consent checkbox on the signup form (pages it links to live
+   in src/pages/LegalPage.jsx + src/legal/*). */
+.auth-consent-group {
+  gap: 6px;
+}
+
+.auth-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fdfbfb;
+  border: 1px solid #e9dede;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: #475569;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.auth-consent:hover {
+  border-color: var(--brand-orange);
+}
+
+.auth-consent:has(.auth-consent-input:checked) {
+  background: var(--brand-orange-soft);
+  border-color: rgba(231, 123, 96, 0.45);
+}
+
+.auth-consent:has(.auth-consent-input[aria-invalid="true"]) {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.auth-consent-input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--brand-orange-dark);
+  cursor: pointer;
+}
+
+.auth-consent-input:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+}
+
+.auth-consent-text a {
+  color: var(--brand-orange-dark);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(231, 123, 96, 0.35);
+}
+
+.auth-consent-text a:hover {
+  border-bottom-color: currentColor;
+}
+
+.auth-consent-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding-left: 2px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.auth-consent-hint.is-error {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.auth-legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
 /* Quick login buttons */
 .quick-login-buttons {
   margin-bottom: 24px;

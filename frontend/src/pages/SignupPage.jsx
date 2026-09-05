@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, User, ArrowRight, RefreshCw } from "lucide-react";
+import { Mail, Lock, User, ArrowRight, RefreshCw, Scale } from "lucide-react";
 import { register, verifyEmail, resendVerification, login } from "../api/client";
 import { getAccessToken, setTokens } from "../api/tokenStorage";
 
@@ -13,6 +13,11 @@ export default function SignupPage() {
     password: "",
   });
   const [verificationCode, setVerificationCode] = useState("");
+  // Consent gate for the public Terms of Service + Privacy Policy (/terms, /privacy).
+  // Enforced client-side only — the register endpoint takes no consent flag.
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [consentError, setConsentError] = useState(false);
+  const consentRef = useRef(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,6 +27,14 @@ export default function SignupPage() {
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!agreedToTerms) {
+      setConsentError(true);
+      setError("Please accept the Terms of Service and Privacy Policy to continue.");
+      consentRef.current?.focus();
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -148,6 +161,48 @@ export default function SignupPage() {
               </div>
             </div>
 
+            <div className="form-group auth-consent-group">
+              <label className="auth-consent" htmlFor="agreeTerms">
+                <input
+                  ref={consentRef}
+                  id="agreeTerms"
+                  type="checkbox"
+                  className="auth-consent-input"
+                  checked={agreedToTerms}
+                  aria-invalid={consentError && !agreedToTerms}
+                  aria-describedby="agreeTermsHint"
+                  onChange={(e) => {
+                    setAgreedToTerms(e.target.checked);
+                    if (e.target.checked) {
+                      setConsentError(false);
+                      setError("");
+                    }
+                  }}
+                />
+                <span className="auth-consent-text">
+                  I have read and accept the{" "}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer">
+                    Privacy Policy
+                  </a>
+                  , and that I will only send genuine job applications to employers I am actually
+                  applying to.
+                </span>
+              </label>
+              <p
+                id="agreeTermsHint"
+                className={consentError && !agreedToTerms ? "auth-consent-hint is-error" : "auth-consent-hint"}
+              >
+                <Scale size={13} />
+                {consentError && !agreedToTerms
+                  ? "Required — tick the box to create your account."
+                  : "Links open in a new tab, so nothing you typed is lost."}
+              </p>
+            </div>
+
             <button type="submit" className="auth-submit-btn" disabled={loading}>
               {loading ? "Creating account..." : "Create Account"}
               {!loading && <ArrowRight size={20} className="btn-icon" />}
@@ -199,6 +254,13 @@ export default function SignupPage() {
           ) : (
             <p>
               <Link to="/login">Back to login</Link>
+            </p>
+          )}
+          {step === "register" && (
+            <p className="auth-legal-links">
+              <Link to="/terms">Terms of Service</Link>
+              <span aria-hidden="true">·</span>
+              <Link to="/privacy">Privacy Policy</Link>
             </p>
           )}
         </div>

@@ -1314,10 +1314,11 @@
   line-height: 1.5;
 }
 
+/* Four columns: Product / Workflow / Account / Legal (legal links live here). */
 .landing-footer-links {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 28px;
 }
 
 .landing-footer-links h4 {
@@ -1351,6 +1352,25 @@
   flex-wrap: wrap;
   font-size: 0.8rem;
   color: #94a3b8;
+}
+
+/* Terms / Privacy shortcuts under the copyright line. */
+.landing-footer-legal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.landing-footer-legal a {
+  color: #64748b;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.landing-footer-legal a:hover {
+  color: var(--brand-orange-dark, #d95e40);
+  border-bottom-color: currentColor;
 }
 
 /* Responsive */
@@ -1391,6 +1411,11 @@
 
   .landing-footer-inner {
     grid-template-columns: 1fr;
+  }
+
+  /* Keep the four footer groups (incl. Legal) readable before they stack. */
+  .landing-footer-links {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .landing-header-inner {

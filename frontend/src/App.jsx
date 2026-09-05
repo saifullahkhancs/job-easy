@@ -4,6 +4,7 @@ import RoleGuard, { ROLES } from "./components/RoleGuard";
 import Layout from "./components/Layout";
 import AdminLayout from "./admin/AdminLayout";
 import UploadPage from "./pages/UploadPage";
+import LegalPage from "./pages/LegalPage";
 import ViewPage from "./pages/ViewPage";
 import SendPage from "./pages/SendPage";
 import MatchPage from "./pages/MatchPage";
@@ -38,6 +39,14 @@ export default function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ForgotPasswordPage />} />
+
+          {/* Public legal pages (no layout, no auth) — linked from signup + footer */}
+          <Route path="/terms" element={<LegalPage doc="terms" />} />
+          <Route path="/privacy" element={<LegalPage doc="privacy" />} />
+          {/* Aliases people actually type, or that older emails link to */}
+          <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
+          <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
+          <Route path="/legal" element={<Navigate to="/terms" replace />} />
           
           {/* Admin routes - no auth guard (internal/dev-only) */}
           <Route path="/admin" element={<AdminLayout />}>

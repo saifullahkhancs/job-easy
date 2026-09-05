@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   LayoutGrid,
   Send,
@@ -754,10 +754,21 @@ export default function LandingPage() {
                 <a onClick={() => navigate("/signup")}>Register</a>
                 <a href="mailto:info@jobeasy.online">Support</a>
               </div>
+              <div>
+                <h4>Legal</h4>
+                <Link to="/terms">Terms of Service</Link>
+                <Link to="/privacy">Privacy Policy</Link>
+                <a href="mailto:info@jobeasy.online">Report abuse</a>
+              </div>
             </div>
           </div>
           <div className="landing-footer-bottom">
             <span>© {new Date().getFullYear()} Job Easy. All rights reserved.</span>
+            <nav className="landing-footer-legal" aria-label="Legal links">
+              <Link to="/terms">Terms of Service</Link>
+              <span aria-hidden="true">·</span>
+              <Link to="/privacy">Privacy Policy</Link>
+            </nav>
             <span>Demo data flagged with * — replace with live metrics after launch.</span>
           </div>
         </footer>
